@@ -4096,10 +4096,12 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
      * 8KHz for BT headset NB, as default.
      * 16KHz for BT headset WB.
      * */
-    ret = str_parms_get_str(parms, "bt_samplerate", value, sizeof(value));
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_BT_SCO_WB, value, sizeof(value));
     if (ret >= 0) {
-        val = atoi(value);
-        adev->bluetooth_type = val;
+        if (strcmp(value, AUDIO_PARAMETER_VALUE_OFF) == 0)
+            adev->bluetooth_type = VX_NB_SAMPLING_RATE;
+        else if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0)
+            adev->bluetooth_type = VX_WB_SAMPLING_RATE;
     }
 
     //this para for Phone to set realcall state,because mode state may be not accurate
