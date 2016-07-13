@@ -17,6 +17,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq (sc8830,$(TARGET_BOARD_PLATFORM))
-include $(call all-subdir-makefiles,sc8830)
+ifeq (sc8810,$(TARGET_BOARD_PLATFORM))
+include $(call all-subdir-makefiles,sc8810)
 endif
