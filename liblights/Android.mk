@@ -22,7 +22,7 @@ supported_boards := \
 	sc8830 \
 	scx15 \
 
-ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM))
+ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := lights.c
