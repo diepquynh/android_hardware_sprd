@@ -26,5 +26,3 @@ include $(call all-named-subdir-makefiles,sc8830)
 endif
 
 endif
-
-supported_boards :=
