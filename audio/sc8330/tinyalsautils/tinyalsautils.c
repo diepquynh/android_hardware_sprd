@@ -24,6 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 
 #include <sys/mman.h>
@@ -39,7 +40,7 @@
 
 #define SND_FILE_CONTROL ALSA_DEVICE_DIRECTORY "controlC%i"
 
-struct snd_ctl_card_info_t 
+struct snd_ctl_card_info_t
 {
 	int card;			/* card number */
 	int pad;			/* reserved for future (was type) */
@@ -61,7 +62,7 @@ static int get_snd_card_name(int card, char *name)
 
     fd = open(control, O_RDONLY);
     if (fd < 0) {
-        ALOGE("open snd control failed.");
+        ALOGE("open snd control failed: %s", strerror(errno));
         return -1;
     }
     if (ioctl(fd, SNDRV_CTL_IOCTL_CARD_INFO, &info) < 0) {

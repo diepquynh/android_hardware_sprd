@@ -36,13 +36,13 @@ LOCAL_SRC_FILES := \
 	$(BOARD_EQ_DIR)/vb_hal_if.c \
 	$(BOARD_EQ_DIR)/vb_hal_adp.c \
 
-LOCAL_C_INCLUDES += \
+LOCAL_C_INCLUDES := \
 	external/tinyalsa/include \
 	$(LOCAL_PATH)/../ \
-	$(LOCAL_PATH)/../../kernel-headers/arch-arm \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH) \
+	$(LOCAL_PATH)/$(BOARD_EQ_DIR) \
 	$(LOCAL_C_INCLUDES) \
 
 LOCAL_SHARED_LIBRARIES := \

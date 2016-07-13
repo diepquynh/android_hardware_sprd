@@ -72,6 +72,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libvbpga \
 	libnvexchange \
 	libdumpdata \
+	libhardware_legacy \
 
 LOCAL_REQUIRED_MODULES := \
 	liblog \
@@ -84,6 +85,7 @@ LOCAL_REQUIRED_MODULES := \
 	libvbpga \
 	libnvexchange \
 	libdumpdata \
+	libhardware_legacy \
 
 ifeq ($(BOARD_USE_LIBATCHANNEL_WRAPPER),true)
 LOCAL_CFLAGS += -DUSE_LIBATCHANNEL_WRAPPER

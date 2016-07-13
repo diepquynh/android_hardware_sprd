@@ -46,6 +46,8 @@
 #include "aud_proc.h"
 #include "vb_control_parameters.h"
 #include "string_exchange_bin.h"
+#include <hardware_legacy/power.h>
+
 
 #include "dumpdata.h"
 
@@ -83,7 +85,7 @@
 //#define AUDIO_DUMP
 #define AUDIO_DUMP_EX
 
-#define AUDIO_OUT_FILE_PATH  "data/audio_out.pcm"
+#define AUDIO_OUT_FILE_PATH  "/data/local/media/audio_out.pcm"
 
 //make sure this device is not used by android
 #define SPRD_AUDIO_IN_DUALMIC_VOICE  0x81000000 //in:0x80000000
@@ -173,6 +175,9 @@
 #define AUDFIFO "/data/local/media/audiopara_tuning"
 
 #define MAX_STOP_THRESHOLD ((unsigned int)-1)/2-1
+
+#define  AUDIO_HAL_WAKE_LOCK_NAME "audio-hal"
+
 
 struct pcm_config pcm_config_mm = {
     .channels = 2,
@@ -383,10 +388,18 @@ typedef struct{
 }T_AT_CMD;
 */
 
+//this struct describe  timer for real call end;
+typedef struct
+{
+    timer_t timer_id;
+    bool created;
+} voip_timer_t;
+
 typedef struct{
    char  at_cmd[MAX_AT_CMD_TYPE][MAX_AT_CMD_LENGTH];
    uint32_t   at_cmd_priority[MAX_AT_CMD_TYPE];
    uint32_t   at_cmd_dirty;
+   int    routeDev;
 }T_AT_CMD;
 
 struct tiny_audio_device {
@@ -399,6 +412,7 @@ struct tiny_audio_device {
     int in_devices;
     int prev_out_devices;
     int prev_in_devices;
+    int routeDev;
     volatile int cur_vbpipe_fd;  /*current vb pipe id, if all pipes is closed this is -1.*/
     cp_type_t  cp_type;
     struct pcm *pcm_modem_dl;
@@ -416,6 +430,7 @@ struct tiny_audio_device {
     bool bluetooth_nrec;
     int  bluetooth_type;
     bool low_power;
+    bool realCall; //for forbid voip
 
     struct tiny_dev_cfg *dev_cfgs;
     unsigned int num_dev_cfgs;
@@ -443,6 +458,8 @@ struct tiny_audio_device {
     int requested_channel_cnt;
     int  input_source;
     T_AT_CMD  *at_cmd_vectors;
+    voip_timer_t voip_timer; //for forbid voip
+    pthread_mutex_t               device_lock;
 };
 
 struct tiny_stream_out {
@@ -671,6 +688,15 @@ static long getCurrentTimeUs()
    gettimeofday(&tv,NULL);
    return tv.tv_sec* 1000000 + tv.tv_usec;
 }
+
+static void get_partial_wakeLock() {
+    acquire_wake_lock(PARTIAL_WAKE_LOCK, AUDIO_HAL_WAKE_LOCK_NAME);
+}
+
+static void release_wakeLock() {
+    release_wake_lock(AUDIO_HAL_WAKE_LOCK_NAME);
+}
+
 
 int i2s_pin_mux_sel(struct tiny_audio_device *adev, int type)
 {
@@ -2556,7 +2582,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             goto err;
         }
 #ifndef VOIP_DSP_PROCESS
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate);
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 #endif
     }
@@ -2574,7 +2600,7 @@ static int start_input_stream(struct tiny_stream_in *in)
         if (!pcm_is_ready(in->pcm)) {
             goto err;
         }
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate);
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 
         if(in->requested_rate != in->config.rate) {
@@ -2691,7 +2717,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             }
         }
         /* start to process pcm data captured, such as noise suppression.*/
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev),in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices),in->requested_rate);
         ALOGI("record process module created is %s.", in->active_rec_proc ? "successful" : "failed");
     }
 
@@ -3362,13 +3388,29 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
      * 8KHz for BT headset NB, as default.
      * 16KHz for BT headset WB.
      * */
-    ret = str_parms_get_str(parms, "bt_samplerate", value, sizeof(value));
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_BT_SCO_WB, value, sizeof(value));
     if (ret >= 0) {
-        val = atoi(value);
-        adev->bluetooth_type = val;
+        if (strcmp(value, AUDIO_PARAMETER_VALUE_OFF) == 0)
+            adev->bluetooth_type = VX_NB_SAMPLING_RATE;
+        else if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0)
+            adev->bluetooth_type = VX_WB_SAMPLING_RATE;
     }
 
-    ret = str_parms_get_str(parms, "screen_state", value, sizeof(value));
+    //this para for Phone to set realcall state,because mode state may be not accurate
+    ret = str_parms_get_str(parms, "realcall", value, sizeof(value));
+    if(ret >= 0){
+        pthread_mutex_lock(&adev->lock);
+        if(strcmp(value, "true") == 0){
+            ALOGV("%s set realCall true",__func__);
+            voip_forbid(adev,true);
+        }else{
+            ALOGV("%s set realCall false",__func__);
+            voip_forbid(adev,false);
+        }
+        pthread_mutex_unlock(&adev->lock);
+    }
+
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_SCREEN_STATE, value, sizeof(value));
     if (ret >= 0) {
         if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0)
             adev->low_power = false;
@@ -4123,7 +4165,9 @@ static void aud_vb_effect_start(struct tiny_audio_device *adev)
         }
         if(adev->private_ctl.vbc_da_eq_switch)
         {
+#if 0
             mixer_ctl_set_value(adev->private_ctl.vbc_da_eq_switch, 0, 1);
+#endif
         }
         if(adev->private_ctl.vbc_ad01_eq_switch)
         {
@@ -5144,15 +5188,9 @@ static int adev_open(const hw_module_t* module, const char* name,
     if (ret != 0) {
         ALOGW("Warning: Failed to create the parameters file of vbc_eq");
     } else {
+        get_partial_wakeLock();
         ret = mixer_ctl_set_enum_by_string(adev->private_ctl.vbc_eq_update, "loading");
-#if 1
-        /* HACKING */
-        static int hacked = 0;
-        if (!hacked)
-            ret = -1;
-        else
-            hacked = 1;
-#endif
+        release_wakeLock();
         if (ret == 0) adev->eq_available = true;
         ALOGI("eq_loading, ret(%d), eq_available(%d)", ret, adev->eq_available);
     }
