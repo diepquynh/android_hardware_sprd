@@ -21,10 +21,16 @@ LOCAL_PATH:= $(call my-dir)
 supported_boards := \
 	sc8830 \
 	scx15 \
+	sc8810
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 
 include $(CLEAR_VARS)
+
+ifeq ($(strip $(TARGET_HAS_BACKLIT_KEYS)),false)
+LOCAL_CFLAGS += -DNON_BACKLIT_KEYS
+endif
+
 LOCAL_SRC_FILES := lights.c
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SHARED_LIBRARIES := liblog
