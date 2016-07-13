@@ -98,9 +98,8 @@ typedef struct
     int32	frame_width;				//frame width
     int32	frame_height;				//frame Height
     int32	time_scale;
-    //int32 	uv_interleaved;				//tmp add
-    int32    yuv_format;
-    int32    b_anti_shake;
+    int32	yuv_format;
+    int32	b_anti_shake;
 } MMEncVideoInfo;
 
 // Encoder config structure
