@@ -31,7 +31,9 @@ static pthread_once_t g_init = PTHREAD_ONCE_INIT;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
 char const *const LIGHT_BACKLIGHT = "/sys/class/backlight/panel/brightness";
+#ifndef NON_BACKLIT_KEYS
 char const *const LIGHT_BUTTONS = "/sys/class/leds/keyboard-backlight/brightness";
+#endif
 char const *const LIGHT_KEYBOARD = NULL;
 
 void init_g_lock(void)
@@ -95,6 +97,8 @@ static int is_lit(struct light_state_t const* state)
         return state->color & 0x00ffffff;
 }
 
+
+// Is this really needed? I expect a logcat spam. Confirmation required - corphish.
 static int set_light_keyboard(struct light_device_t* dev,
                               struct light_state_t const* state)
 {
@@ -112,7 +116,7 @@ static int set_light_keyboard(struct light_device_t* dev,
         pthread_mutex_unlock(&g_lock);
         return err;
 }
-
+ #ifndef NON_BACKLIT_KEYS
 static int set_light_buttons(struct light_device_t* dev,
                              struct light_state_t const* state)
 {
@@ -130,6 +134,7 @@ static int set_light_buttons(struct light_device_t* dev,
         pthread_mutex_unlock(&g_lock);
         return err;
 }
+#endif
 
 static int close_lights(struct light_device_t *dev)
 {
@@ -140,6 +145,7 @@ static int close_lights(struct light_device_t *dev)
 }
 
 /* LEDs */
+// Is this really needed? I expect a logcat spam. Confirmation required - corphish.
 static int set_light_leds_notifications(struct light_device_t *dev,
                                         struct light_state_t const *state)
 {
@@ -166,8 +172,10 @@ static int open_lights(const struct hw_module_t *module, char const *name,
                 set_light = set_light_backlight;
         else if (0 == strcmp(LIGHT_ID_KEYBOARD, name))
                 set_light = set_light_keyboard;
+#ifndef NON_BACKLIT_KEYS
         else if (0 == strcmp(LIGHT_ID_BUTTONS, name))
                 set_light = set_light_buttons;
+#endif
         else if (0 == strcmp(LIGHT_ID_NOTIFICATIONS, name))
                 set_light = set_light_leds_notifications;
         else if (0 == strcmp(LIGHT_ID_ATTENTION, name))

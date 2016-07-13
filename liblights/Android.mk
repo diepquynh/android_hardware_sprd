@@ -18,7 +18,10 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-include $(CLEAR_VARS)
+ifeq ($(strip $(TARGET_HAS_BACKLIT_KEYS)),false)
+LOCAL_CFLAGS += -DNON_BACKLIT_KEYS
+endif
+
 LOCAL_SRC_FILES := lights.c
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SHARED_LIBRARIES := liblog
