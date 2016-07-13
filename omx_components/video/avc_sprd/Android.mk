@@ -17,19 +17,23 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(call all-named-subdir-makefiles,thumbnail)
-
 ifneq (,$(filter scx15 sc8830,$(TARGET_BOARD_PLATFORM)))
+
+include_makefiles := \
+	$(LOCAL_PATH)/thumbnail/Android.mk \
 
 # TODO Sync sc8830 and scx15 encoder codes
 
 ifeq (sc8830,$(TARGET_BOARD_PLATFORM))
-include $(call all-named-subdir-makefiles,sc8830)
+include_makefiles += $(call all-named-subdir-makefiles,sc8830)
 endif
 
 ifeq (scx15,$(TARGET_BOARD_PLATFORM))
-include $(call all-named-subdir-makefiles,scx15)
-include $(call all-named-subdir-makefiles,sc8830/dec)
+include_makefiles += $(call all-named-subdir-makefiles,scx15 sc8830/dec)
 endif
+
+include $(include_makefiles)
+
+include_makefiles :=
 
 endif

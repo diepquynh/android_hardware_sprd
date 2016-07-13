@@ -17,8 +17,13 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(call all-named-subdir-makefiles,thumbnail)
+include_makefiles := \
+	$(LOCAL_PATH)/thumbnail/Android.mk \
 
 ifneq (,$(filter scx15 sc8830,$(TARGET_BOARD_PLATFORM)))
-include $(call all-named-subdir-makefiles,sc8830)
+include_makefiles += $(call all-named-subdir-makefiles,sc8830)
 endif
+
+include $(include_makefiles)
+
+include_makefiles :=
