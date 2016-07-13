@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2013 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,16 +12,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 LOCAL_PATH := $(call my-dir)
 
-# HAL module implemenation stored in
-# hw/<POWERS_HARDWARE_MODULE_ID>.<ro.hardware>.so
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_C_INCLUDES += hardware/libhardware/include
-LOCAL_SHARED_LIBRARIES := liblog
-LOCAL_SRC_FILES := memtrack_sprd.c sprd_mem_check.c
+LOCAL_MODULE_RELATIVE_PATH := hw
+
+LOCAL_C_INCLUDES := \
+	hardware/libhardware/include \
+
+LOCAL_SHARED_LIBRARIES := \
+	liblog \
+
+LOCAL_SRC_FILES := \
+	memtrack_sprd.c \
+	sprd_mem_check.c \
+
 LOCAL_MODULE := memtrack.$(TARGET_BOARD_PLATFORM)
+
 include $(BUILD_SHARED_LIBRARY)
