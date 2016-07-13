@@ -18,12 +18,6 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-supported_boards := \
-	sc8830 \
-	scx15 \
-
-ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
-
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := lights.c
 LOCAL_MODULE_RELATIVE_PATH := hw
@@ -31,7 +25,3 @@ LOCAL_SHARED_LIBRARIES := liblog
 LOCAL_MODULE := lights.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
-
-endif
-
-supported_boards :=

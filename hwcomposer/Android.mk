@@ -24,5 +24,3 @@ supported_boards := \
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM))
 endif
-
-supported_boards :=
