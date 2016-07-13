@@ -34,7 +34,7 @@
 //#include <gui/ISurfaceTexture.h>
 
 #include <linux/ion.h>
-#include <MemoryHeapIon_SPRD.h>
+#include <binder/MemoryHeapIon.h>
 
 #include <dlfcn.h>
 
@@ -322,7 +322,9 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::initEncParams() {
     mEncInfo.is_h263 = mIsH263;
     mEncInfo.frame_width = mVideoWidth;
     mEncInfo.frame_height = mVideoHeight;
-    mEncInfo.yuv_format = MMENC_YUV420SP_NV21;
+    //mEncInfo.uv_interleaved = 1;
+    mEncInfo.yuv_format = MMENC_YUV420SP_NV21;//1;
+	//ALOGE("yuv_format, cathy");
     mEncInfo.time_scale = 1000;
 #ifdef ANTI_SHAKE
     mEncInfo.b_anti_shake = 1;
