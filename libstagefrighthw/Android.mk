@@ -21,7 +21,7 @@ supported_boards := \
 	sc8830 \
 	scx15 \
 
-ifneq(,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM))
+ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 
 ifneq (,$(filter scx15 sc8830,$(TARGET_BOARD_PLATFORM)))
 include $(call all-subdir-makefiles,sc8830)
