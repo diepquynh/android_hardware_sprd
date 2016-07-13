@@ -55,7 +55,7 @@ LOCAL_SRC_FILES := \
 	dump.cpp \
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../gralloc \
+	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM) \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/
 
