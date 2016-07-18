@@ -47,7 +47,7 @@
 #include <cutils/log.h>
 #include "gralloc_priv.h"
 
-#include "SprdFrameBufferHAL.h"
+#include "SprdPrimaryDisplayDevice/SprdFrameBufferHAL.h"
 
 using namespace android;
 
@@ -73,6 +73,12 @@ struct sprdRect {
     uint32_t h;
 };
 
+
+struct sprdPoint {
+    uint32_t x;
+    uint32_t y;
+};
+
 enum layerType {
     LAYER_OSD = 1,
     LAYER_OVERLAY,
@@ -92,6 +98,8 @@ public:
           mFormat(-1),
           mLayerIndex(-1),
           mSprdLayerIndex(-1),
+          mAccelerator(-1),
+          mProtectedFlag(false),
           mDebugFlag(0)
     {
 
@@ -152,11 +160,32 @@ public:
         return (privateH->flags & private_handle_t::PRIV_FLAGS_NOT_OVERLAY);
     }
 
+    inline int getAccelerator()
+    {
+        return mAccelerator;
+    }
+
+    inline void resetAccelerator()
+    {
+        mAccelerator = 0;
+    }
+
+    inline void updateAndroidLayer(hwc_layer_1_t *l)
+    {
+        mAndroidLayer = l;
+    }
+
     bool checkRGBLayerFormat();
     bool checkYUVLayerFormat();
 
+    inline bool getProtectedFlag() const
+    {
+        return mProtectedFlag;
+    }
+
 private:
     friend class SprdHWLayerList;
+    friend class SprdVDLayerList;
 
     hwc_layer_1_t *mAndroidLayer;
     enum layerType mLayerType;
@@ -165,6 +194,8 @@ private:
     int mSprdLayerIndex;
     struct sprdRect srcRect;
     struct sprdRect FBRect;
+    int mAccelerator;
+    bool mProtectedFlag;
     int mDebugFlag;
 
     inline void setAndroidLayer(hwc_layer_1_t *l)
@@ -190,6 +221,16 @@ private:
     inline void setLayerFormat(int f)
     {
         mFormat = f;
+    }
+
+    inline void setLayerAccelerator(int flag)
+    {
+        mAccelerator = flag;
+    }
+
+    inline void setProtectedFlag(bool flag)
+    {
+        mProtectedFlag = flag;
     }
 };
 
