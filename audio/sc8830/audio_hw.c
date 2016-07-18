@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #define LOG_TAG "audio_hw_primary"
 #define LOG_NDEBUG 0
+
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -33,11 +35,14 @@
 #include <system/audio.h>
 #include <hardware/audio.h>
 
+#include <hardware_legacy/power.h>
+
 #include <expat.h>
 
 #include <tinyalsa/asoundlib.h>
 #include <tinyalsautils.h>
 #include <audio_utils/resampler.h>
+
 #include "audio_pga.h"
 #include "vb_effect_if.h"
 #include "vb_pga.h"
@@ -46,8 +51,6 @@
 #include "aud_proc.h"
 #include "vb_control_parameters.h"
 #include "string_exchange_bin.h"
-#include <hardware_legacy/power.h>
-
 
 #include "dumpdata.h"
 
@@ -543,8 +546,7 @@ typedef struct {
 
 static const dev_names_para_t dev_names_linein[] = {
     { AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_FM_SPEAKER, "speaker" },
-    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET,
-        "headphone" },
+    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET, "headphone" },
     { AUDIO_DEVICE_OUT_EARPIECE, "earpiece" },
     /* ANLG for voice call via linein*/
     { AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET | AUDIO_DEVICE_OUT_ALL_FM, "line" },
@@ -562,8 +564,7 @@ static const dev_names_para_t dev_names_linein[] = {
 };
 static const dev_names_para_t dev_names_digitalfm[] = {
     { AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_FM_SPEAKER, "speaker" },
-    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET,
-        "headphone" },
+    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET, "headphone" },
     { AUDIO_DEVICE_OUT_EARPIECE, "earpiece" },
     /* ANLG for voice call via linein*/
     { AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET, "line" },
@@ -3838,7 +3839,7 @@ static uint32_t adev_get_supported_devices(const struct audio_hw_device *dev)
             AUDIO_DEVICE_IN_AUX_DIGITAL |
             AUDIO_DEVICE_IN_BACK_MIC |
             AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET |
-            AUDIO_DEVICE_IN_ALL_SCO|
+            AUDIO_DEVICE_IN_ALL_SCO |
             AUDIO_DEVICE_IN_VOICE_CALL |
             AUDIO_DEVICE_IN_DEFAULT);
 }
