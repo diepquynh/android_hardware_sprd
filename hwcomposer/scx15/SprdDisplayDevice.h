@@ -54,6 +54,7 @@ typedef struct _DisplayAttributes {
     float xdpi;
     float ydpi;
     bool connected;
+    unsigned int AcceleratorMode;
 } DisplayAttributes;
 
 #endif
