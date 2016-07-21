@@ -22,7 +22,7 @@
 //#include <camera/CameraParameters.h>
 //#include <binder/MemoryBase.h>
 //#include <binder/MemoryHeapBase.h>
-#include <binder/MemoryHeapIon.h>
+#include <MemoryHeapIon_SPRD.h>
 #include <utils/threads.h>
 extern "C" {
     #include <linux/android_pmem.h>
