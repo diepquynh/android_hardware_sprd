@@ -175,6 +175,9 @@ private_handle_t* SprdDisplayPlane::dequeueBuffer()
         buffer = createPlaneBuffer(found);
     }
 
+    if (buffer == NULL) {
+        ALOGE("buffer is NULL");
+    }
 
     /*
      *  eglMakeCurrent will call dequeueBuffer first.
@@ -339,6 +342,7 @@ bool SprdDisplayPlane::close()
         mSlots[i].mBufferState = BufferSlot::RELEASE;
     }
 
+    mFlushingBufferIndex = -1;
 
     InitFlag = false;
 
@@ -383,7 +387,7 @@ enum PlaneRunStatus SprdDisplayPlane:: queryPlaneRunStatus()
 #ifdef DYNAMIC_RELEASE_PLANEBUFFER
 void AllocHelper:: onFirstRef()
 {
-    run("DisplayPlaneAllocHelper", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
+    run("DisplayAllocHelper", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
 }
 
 status_t AllocHelper:: readyToRun()

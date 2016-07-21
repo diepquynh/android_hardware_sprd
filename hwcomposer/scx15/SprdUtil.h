@@ -46,7 +46,7 @@
 #include <MemoryHeapIon_SPRD.h>
 #include <ui/Rect.h>
 
-#include "SprdPrimaryDisplayDevice/SprdHWLayerList.h"
+#include "SprdHWLayer.h"
 #include "gralloc_priv.h"
 #include "SprdPrimaryDisplayDevice/SprdFrameBufferHAL.h"
 
@@ -64,6 +64,33 @@
 
 using namespace android;
 
+/*
+ *  Accelerator mode
+ * */
+#define ACCELERATOR_NON              (0x00000000)
+#define ACCELERATOR_GSP              (0x00000001)
+#define ACCELERATOR_GSP_IOMMU        (0x00000010)
+#define ACCELERATOR_OVERLAYCOMPOSER  (0x00000100)
+#define ACCELERATOR_DCAM             (0x00001000)
+
+#ifndef ALIGN
+#define ALIGN(value, base) (((value) + ((base) - 1)) & ~((base) - 1))
+#endif
+
+#ifdef PROCESS_VIDEO_USE_GSP
+typedef enum
+{
+    GEN_COLOR_RED,
+    GEN_COLOR_GREEN,
+    GEN_COLOR_BLUE,
+    GEN_COLOR_YELLOW,
+    GEN_COLOR_MAGENTA,
+    GEN_COLOR_CYAN,
+    GEN_COLOR_BLACK,
+    GEN_COLOR_WHITE,
+    GEN_COLOR_GRAY
+} GEN_COLOR;
+#endif
 
 #ifdef TRANSFORM_USE_DCAM
 /*

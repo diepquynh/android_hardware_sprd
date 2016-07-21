@@ -33,6 +33,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	libcutils \
 	libGLESv1_CM \
+	libGLESv2 \
 	libhardware \
 	libui \
 	libsync \
@@ -46,10 +47,11 @@ LOCAL_SRC_FILES := \
 	SprdPrimaryDisplayDevice/SprdPrimaryDisplayDevice.cpp \
 	SprdPrimaryDisplayDevice/SprdVsyncEvent.cpp \
 	SprdPrimaryDisplayDevice/SprdHWLayerList.cpp \
-	SprdPrimaryDisplayDevice/SprdHWLayer.cpp \
+	SprdHWLayer.cpp \
 	SprdPrimaryDisplayDevice/SprdOverlayPlane.cpp \
 	SprdPrimaryDisplayDevice/SprdPrimaryPlane.cpp \
 	SprdVirtualDisplayDevice/SprdVirtualDisplayDevice.cpp \
+	SprdVirtualDisplayDevice/SprdVDLayerList.cpp \
 	SprdExternalDisplayDevice/SprdExternalDisplayDevice.cpp \
 	SprdUtil.cpp \
 	dump.cpp \
@@ -81,6 +83,7 @@ DEVICE_OVERLAYPLANE_BORROW_PRIMARYPLANE_BUFFER := true
 endif
 
 ifeq ($(TARGET_BOARD_PLATFORM),sc8830)
+DEVICE_DIRECT_DISPLAY_SINGLE_OSD_LAYER := true
 DEVICE_USE_FB_HW_VSYNC := true
 endif
 
@@ -104,20 +107,19 @@ LOCAL_CFLAGS += -DGSP_OUTPUT_USE_YUV420
 LOCAL_CFLAGS += -DGSP_SCALING_UP_TWICE
 # LOCAL_CFLAGS += -D_DMA_COPY_OSD_LAYER
 #
-# DIRECT_DISPLAY_SINGLE_OSD_LAYER need contiguous physcial address.
-# At present, this condition cannot be satisfied.
-#LOCAL_CFLAGS += -DDIRECT_DISPLAY_SINGLE_OSD_LAYER
+# if GSP has not IOMMU, DIRECT_DISPLAY_SINGLE_OSD_LAYER need contiguous physcial address;
+# if GSP has IOMMU, we can open DIRECT_DISPLAY_SINGLE_OSD_LAYER.
+ifeq ($(strip $(DEVICE_DIRECT_DISPLAY_SINGLE_OSD_LAYER)),true)
+LOCAL_CFLAGS += -DDIRECT_DISPLAY_SINGLE_OSD_LAYER
+endif
 
-ifeq ($(TARGET_BOARD_PLATFORM),sc8830)
-LOCAL_CFLAGS += -DGSP_ADDR_TYPE_PHY
-LOCAL_CLFAGS += -DHWC_SUPPORT
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sc8830)
+ifneq ($(strip $(DEVICE_GSP_NOT_SCALING_UP_TWICE)),true) # when on tshark, if cpy2_pa is exist, we dont support scaling-up-twice feature
+endif
 endif
 
 ifeq ($(TARGET_BOARD_PLATFORM),scx15)
 LOCAL_CFLAGS += -DGSP_ADDR_TYPE_PHY
-#LOCAL_CFLAGS += -DGSP_ADDR_TYPE_IOVA
-#LOCAL_CFLAGS += -DGSP_BLEND_2_LAYERS
-#LOCAL_CFLAGS += -DGSP_ENDIAN_IMPROVEMENT
 endif
 
 endif # DEVICE_WITH_GSP
@@ -132,6 +134,16 @@ endif
 
 ifeq ($(DEVICE_DYNAMIC_RELEASE_PLANEBUFFER),true)
 LOCAL_CFLAGS += -DDYNAMIC_RELEASE_PLANEBUFFER
+endif
+
+# For Virtual Display
+# HWC need do the Hardware copy and format convertion
+# FORCE_ADJUST_ACCELERATOR: for a better performance of Virtual Display,
+# we forcibly make sure the GSP/GPP device to be used by Virtual Display.
+# and disable the GSP/GPP on Primary Display.
+ifeq ($(TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS),true)
+LOCAL_CFLAGS += -DFORCE_HWC_COPY_FOR_VIRTUAL_DISPLAYS
+#LOCAL_CFLAGS += -DFORCE_ADJUST_ACCELERATOR
 endif
 
 # OVERLAY_COMPOSER_GPU_CONFIG: Enable or disable OVERLAY_COMPOSER_GPU

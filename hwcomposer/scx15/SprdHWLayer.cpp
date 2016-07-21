@@ -26,35 +26,69 @@
  **                                   SurfaceFligner composition. It will     *
  **                                   improve system performance.             *
  ******************************************************************************
- ** File: SprdDisplayDevice.h         DESCRIPTION                             *
- **                                   Define some display device structures.  *
+ ** File: SprdHWLayer.cpp             DESCRIPTION                             *
+ **                                   Mainly responsible for filtering HWLayer*
+ **                                   list, find layers that meet OverlayPlane*
+ **                                   and PrimaryPlane specifications and then*
+ **                                   mark them as HWC_OVERLAY.               *
  ******************************************************************************
  ******************************************************************************
  ** Author:         zhongjun.chen@spreadtrum.com                              *
  *****************************************************************************/
 
-#ifndef _SPRD_DISPLAY_DEVICE_H_
-#define _SPRD_DISPLAY_DEVICE_H_
+#include "SprdHWLayer.h"
 
-enum DisplayType {
-    DISPLAY_ID_INVALIDE = -1,
-    DISPLAY_PRIMARY = HWC_DISPLAY_PRIMARY,
-    DISPLAY_EXTERNAL = HWC_DISPLAY_EXTERNAL,
-    DISPLAY_VIRTUAL = HWC_DISPLAY_VIRTUAL,
-    NUM_BUILDIN_DISPLAY_TYPES = HWC_NUM_PHYSICAL_DISPLAY_TYPES,
-};
+using namespace android;
 
-#define MAX_DISPLAYS HWC_NUM_DISPLAY_TYPES
+bool SprdHWLayer:: checkRGBLayerFormat()
+{
+    hwc_layer_1_t *layer = mAndroidLayer;
+    if (layer == NULL)
+    {
+        return false;
+    }
 
-typedef struct _DisplayAttributes {
-    uint32_t vsync_period; //nanos
-    uint32_t xres;
-    uint32_t yres;
-    uint32_t stride;
-    float xdpi;
-    float ydpi;
-    bool connected;
-    unsigned int AcceleratorMode;
-} DisplayAttributes;
+    const native_handle_t *pNativeHandle = layer->handle;
+    struct private_handle_t *privateH = (struct private_handle_t *)pNativeHandle;
 
-#endif
+    if (pNativeHandle == NULL || privateH == NULL)
+    {
+        return false;
+    }
+
+    if ((privateH->format != HAL_PIXEL_FORMAT_RGBA_8888) &&
+        (privateH->format != HAL_PIXEL_FORMAT_RGBX_8888) &&
+        (privateH->format != HAL_PIXEL_FORMAT_RGB_565))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool SprdHWLayer:: checkYUVLayerFormat()
+{
+    hwc_layer_1_t *layer = mAndroidLayer;
+    if (layer == NULL)
+    {
+        return false;
+    }
+
+    const native_handle_t *pNativeHandle = layer->handle;
+    struct private_handle_t *privateH = (struct private_handle_t *)pNativeHandle;
+
+    if (pNativeHandle == NULL || privateH == NULL)
+    {
+        return false;
+    }
+
+    if ((privateH->format != HAL_PIXEL_FORMAT_YCbCr_420_SP) &&
+        (privateH->format != HAL_PIXEL_FORMAT_YCrCb_420_SP) &&
+        (privateH->format != HAL_PIXEL_FORMAT_YV12))
+    {
+        return false;
+    }
+
+    return true;
+}
+
