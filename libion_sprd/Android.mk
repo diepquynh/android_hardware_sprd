@@ -41,6 +41,10 @@ LOCAL_MODULE_TAGS := \
 LOCAL_SHARED_LIBRARIES := \
 	liblog \
 
+LOCAL_POST_INSTALL_CMD := \
+	$(hide) mkdir -p $(TARGET_OUT_SHARED_LIBRARIES); \
+	ln -sf $(LOCAL_MODULE).so $(TARGET_OUT_SHARED_LIBRARIES)/libion.so
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
