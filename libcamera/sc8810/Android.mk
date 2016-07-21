@@ -21,7 +21,6 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/hardware/samsung/sprd-common/kernel_headers/sc8810 \
 	$(TOP)/hardware/samsung/sprd-common/gralloc/sc8810 \
 	$(TOP)/hardware/samsung/sprd-common/mali/sc8810/src/ump/include \
-	$(TOP)/hardware/samsung/sprd-common/libmemoryheapion_sprd
 
 LOCAL_SRC_FILES:= \
 	sc8810/SprdOEMCamera.cpp \

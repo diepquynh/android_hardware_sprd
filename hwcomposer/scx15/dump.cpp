@@ -142,40 +142,41 @@ fail_open:
 }
 static int dump_layer(const char* path ,const char* pSrc , const char* ptype ,  int width , int height , int format ,int64_t randNum ,  int index , int LayerIndex = 0) {
     char fileName[MAX_DUMP_PATH_LENGTH + MAX_DUMP_FILENAME_LENGTH];
+    static int cnt = 0;
     switch(format)
     {
         case HAL_PIXEL_FORMAT_RGBA_8888:
-            sprintf(fileName , "%s%lld_%s_%d_rgba_%dx%d_%d.bmp" ,path, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgba_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_RGBX_8888:
-            sprintf(fileName , "%s%lld_%s_%d_rgbx_%dx%d_%d.bmp" ,path, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgbx_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_BGRA_8888:
-            sprintf(fileName , "%s%lld_%s_%d_bgra_%dx%d_%d.bmp" ,path, randNum , ptype , LayerIndex ,width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_bgra_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
             break;
         case HAL_PIXEL_FORMAT_RGB_888:
-            sprintf(fileName , "%s%lld_%s_%d_rgb888_%dx%d_%d.bmp" ,path, randNum , ptype , LayerIndex ,width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgb888_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
             break;
         case HAL_PIXEL_FORMAT_RGB_565:
-            sprintf(fileName , "%s%lld_%s_%d_rgb565_%dx%d_%d.bmp" ,path, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgb565_%dx%d_%d.bmp" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YCbCr_420_SP:
-            sprintf(fileName , "%s%lld_%s_%d_ybrsp_%dx%d_%d.yuv" ,path, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_ybrsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-            sprintf(fileName , "%s%lld_%s_%d_yrbsp_%dx%d_%d.yuv" ,path, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_yrbsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YV12:
-           sprintf(fileName , "%s%lld_%s_%d_yv12_%dx%d_%d.yuv" ,path, randNum , ptype , LayerIndex , width, height,index);
-           break;
+            sprintf(fileName , "%s%d_%lld_%s_%d_yv12_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            break;
         case HAL_PIXEL_FORMAT_YCbCr_420_P:
-           sprintf(fileName , "%s%lld_%s_%d_ybrp_%dx%d_%d.yuv" ,path, randNum , ptype , LayerIndex , width, height,index);
-           break;
+            sprintf(fileName , "%s%d_%lld_%s_%d_ybrp_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            break;
         default:
             ALOGE("dump layer failed because of error format %d" , format);
             return -2;
     }
-
+    cnt++;
     return dump_bmp(fileName , (void*)pSrc, format,width,height);
 }
 
@@ -205,6 +206,7 @@ void queryDebugFlag(int *debugFlag)
     char value[PROPERTY_VALUE_MAX];
     static int openFileFlag = 0;
 
+    //*debugFlag = 1;
     if (debugFlag == NULL)
     {
         ALOGE("queryDebugFlag, input parameter is NULL");
@@ -216,6 +218,10 @@ void queryDebugFlag(int *debugFlag)
     if (atoi(value) == 1)
     {
         *debugFlag = 1;
+    }
+    if (atoi(value) == 2)
+    {
+        *debugFlag = 0;
     }
 
 #define HWC_LOG_PATH "/data/hwc.cfg"
@@ -233,8 +239,13 @@ void queryDebugFlag(int *debugFlag)
     {
         if (openFileFlag == 0)
         {
+            int ret;
             memset(cfg, '\0', 100);
-            fread(cfg, 1, 99, fp);
+            ret = fread(cfg, 1, 99, fp);
+            if (ret < 1) {
+                ALOGE("fread return size is wrong %d", ret);
+            }
+            cfg[sizeof(cfg) - 1] = 0;
             pch = strstr(cfg, "enable");
             if (pch != NULL)
             {
@@ -246,8 +257,8 @@ void queryDebugFlag(int *debugFlag)
         {
             *debugFlag = 1;
         }
+        fclose(fp);
     }
-    fclose(fp);
 }
 
 void queryDumpFlag(int *dumpFlag)
@@ -278,6 +289,37 @@ void queryDumpFlag(int *dumpFlag)
         *dumpFlag = 0;
     }
 }
+
+
+void queryIntFlag(const char* strProperty,int *IntFlag)
+{
+    if (IntFlag == NULL || strProperty == NULL)
+    {
+        ALOGE("queryIntFlag, input parameter is NULL");
+        return;
+    }
+
+    char value[PROPERTY_VALUE_MAX];
+
+    if (0 != property_get(strProperty, value, "0"))
+    {
+        int flag =atoi(value);
+
+        if (flag != 0)
+        {
+            *IntFlag = flag;
+        }
+        else
+        {
+            *IntFlag = -1;
+        }
+    }
+    else
+    {
+        *IntFlag = -1;
+    }
+}
+
 
 int dumpImage(hwc_display_contents_1_t *list)
 {
@@ -316,7 +358,7 @@ int dumpImage(hwc_display_contents_1_t *list)
             continue;
         }
 
-        Rect bounds(pH->width, pH->height);
+        Rect bounds(pH->stride, pH->height);
         void* vaddr;
 
         GraphicBufferMapper::get().lock((buffer_handle_t)pH, GRALLOC_USAGE_SW_READ_OFTEN, bounds, &vaddr);
