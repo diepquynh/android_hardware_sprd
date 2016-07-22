@@ -27,7 +27,7 @@ LOCAL_MODULE := hwcomposer.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_RELATIVE_PATH := hw
 
 LOCAL_SHARED_LIBRARIES := \
-	libion \
+	libion_sprd \
 	liblog \
 	libEGL \
 	libutils \

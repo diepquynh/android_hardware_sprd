@@ -33,7 +33,7 @@ LOCAL_MODULE := gralloc.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 
 SHARED_MEM_LIBS := \
-	libion \
+	libion_sprd \
 	libhardware
 
 LOCAL_SHARED_LIBRARIES := \
