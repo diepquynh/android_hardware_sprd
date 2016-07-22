@@ -4167,9 +4167,7 @@ static void aud_vb_effect_start(struct tiny_audio_device *adev)
         }
         if(adev->private_ctl.vbc_da_eq_switch)
         {
-#if 0
             mixer_ctl_set_value(adev->private_ctl.vbc_da_eq_switch, 0, 1);
-#endif
         }
         if(adev->private_ctl.vbc_ad01_eq_switch)
         {
