@@ -4900,8 +4900,7 @@ static void vb_effect_getpara(struct tiny_audio_device *adev)
     off_t offset = 0;
     AUDIO_TOTAL_T * aud_params_ptr;
     int len = sizeof(AUDIO_TOTAL_T)*adev_get_audiomodenum4eng();
-    int srcfd;
-    char *filename = NULL;
+    const char *filename = ENG_AUDIO_PARA;
 
     adev->audio_para = calloc(1, len);
     if (!adev->audio_para)
@@ -4910,12 +4909,6 @@ static void vb_effect_getpara(struct tiny_audio_device *adev)
         return;
     }
     memset(adev->audio_para, 0, len);
-    srcfd = open((char *)(ENG_AUDIO_PARA_DEBUG), O_RDONLY);
-    filename = (srcfd < 0 )? ( ENG_AUDIO_PARA):(ENG_AUDIO_PARA_DEBUG);
-    if(srcfd >= 0)
-    {
-        close(srcfd);
-    }
     ALOGI("vb_effect_getpara read name:%s.", filename);
     stringfile2nvstruct(filename, adev->audio_para, len); //get data from audio_hw.txt.
     audio_para_ptr = adev->audio_para;
