@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 //#define ALOG_NDEBUG 0
-#define LOG_TAG "Alsa_Util"
+#define LOG_TAG "TinyAlsaUtils"
 #include <utils/Log.h>
 
 #include <stdio.h>
@@ -33,13 +33,14 @@
 #include <linux/ioctl.h>
 #include <sound/asound.h>
 
-
+#include "tinyalsautils.h"
 
 #define ALSA_DEVICE_DIRECTORY "/dev/snd/"
 
-#define SND_FILE_CONTROL	ALSA_DEVICE_DIRECTORY "controlC%i"
+#define SND_FILE_CONTROL ALSA_DEVICE_DIRECTORY "controlC%i"
 
-struct snd_ctl_card_info_t {
+struct snd_ctl_card_info_t 
+{
 	int card;			/* card number */
 	int pad;			/* reserved for future (was type) */
 	unsigned char id[16];		/* ID of card (user selectable) */
@@ -50,28 +51,6 @@ struct snd_ctl_card_info_t {
 	unsigned char mixername[80];	/* visual mixer identification */
 	unsigned char components[128];	/* card components / fine identification, delimited with one space (AC97 etc..) */
 };
-
-static int get_snd_card_name(int card, char *name);
-
-int get_snd_card_number(const char *card_name)
-{
-    int i = 0;
-    int ret = 0;
-    char cur_name[64] = {0};
-
-    //loop search card number, which is in the ascending order.
-    for (i = 0; i < 32; i++) {
-        ret = get_snd_card_name(i, &cur_name[0]);
-        if (ret < 0)
-            break;
-        if (strcmp(cur_name, card_name) == 0) {
-            ALOGI("Search Completed, cur_name is %s, card_num=%d", cur_name, i);
-            return i;
-        }
-    }
-    ALOGE("There is no one matched to <%s>.", card_name);
-    return -1;
-}
 
 static int get_snd_card_name(int card, char *name)
 {
@@ -93,7 +72,28 @@ static int get_snd_card_name(int card, char *name)
     close(fd);
     ALOGI("card name is %s, query card=%d", info.name, card);
     //get card name
-    if (name) strcpy(name, (char *)info.name);
+    if (name)
+	strcpy(name, (char *)info.name);
     return 0;
+}
+
+int get_snd_card_number(const char *card_name)
+{
+    int i = 0;
+    int ret = 0;
+    char cur_name[64] = {0};
+
+    //loop search card number, which is in the ascending order.
+    for (i = 0; i < 32; i++) {
+        ret = get_snd_card_name(i, &cur_name[0]);
+        if (ret < 0)
+            break;
+        if (strcmp(cur_name, card_name) == 0) {
+            ALOGI("Search Completed, cur_name is %s, card_num=%d", cur_name, i);
+            return i;
+        }
+    }
+    ALOGE("There is no one matched to <%s>.", card_name);
+    return -1;
 }
 

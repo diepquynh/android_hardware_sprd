@@ -1,4 +1,9 @@
-#include "AtChannel.h"
+#ifdef USE_LIBATCHANNEL_WRAPPER
+#include <AtChannelWrapper.h>
+#else
+#include <AtChannel.h>
+#endif /* USE_LIBATCHANNEL_WRAPPER */
+
 #define VOICECALL_VOLUME_MAX_UI	6
 
 enum {
