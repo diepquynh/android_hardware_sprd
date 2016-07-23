@@ -11,7 +11,6 @@
 #include <sys/mman.h>
 #include "audio_pga.h"
 #include <tinyalsa/asoundlib.h>
-#include <tinyalsautils.h>
 
 //#ifdef __cplusplus
 //extern "c"
