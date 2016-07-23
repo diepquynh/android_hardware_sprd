@@ -28,11 +28,14 @@
 #include <eng_audio.h>
 #include <stdint.h>
 #include <cutils/log.h>
+#include <tinyalsautils.h>
 #include "aud_enha.h"
 #include "vb_effect_if.h"
 #include <tinyalsa/asoundlib.h>
-#include "string_exchange_bin.h"
+#include <string_exchange_bin.h>
 
+#include "aud_enha.h"
+#include "vb_effect_if.h"
 
 #ifndef AUDIO_DEVICE_OUT_FM_HEADSET
 #define AUDIO_DEVICE_OUT_FM_HEADSET 0x1000000
@@ -454,7 +457,6 @@ static struct mixer_ctl *s_ctl_da_eq_profile_select = NULL;
 static struct mixer_ctl *s_ctl_ad01_eq_profile_select = NULL;
 static struct mixer_ctl *s_ctl_ad23_eq_profile_select = NULL;
 
-extern int get_snd_card_number(const char *card_name);
 //get audio nv struct
 static AUDIO_TOTAL_T *get_aud_paras();
 static int do_parse(AUDIO_TOTAL_T *aud_ptr, unsigned int size);

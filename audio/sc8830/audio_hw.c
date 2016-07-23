@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #define LOG_TAG "audio_hw_primary"
 #define LOG_NDEBUG 0
+
 volatile int log_level = 4;
 #define LOG_V(...)  ALOGV_IF(log_level >= 5,__VA_ARGS__);
 #define LOG_D(...)  ALOGD_IF(log_level >= 4,__VA_ARGS__);
@@ -32,7 +34,6 @@ volatile int log_level = 4;
 #include <sys/mman.h>
 #include <semaphore.h>
 
-
 #include <cutils/log.h>
 #include <cutils/str_parms.h>
 #include <cutils/properties.h>
@@ -41,10 +42,14 @@ volatile int log_level = 4;
 #include <system/audio.h>
 #include <hardware/audio.h>
 
+#include <hardware_legacy/power.h>
+
 #include <expat.h>
 
 #include <tinyalsa/asoundlib.h>
+#include <tinyalsautils.h>
 #include <audio_utils/resampler.h>
+
 #include "audio_pga.h"
 #include "vb_effect_if.h"
 #include "vb_pga.h"
@@ -53,8 +58,6 @@ volatile int log_level = 4;
 #include "aud_proc.h"
 #include "vb_control_parameters.h"
 #include "string_exchange_bin.h"
-#include <hardware_legacy/power.h>
-
 
 #include "dumpdata.h"
 
@@ -92,7 +95,7 @@ volatile int log_level = 4;
 //#define AUDIO_DUMP
 #define AUDIO_DUMP_EX
 
-#define AUDIO_OUT_FILE_PATH  "data/local/media/audio_out.pcm"
+#define AUDIO_OUT_FILE_PATH  "/data/local/media/audio_out.pcm"
 
 
 //make sure this device is not used by android
@@ -661,8 +664,7 @@ typedef struct {
 
 static const dev_names_para_t dev_names_linein[] = {
     { AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_FM_SPEAKER, "speaker" },
-    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE |AUDIO_DEVICE_OUT_FM_HEADSET,
-        "headphone" },
+    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET, "headphone" },
     { AUDIO_DEVICE_OUT_EARPIECE, "earpiece" },
     /* ANLG for voice call via linein*/
     { AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET | AUDIO_DEVICE_OUT_ALL_FM, "line" },
@@ -680,8 +682,7 @@ static const dev_names_para_t dev_names_linein[] = {
 };
 static const dev_names_para_t dev_names_digitalfm[] = {
     { AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_FM_SPEAKER, "speaker" },
-    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE |AUDIO_DEVICE_OUT_FM_HEADSET,
-        "headphone" },
+    { AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE | AUDIO_DEVICE_OUT_FM_HEADSET, "headphone" },
     { AUDIO_DEVICE_OUT_EARPIECE, "earpiece" },
     /* ANLG for voice call via linein*/
     { AUDIO_DEVICE_OUT_FM, "digital-fm" },
@@ -760,7 +761,6 @@ static dump_data_info_t dump_info;
  * NOTE: when multiple mutexes have to be acquired, always respect the following order:
  *        hw device > in stream > out stream
  */
-extern int get_snd_card_number(const char *card_name);
 int set_call_route(struct tiny_audio_device *adev, int device, int on);
 static void select_devices_signal(struct tiny_audio_device *adev);
 static void select_devices_signal_asyn(struct tiny_audio_device *adev);
@@ -3055,7 +3055,7 @@ static int start_input_stream(struct tiny_stream_in *in)
 #endif
 
 #ifndef VOIP_DSP_PROCESS
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 #endif
     }
@@ -3074,7 +3074,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             ALOGE("%s:cannot open in->pcm : %s", __func__,pcm_get_error(in->pcm));
             goto err;
         }
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 
         if(in->requested_rate != in->config.rate) {
@@ -3190,7 +3190,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             }
         }
         /* start to process pcm data captured, such as noise suppression.*/
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices),in->requested_rate);
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev),in->requested_rate);
         ALOGI("record process module created is %s.", in->active_rec_proc ? "successful" : "failed");
     }
 
@@ -4667,8 +4667,9 @@ static uint32_t adev_get_supported_devices(const struct audio_hw_device *dev)
             AUDIO_DEVICE_IN_AUX_DIGITAL |
             AUDIO_DEVICE_IN_BACK_MIC |
             AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET |
-            AUDIO_DEVICE_IN_ALL_SCO|
+            AUDIO_DEVICE_IN_ALL_SCO |
             AUDIO_DEVICE_IN_VOICE_CALL |
+	    AUDIO_DEVICE_IN_FM_TUNER |
             AUDIO_DEVICE_IN_LINE_IN |
             AUDIO_DEVICE_IN_DEFAULT);
 }
@@ -5935,8 +5936,7 @@ static void vb_effect_getpara(struct tiny_audio_device *adev)
     off_t offset = 0;
     AUDIO_TOTAL_T * aud_params_ptr;
     int len = sizeof(AUDIO_TOTAL_T)*adev_get_audiomodenum4eng();
-    int srcfd;
-    char *filename = NULL;
+    const char *filename = ENG_AUDIO_PARA;
 
     adev->audio_para = calloc(1, len);
     if (!adev->audio_para)
@@ -5945,12 +5945,6 @@ static void vb_effect_getpara(struct tiny_audio_device *adev)
         return;
     }
     memset(adev->audio_para, 0, len);
-    srcfd = open((char *)(ENG_AUDIO_PARA_DEBUG), O_RDONLY);
-    filename = (srcfd < 0 )? ( ENG_AUDIO_PARA):(ENG_AUDIO_PARA_DEBUG);
-    if(srcfd >= 0)
-    {
-        close(srcfd);
-    }
     ALOGI("vb_effect_getpara read name:%s.", filename);
     stringfile2nvstruct(filename, adev->audio_para, len); //get data from audio_hw.txt.
     audio_para_ptr = adev->audio_para;
