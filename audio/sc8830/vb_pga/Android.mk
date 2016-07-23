@@ -1,6 +1,4 @@
-#
-# Copyright (C) 2016 The Android Open Source Project
-# Copyright (C) 2016 The CyanogenMod Project
+# Copyright (C) 2012 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,42 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS := \
-	-D_POSIX_SOURCE \
-	-Wno-multichar \
-	-g \
+LOCAL_CFLAGS := -D_POSIX_SOURCE -Wno-multichar -g
 
-LOCAL_C_INCLUDES += \
-	external/tinyalsa/include \
-	external/expat/lib \
-	$(LOCAL_PATH)/../ \
+LOCAL_C_INCLUDES += vendor/sprd/open-source/apps/engmode \
+			external/tinyalsa/include \
+			external/expat/lib
 
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-	$(LOCAL_PATH) \
-	$(LOCAL_C_INCLUDES) \
+LOCAL_SRC_FILES :=  audio_pga.c vb_pga.c tinyalsa_util.c
 
-LOCAL_SRC_FILES := \
-	audio_pga.c \
-	vb_pga.c \
-
-LOCAL_SHARED_LIBRARIES := \
-	liblog \
-	libc \
-	libcutils \
-	liblog \
-	libtinyalsa \
-	libtinyalsautils \
-	libaudioutils \
-	libexpat \
-	libdl \
-	libhardware_legacy \
+LOCAL_SHARED_LIBRARIES := liblog libc libcutils liblog libtinyalsa libaudioutils \
+	libexpat libdl libhardware_legacy
 
 LOCAL_MODULE := libvbpga
 
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
+
+
+
+

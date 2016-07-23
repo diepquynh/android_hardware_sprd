@@ -1,6 +1,4 @@
-#
-# Copyright (C) 2016 The Android Open Source Project
-# Copyright (C) 2016 The CyanogenMod Project
+# Copyright (C) 2012 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,44 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS := \
-	-D_POSIX_SOURCE \
-	-Wno-multichar \
-	-g
+LOCAL_CFLAGS := -D_POSIX_SOURCE -Wno-multichar -g
 
-ifneq (,$(filter sc8830 scx15,$(TARGET_BOARD_PLATFORM)))
-BOARD_EQ_DIR := v2
-else
-BOARD_EQ_DIR := v1
+LOCAL_C_INCLUDES += vendor/sprd/open-source/apps/engmode \
+			external/tinyalsa/include \
+			vendor/sprd/open-source/libs/audio \
+			vendor/sprd/open-source/libs/audio/nv_exchange
+
+	BOARD_EQ_DIR := v1
+
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sc8830)
+	BOARD_EQ_DIR := v2
 endif
 
-LOCAL_SRC_FILES := \
-	$(BOARD_EQ_DIR)/vb_effect_if.c \
-	$(BOARD_EQ_DIR)/vbc_codec_eq.c \
-	$(BOARD_EQ_DIR)/filter_calc.c \
-	$(BOARD_EQ_DIR)/vb_hal_if.c \
-	$(BOARD_EQ_DIR)/vb_hal_adp.c \
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),scx15)
+	BOARD_EQ_DIR := v2
+endif
 
-LOCAL_C_INCLUDES := \
-	external/tinyalsa/include \
-	$(LOCAL_PATH)/../ \
+LOCAL_SRC_FILES := $(BOARD_EQ_DIR)/vb_effect_if.c \
+		$(BOARD_EQ_DIR)/vbc_codec_eq.c \
+		$(BOARD_EQ_DIR)/filter_calc.c \
+		$(BOARD_EQ_DIR)/vb_hal_if.c \
+		$(BOARD_EQ_DIR)/vb_hal_adp.c \
+		$(BOARD_EQ_DIR)/tinyalsa_util.c
 
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-	$(LOCAL_PATH) \
-	$(LOCAL_PATH)/$(BOARD_EQ_DIR) \
-	$(LOCAL_C_INCLUDES) \
-
-LOCAL_SHARED_LIBRARIES := \
-	liblog \
-	libc \
-	libcutils \
-	libtinyalsa \
-	libtinyalsautils \
-	libnvexchange \
+LOCAL_SHARED_LIBRARIES := liblog libc libcutils libtinyalsa  libnvexchange
 
 LOCAL_MODULE := libvbeffect
 
@@ -80,3 +70,4 @@ $(LOCAL_BUILT_MODULE):
 	$(hide) rm -rf $(SYMLINK)
 	$(hide) ln -sf $(VBC_EQ_FILE) $(SYMLINK)
 	$(hide) touch $@
+
