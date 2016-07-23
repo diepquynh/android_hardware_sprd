@@ -17,6 +17,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq (sc8810,$(TARGET_BOARD_PLATFORM))
-include $(call all-subdir-makefiles,sc8810)
+supported_boards := \
+	sc8810 \
+	scx15 \
+
+ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
+include $(call all-makefiles-under,$(TARGET_BOARD_PLATFORM))
 endif
