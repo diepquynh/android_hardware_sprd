@@ -26,6 +26,7 @@ LOCAL_CFLAGS := \
 	-D_POSIX_SOURCE \
 	-Wno-multichar \
 	-g \
+	-Wno-unused-parameter
 
 ifeq ($(BOARD_USES_LINE_CALL), true)
 LOCAL_CFLAGS += -D_VOICE_CALL_VIA_LINEIN
@@ -59,7 +60,7 @@ LOCAL_C_INCLUDES += \
 	external/expat/lib \
 	system/media/audio_utils/include \
 	system/media/audio_effects/include \
-	$(LOCAL_PATH)/../record_process \
+	$(LOCAL_PATH)/record_process \
 
 LOCAL_SRC_FILES := \
 	audio_hw.c \

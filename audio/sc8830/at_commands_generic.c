@@ -5,6 +5,7 @@
 #endif /* USE_LIBATCHANNEL_WRAPPER */
 
 #define VOICECALL_VOLUME_MAX_UI	6
+#define AT_RESPONSE_LEN 1024
 
 enum {
      ROUTE_BIT = 0,
@@ -23,7 +24,6 @@ static int at_cmd_routeDev(struct tiny_audio_device *adev,char* route,T_AT_CMD* 
 
 int do_cmd_dual(int modemId, int simId, struct tiny_audio_device *adev)
 {
-    const char *err_str = NULL;
     int indx = 0;
     T_AT_CMD process_at_cmd = {0};
     int dirty_count= 0;
@@ -58,11 +58,13 @@ int do_cmd_dual(int modemId, int simId, struct tiny_audio_device *adev)
         cmd_bit = cmd_queue_pri[dirty_count-indx-1];
         ALOGD("do_cmd_dual Switch incall AT command [%d][%d][%s][%d] ", modemId,simId,&(process_at_cmd.at_cmd[cmd_bit]),cmd_bit);
         adev->routeDev = at_cmd_routeDev(adev,&(process_at_cmd.at_cmd[cmd_bit]),&process_at_cmd);
-        err_str = sendAt(modemId, simId, &(process_at_cmd.at_cmd[cmd_bit]));
-        ALOGD("do_cmd_dual Switch incall AT command [%s][%s] ", &(process_at_cmd.at_cmd[cmd_bit]), err_str);
+        char resp[AT_RESPONSE_LEN] = { 0 };
+        int ret = sendAt(resp, AT_RESPONSE_LEN, simId, &(process_at_cmd.at_cmd[cmd_bit]));
+        ALOGD("do_cmd_dual Switch incall AT command [%d][%s][%s] ", ret, &(process_at_cmd.at_cmd[cmd_bit]), resp);
     }
     return 0;
 }
+
 static uint8_t process_priority(struct tiny_audio_device *adev,int bit){
     int indx = 0;
     int max_priority = adev->at_cmd_vectors->at_cmd_priority[0];
