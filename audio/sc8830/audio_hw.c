@@ -2106,7 +2106,7 @@ static uint32_t out_get_sample_rate(const struct audio_stream *stream)
     return DEFAULT_OUT_SAMPLING_RATE;
 }
 
-static int out_set_sample_rate(struct audio_stream *stream, uint32_t rate)
+static int out_set_sample_rate()
 {
     return 0;
 }
