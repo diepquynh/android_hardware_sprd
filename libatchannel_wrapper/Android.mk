@@ -39,4 +39,22 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 
 include $(BUILD_SHARED_LIBRARY)
 
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := at_test
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := \
+	at_test.cpp
+
+LOCAL_SHARED_LIBRARIES := \
+	libcutils \
+	libbinder \
+	libutils \
+	libdl \
+	libatchannel_wrapper \
+
+include $(BUILD_EXECUTABLE)
+
 endif # BOARD_USE_LIBATCHANNEL_WRAPPER
