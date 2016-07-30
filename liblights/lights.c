@@ -80,7 +80,7 @@ static int set_light_backlight(struct light_device_t *dev,
         int err = 0;
         int brightness = rgb_to_brightness(state);
 
-        ALOGD("file:%s, func:%s, brightness=%d\n", __FILE__, __func__, brightness);
+        ALOGV("file:%s, func:%s, brightness=%d\n", __FILE__, __func__, brightness);
         if(NULL==LIGHT_BACKLIGHT) {
                 ALOGE("file:%s, func:%s, unsupported light!\n", __FILE__, __func__);
                 return -EINVAL;
@@ -98,14 +98,13 @@ static int is_lit(struct light_state_t const* state)
 }
 
 
-// Is this really needed? I expect a logcat spam. Confirmation required - corphish.
 static int set_light_keyboard(struct light_device_t* dev,
                               struct light_state_t const* state)
 {
         int err = 0;
         int on = is_lit(state);
 
-        ALOGD("file:%s, func:%s, on=%d\n", __FILE__, __func__, on);
+        ALOGV("file:%s, func:%s, on=%d\n", __FILE__, __func__, on);
         if(NULL==LIGHT_KEYBOARD) {
                 ALOGE("file:%s, func:%s, unsupported light!\n", __FILE__, __func__);
                 return -EINVAL;
@@ -123,7 +122,7 @@ static int set_light_buttons(struct light_device_t* dev,
         int err = 0;
         int on = is_lit(state);
 
-        ALOGD("file:%s, func:%s, on=%d\n", __FILE__, __func__, on);
+        ALOGV("file:%s, func:%s, on=%d\n", __FILE__, __func__, on);
         if(NULL==LIGHT_BUTTONS) {
                 ALOGE("file:%s, func:%s, unsupported light!\n", __FILE__, __func__);
                 return -EINVAL;
