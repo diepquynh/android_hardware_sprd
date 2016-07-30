@@ -45,7 +45,7 @@
 #include <btl_if.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <hardware/fm.h>
+#include "fm.h"
 #include <CMutex.h>
 #include <com_broadcom_bt_service_fm_FmReceiverService_int.h>
 #define     DEBUG_VALUE 0
