@@ -43,7 +43,7 @@
 #include <utils/RefBase.h>
 #include <cutils/log.h>
 #include <semaphore.h>
-#include <binder/MemoryHeapIon.h>
+#include <MemoryHeapIon_SPRD.h>
 #include <ui/Rect.h>
 
 #include "SprdHWLayer.h"
