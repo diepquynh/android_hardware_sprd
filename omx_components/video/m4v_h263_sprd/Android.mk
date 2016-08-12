@@ -21,7 +21,11 @@ include_makefiles := \
 	$(LOCAL_PATH)/thumbnail/Android.mk \
 
 ifneq (,$(filter scx15 sc8830,$(TARGET_BOARD_PLATFORM)))
+ifeq ($(SOC_SCX30G_V2),true) # For scx30g_v2 board (sc8830)
+include_makefiles += $(call all-named-subdir-makefiles,scx30g_v2)
+else
 include_makefiles += $(call all-named-subdir-makefiles,sc8830)
+endif
 endif
 
 include $(include_makefiles)

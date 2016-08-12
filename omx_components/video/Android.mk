@@ -24,5 +24,3 @@ supported_boards := \
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 include $(call all-makefiles-under,$(LOCAL_PATH))
 endif
-
-supported_boards :=
