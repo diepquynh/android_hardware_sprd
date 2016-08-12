@@ -39,6 +39,12 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libutils
 
+ifeq ($(TARGET_DEVICE),grandprimeve3g)
+LOCAL_POST_INSTALL_CMD := \
+	$(hide) mkdir -p $(TARGET_OUT_SHARED_LIBRARIES); \
+	ln -sf $(LOCAL_MODULE).so $(TARGET_OUT_SHARED_LIBRARIES)/libmemoryheapion.so
+endif
+
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
