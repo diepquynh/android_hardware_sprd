@@ -22,7 +22,7 @@ supported_boards := \
 	scx15 \
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
+ifneq ($(SOC_SCX30G_V2),true)
 include $(call all-makefiles-under,$(LOCAL_PATH))
 endif
-
-supported_boards :=
+endif

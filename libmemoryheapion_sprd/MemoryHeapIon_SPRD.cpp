@@ -30,7 +30,11 @@
 
 #include <binder/MemoryHeapBase.h>
 
+#ifdef SCX30G_V2
+#include "MemoryHeapIon_SPRD_scx30g_v2.h"
+#else
 #include "MemoryHeapIon_SPRD.h"
+#endif
 
 #ifdef USE_TARGET_SIMULATOR_MODE
 #include <linux/ion.h>
@@ -375,7 +379,7 @@ int MemoryHeapIon::flush_ion_buffer(void *v_addr, void *p_addr,int size){
     return 0;
 }
 
-MemoryHeapIon::MemoryHeapIon() : mIonDeviceFd(-1), mIonHandle(NULL)
+MemoryHeapIon::MemoryHeapIon() : mIonDeviceFd(-1)//, mIonHandle(NULL)
 {
 }
 
@@ -398,10 +402,15 @@ MemoryHeapIon::MemoryHeapIon(const char* device, size_t size,
         ALOGE("open ion fail");
     }
 }
-
+#ifndef SCX30G_V2
 status_t MemoryHeapIon::ionInit(int ionFd, void *base, int size, int flags,
                 const char* device, struct ion_handle *handle,
                 int ionMapFd) {
+#else
+status_t MemoryHeapIon::ionInit(int ionFd, void *base, int size, int flags,
+                const char* device, ion_user_handle_t handle,
+                int ionMapFd) {
+#endif
     mIonDeviceFd = ionFd;
     mIonHandle = handle;
     MemoryHeapBase::init(ionMapFd, base, size, flags, device);
@@ -424,7 +433,11 @@ status_t MemoryHeapIon::mapIonFd(int fd, size_t size, unsigned long memory_type,
     data.len = size;
     data.align = getpagesize();
 #if (ION_DRIVER_VERSION == 1)
+#ifdef SCX30G_V2
+    data.heap_id_mask = memory_type;
+#else
     data.heap_mask = memory_type;
+#endif
     //if cached buffer , force set the lowest two bits 11
     if((memory_type&(1<<31)))
     {

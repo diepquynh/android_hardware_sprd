@@ -39,10 +39,12 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libutils
 
-ifeq ($(TARGET_DEVICE),grandprimeve3g)
+ifeq ($(SOC_SCX30G_V2),true)
 LOCAL_POST_INSTALL_CMD := \
 	$(hide) mkdir -p $(TARGET_OUT_SHARED_LIBRARIES); \
-	ln -sf $(LOCAL_MODULE).so $(TARGET_OUT_SHARED_LIBRARIES)/libmemoryheapion.so
+	mv -f $(TARGET_OUT_SHARED_LIBRARIES)/$(LOCAL_MODULE).so $(TARGET_OUT_SHARED_LIBRARIES)/libmemoryheapion.so
+
+LOCAL_CFLAGS += -DSCX30G_V2
 endif
 
 LOCAL_MODULE_TAGS := optional

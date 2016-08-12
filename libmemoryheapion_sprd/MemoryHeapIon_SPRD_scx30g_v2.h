@@ -26,7 +26,7 @@
 #include <utils/SortedVector.h>
 #include <utils/threads.h>
 
-struct ion_handle;
+#include <linux/ion.h>
 
 namespace android {
 
@@ -43,15 +43,9 @@ public:
 
     status_t mapIonFd(int fd, size_t size, unsigned long memory_type, int flags);
 
-#ifndef SCX30G_V2
     status_t ionInit(int ionFd, void *base, int size, int flags,
-                                const char* device, struct ion_handle *handle,
+                                const char* device, ion_user_handle_t handle,
                                 int ionMapFd);
-#else
-    status_t ionInit(int ionFd, void *base, int size, int flags,
-                                const char* device, ion_user_handle_t *handle,
-                                int ionMapFd);
-#endif
     int get_phy_addr_from_ion(int *phy_addr, int *size);
     int flush_ion_buffer(void *v_addr, void *p_addr,int size);
     int get_gsp_iova(int *mmu_addr, int *size);
@@ -69,7 +63,7 @@ public:
 
 private:
     int mIonDeviceFd;  /*fd we get from open("/dev/ion")*/
-    struct ion_handle *mIonHandle;  /*handle we get from ION_IOC_ALLOC*/ };
+    ion_user_handle_t mIonHandle;  /*handle we get from ION_IOC_ALLOC*/ };
 
 // ---------------------------------------------------------------------------
 }; // namespace android
