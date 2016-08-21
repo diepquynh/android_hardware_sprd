@@ -32,13 +32,8 @@ LOCAL_C_INCLUDES += \
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_C_INCLUDES) \
 
-ifeq ($(SOC_SCX30G_V2),true)
-LOCAL_SRC_FILES := \
-	ion_scx30g_v2.c
-else
 LOCAL_SRC_FILES := \
 	ion.c
-endif
 
 LOCAL_MODULE_TAGS := \
 	optional \
@@ -64,15 +59,9 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/kernel-headers \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 
-ifeq ($(SOC_SCX30G_V2),true)
-LOCAL_SRC_FILES := \
-	ion_scx30g_v2.c \
-	ion_test.c
-else
 LOCAL_SRC_FILES := \
 	ion.c \
 	ion_test.c
-endif
 
 LOCAL_MODULE_TAGS := \
 	optional \
