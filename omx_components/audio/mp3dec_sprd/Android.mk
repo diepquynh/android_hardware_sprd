@@ -39,7 +39,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libstagefright_omx \
 	libstagefright_foundation \
 	libstagefrighthw \
-	libmemoryheapion_sprd \
+	libmemoryheapion \
 	libutils \
 	libui \
 	libdl \

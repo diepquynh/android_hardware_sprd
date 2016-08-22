@@ -37,7 +37,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)/include \
 
 LOCAL_SHARED_LIBRARIES := \
-	libmemoryheapion_sprd \
+	libmemoryheapion \
 	libutils \
 	libcutils \
 	libui \
