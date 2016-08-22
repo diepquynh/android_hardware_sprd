@@ -19,7 +19,7 @@
 
 #include "SprdSimpleOMXComponent.h"
 #include <utils/KeyedVector.h>
-#include <MemoryHeapIon_SPRD_scx30g_v2.h>
+#include <MemoryHeapIon_SPRD.h>
 #include "avc_dec_api.h"
 
 #define SPRD_ION_DEV "/dev/ion"

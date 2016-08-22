@@ -18,7 +18,7 @@
 #define SPRD_VPX_DECODER_H_
 
 #include "SprdSimpleOMXComponent.h"
-#include <MemoryHeapIon_SPRD_scx30g_v2.h>
+#include <MemoryHeapIon_SPRD.h>
 
 #include "vpx_dec_api.h"
 
