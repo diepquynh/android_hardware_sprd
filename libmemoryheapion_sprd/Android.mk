@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libmemoryheapion_sprd
 
 LOCAL_SRC_FILES := \
-	MemoryHeapIon_SPRD.cpp
+	MemoryHeapIon.cpp
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
@@ -39,13 +39,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libutils
 
-ifeq ($(SOC_SCX30G_V2),true)
 LOCAL_POST_INSTALL_CMD := \
 	$(hide) mkdir -p $(TARGET_OUT_SHARED_LIBRARIES); \
 	mv -f $(TARGET_OUT_SHARED_LIBRARIES)/$(LOCAL_MODULE).so $(TARGET_OUT_SHARED_LIBRARIES)/libmemoryheapion.so
-
-LOCAL_CFLAGS += -DSCX30G_V2
-endif
 
 LOCAL_MODULE_TAGS := optional
 
