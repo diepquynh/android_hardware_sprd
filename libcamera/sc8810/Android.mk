@@ -18,9 +18,9 @@ LOCAL_C_INCLUDES := \
         external/jhead \
         external/sqlite/dist \
     system/media/camera/include \
-	$(TOP)/hardware/samsung/sprd-common/kernel_headers/sc8810 \
-	$(TOP)/hardware/samsung/sprd-common/gralloc/sc8810 \
-	$(TOP)/hardware/samsung/sprd-common/mali/sc8810/src/ump/include \
+	$(TOP)/hardware/sprd/kernel_headers/sc8810 \
+	$(TOP)/hardware/sprd/gralloc/sc8810 \
+	$(TOP)/hardware/sprd/mali/sc8810/src/ump/include \
 
 LOCAL_SRC_FILES:= \
 	sc8810/SprdOEMCamera.cpp \
