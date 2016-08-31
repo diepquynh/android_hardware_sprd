@@ -27,7 +27,7 @@ LOCAL_C_INCLUDES := \
         external/sqlite/dist \
 	system/media/camera/include \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
-	hardware/samsung/sprd-common/gralloc/$(TARGET_BOARD_PLATFORM) \
+	hardware/sprd/gralloc/$(TARGET_BOARD_PLATFORM) \
 
 LOCAL_SRC_FILES:= \
 	sc8830/src/SprdOEMCamera.c \
