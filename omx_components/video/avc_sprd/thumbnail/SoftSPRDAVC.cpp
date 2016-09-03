@@ -511,7 +511,7 @@ void SoftSPRDAVC::onQueueFilled(OMX_U32 portIndex) {
             add_startcode_len = 4;
             dec_in.dataLen += add_startcode_len;
         }
-        memcpy((void *)mStreamBuffer+add_startcode_len, inHeader->pBuffer + inHeader->nOffset, inHeader->nFilledLen);
+        memcpy(((uint8 *)mStreamBuffer)+add_startcode_len, inHeader->pBuffer + inHeader->nOffset, inHeader->nFilledLen);
 
         dec_in.beLastFrm = 0;
         dec_in.expected_IVOP = mNeedIVOP;

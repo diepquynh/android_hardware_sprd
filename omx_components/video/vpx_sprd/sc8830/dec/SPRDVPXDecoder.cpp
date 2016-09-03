@@ -797,7 +797,7 @@ void SPRDVPXDecoder::onQueueFilled(OMX_U32 portIndex) {
                 return ;
             }
 //    	ALOGI("%s, %d, pBuffer: 0x%x, vaddr: 0x%x", __FUNCTION__, __LINE__, outHeader->pBuffer,vaddr);
-            uint8 *yuv = (uint8 *)(vaddr + outHeader->nOffset);
+            uint8 *yuv = ((uint8 *)vaddr) + outHeader->nOffset;
             ALOGI("%s, %d, yuv: %0x,outHeader->pBuffer: %0x, outHeader->nOffset: %d, outHeader->nFlags: %d, outHeader->nTimeStamp: %lld",
                   __FUNCTION__, __LINE__, yuv, outHeader->pBuffer, outHeader->nOffset, outHeader->nFlags, outHeader->nTimeStamp);
             (*mVPXDecSetCurRecPic)(mHandle, yuv, (uint8 *)picPhyAddr, (void *)outHeader);
