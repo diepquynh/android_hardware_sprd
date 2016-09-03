@@ -2538,7 +2538,7 @@ static void audio_bt_sco_thread_destory(struct tiny_audio_device *adev)
     ALOGE("bt sco : duplicate thread destory before");
     ret = pthread_join(adev->bt_sco_manager.dup_thread, NULL);
     ALOGE("bt sco : duplicate thread destory ret is %d", ret);
-    adev->bt_sco_manager.dup_thread = NULL;
+    adev->bt_sco_manager.dup_thread = 0;
 
     pthread_mutex_destroy(&adev->bt_sco_manager.dup_mutex);
     pthread_mutex_destroy(&adev->bt_sco_manager.cond_mutex);
