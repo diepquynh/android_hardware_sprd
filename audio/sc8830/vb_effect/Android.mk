@@ -60,6 +60,7 @@ LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 
+ifeq ($(TARGET_NEEDS_VBC_EQ_SYMLINK),true)
 
 include $(CLEAR_VARS)
 
@@ -82,3 +83,4 @@ $(LOCAL_BUILT_MODULE):
 	$(hide) ln -sf $(VBC_EQ_FILE) $(SYMLINK)
 	$(hide) touch $@
 
+endif
