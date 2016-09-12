@@ -107,8 +107,8 @@ LOCAL void JPEGDEC_init_fw_param(JPEGDEC_PARAMS_T *jpegdec_params,
 
 	if(0 == jpegdec_params->set_slice_height)
 	{	
-		dec_fw_info_ptr->yuv_0_addr.y_data_ptr = jpegdec_params->yuv_phy_buf;
-		dec_fw_info_ptr->yuv_0_addr.u_data_ptr = jpegdec_params->target_phy_buf_UV;
+		//dec_fw_info_ptr->yuv_0_addr.y_data_ptr = jpegdec_params->yuv_phy_buf;
+		//dec_fw_info_ptr->yuv_0_addr.u_data_ptr = jpegdec_params->target_phy_buf_UV;
 		dec_fw_info_ptr->yuv_0_addr.v_data_ptr = NULL;
 		dec_fw_info_ptr->yuv_1_addr.y_data_ptr = dec_fw_info_ptr->yuv_0_addr.y_data_ptr  + YUV_Size_Align;
 		dec_fw_info_ptr->yuv_1_addr.u_data_ptr = dec_fw_info_ptr->yuv_0_addr.u_data_ptr  + YUV_Size_Align;
@@ -116,8 +116,8 @@ LOCAL void JPEGDEC_init_fw_param(JPEGDEC_PARAMS_T *jpegdec_params,
 	}
 	else
 	{
-		dec_fw_info_ptr->yuv_0_addr.y_data_ptr = jpegdec_params->yuv_phy_buf;
-		dec_fw_info_ptr->yuv_0_addr.u_data_ptr = jpegdec_params->target_phy_buf_UV;
+		//dec_fw_info_ptr->yuv_0_addr.y_data_ptr = jpegdec_params->yuv_phy_buf;
+		//dec_fw_info_ptr->yuv_0_addr.u_data_ptr = jpegdec_params->target_phy_buf_UV;
 		dec_fw_info_ptr->yuv_0_addr.v_data_ptr = NULL;
 		dec_fw_info_ptr->yuv_1_addr.y_data_ptr = dec_fw_info_ptr->yuv_0_addr.y_data_ptr;
 		dec_fw_info_ptr->yuv_1_addr.u_data_ptr = dec_fw_info_ptr->yuv_0_addr.u_data_ptr;
@@ -337,7 +337,7 @@ void poll_ahb_idle(uint32_t time)
 		if (vsp_time_out_cnt > time)
 		{
 			SCI_TRACE_LOW("JPEGDEC_Poll_MEA_BSM X, fail 2.\n");
-			return 1;
+			return;
 		}
 	}
 }
