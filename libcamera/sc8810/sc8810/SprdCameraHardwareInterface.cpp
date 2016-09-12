@@ -1135,7 +1135,7 @@ CameraParameters SprdCameraHardware::getParameters() const
         return mParameters;
 }
 
-static CameraInfo sCameraInfo[] = {
+static oldCameraInfo sCameraInfo[] = {
     {
         CAMERA_FACING_BACK,
         90,  /* orientation */
@@ -1148,7 +1148,7 @@ static CameraInfo sCameraInfo[] = {
 #endif
 };
 
-static CameraInfo sCameraInfo3[] = {
+static oldCameraInfo sCameraInfo3[] = {
     {
         CAMERA_FACING_BACK,
         90,  /* orientation */

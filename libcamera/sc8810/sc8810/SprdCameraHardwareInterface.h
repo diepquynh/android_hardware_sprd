@@ -56,6 +56,28 @@ typedef struct sprd_camera_memory {
 	void *data;
 }sprd_camera_memory_t;
 
+typedef struct CameraInfo {
+    /**
+     * The direction that the camera faces to. It should be CAMERA_FACING_BACK
+     * or CAMERA_FACING_FRONT.
+     */
+    int facing;
+
+    /**
+     * The orientation of the camera image. The value is the angle that the
+     * camera image needs to be rotated clockwise so it shows correctly on the
+     * display in its natural orientation. It should be 0, 90, 180, or 270.
+     *
+     * For example, suppose a device has a naturally tall screen. The
+     * back-facing camera sensor is mounted in landscape. You are looking at
+     * the screen. If the top side of the camera sensor is aligned with the
+     * right edge of the screen in natural orientation, the value should be
+     * 90. If the top side of a front-facing camera sensor is aligned with the
+     * right of the screen, the value should be 270.
+     */
+    int orientation;
+}oldCameraInfo;
+
 class SprdCameraHardware : public virtual RefBase {
 public:
     //virtual sp<IMemoryHeap> getPreviewHeap() const;
