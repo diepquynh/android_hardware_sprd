@@ -33,7 +33,7 @@
 #include "MemoryHeapIon.h"
 
 #ifdef USE_TARGET_SIMULATOR_MODE
-#include <linux/ion.h>
+#include "ion.h"
 
 //modify for make sdk
 struct ion_phys_data {
@@ -54,7 +54,7 @@ enum ION_SPRD_CUSTOM_CMD {
     ION_SPRD_CUSTOM_MSYNC
 };
 #else
-#include <linux/ion.h>
+#include "ion.h"
 #include <video/ion_sprd.h>
 #endif
 
