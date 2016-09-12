@@ -56,7 +56,7 @@ typedef struct sprd_camera_memory {
 	void *data;
 }sprd_camera_memory_t;
 
-typedef struct CameraInfo {
+typedef struct mCameraInfo {
     /**
      * The direction that the camera faces to. It should be CAMERA_FACING_BACK
      * or CAMERA_FACING_FRONT.
