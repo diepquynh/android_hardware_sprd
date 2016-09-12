@@ -928,8 +928,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;  
     }
 
-    if (user_ptr->MakerNote.ptr
-        && user_ptr->MakerNote.count > 0)
+    if (user_ptr->MakerNote.count > 0)
     {
         ifd_info.tag = IFD_MAKERNOTE;
         ifd_info.type = IFD_UNDEFINED;
@@ -945,8 +944,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
-    if (user_ptr->UserComment.ptr
-        && user_ptr->UserComment.count > 0)
+    if (user_ptr->UserComment.count > 0)
     {
         ifd_info.tag = IFD_USERCOMMENT;
         ifd_info.type = IFD_UNDEFINED;
@@ -1453,7 +1451,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
     
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.DeviceSettingDescription
-        && PNULL != pic_taking_cond_ptr->DeviceSettingDescription.ptr
         && pic_taking_cond_ptr->DeviceSettingDescription.count > 0) 
     {
         ifd_info.tag = IFD_DEVICESETTINGDESCRIPTION;
