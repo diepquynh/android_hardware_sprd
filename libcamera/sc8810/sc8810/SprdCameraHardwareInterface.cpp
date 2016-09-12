@@ -3484,10 +3484,10 @@ static int HAL_getCameraInfo(int cameraId, struct camera_info *cameraInfo)
     property_get("sys.camera.atv", propBuf_atv, "0");	
     ALOGD("HAL_getCameraInfo: property_atv: %s.", propBuf_atv);
     if((0 == strcmp(propBuf_atv, "1"))){
-		memcpy(cameraInfo, &sCameraInfo3[cameraId], sizeof(CameraInfo));
+		memcpy(cameraInfo, &sCameraInfo3[cameraId], sizeof(oldCameraInfo));
     }
     else{
-        memcpy(cameraInfo, &sCameraInfo[cameraId], sizeof(CameraInfo));        
+        memcpy(cameraInfo, &sCameraInfo[cameraId], sizeof(oldCameraInfo));        
     }
     return 0;
 }
