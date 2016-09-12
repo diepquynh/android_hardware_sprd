@@ -310,7 +310,7 @@ if((SWITCH_MODE == jpeg_fw_codec->work_mode) || (jpeg_fw_codec->is_first_slice &
 			if(VSP_READ_REG_POLL(VSP_BSM_REG_BASE+BSM_DEBUG_OFF, 1<<3, 1<<3, TIME_OUT_CLK,
 				"polling bsm fifo fifo depth >= 8 words for gob header"))
 			{
-				JPEG_PRINT(("[START_HW_DECODE] flush failed, i = %d", i));
+				//JPEG_PRINT(("[START_HW_DECODE] flush failed, i = %d", i));
 				return JPEG_FAILED;
 			}
 			
