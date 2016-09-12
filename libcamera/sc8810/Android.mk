@@ -17,7 +17,8 @@ LOCAL_C_INCLUDES := \
 	external/skia/include/core\
         external/jhead \
         external/sqlite/dist \
-    system/media/camera/include \
+        system/media/camera/include \
+        $(TOP)/hardware/sprd/libmemoryheapion/scx15 \
 	$(TOP)/hardware/sprd/kernel_headers/sc8810 \
 	$(TOP)/hardware/sprd/gralloc/sc8810 \
 	$(TOP)/hardware/sprd/mali/sc8810/src/ump/include \
