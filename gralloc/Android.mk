@@ -20,6 +20,7 @@ LOCAL_PATH := $(call my-dir)
 supported_boards := \
 	sc8830 \
 	scx15 \
+	sc8810 \
 
 ifeq ($(SOC_SCX30G_V2),true)
 include $(call all-named-subdir-makefiles,scx30g_v2)
