@@ -49,7 +49,10 @@ LOCAL_SHARED_LIBRARIES := liblog libcutils libGLESv1_CM $(SHARED_MEM_LIBS)
 # Include the UMP header files
 LOCAL_C_INCLUDES := $(MALI_DDK_PATH)/mali/sc8810/src/ump/include system/core/include/
 LOCAL_C_INCLUDES += \
-    $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/
+    $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
+    $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/ \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/
+	
 LOCAL_CFLAGS:= -DLOG_TAG=\"gralloc.$(TARGET_BOARD_PLATFORM)\" -w 
 		
 ifneq ($(TARGET_LCD_SIZE),)
