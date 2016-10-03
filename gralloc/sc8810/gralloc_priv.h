@@ -34,7 +34,7 @@
 #define GRALLOC_ARM_DMA_BUF_MODULE 0
 
 #if GRALLOC_ARM_UMP_MODULE
-#include <ump/ump.h>
+#include "ump/ump.h"
 #endif
 
 struct private_handle_t;
