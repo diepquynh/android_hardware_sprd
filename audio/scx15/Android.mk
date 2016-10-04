@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 LOCAL_PATH := $(call my-dir)
 
@@ -86,15 +87,6 @@ LOCAL_REQUIRED_MODULES := \
 	libnvexchange \
 	libdumpdata \
 	libhardware_legacy \
-
-ifeq ($(BOARD_USE_LIBATCHANNEL_WRAPPER),true)
-LOCAL_CFLAGS += -DUSE_LIBATCHANNEL_WRAPPER
-LOCAL_SHARED_LIBRARIES += libatchannel_wrapper
-LOCAL_REQUIRED_MODULES += libatchannel_wrapper
-else
-LOCAL_SHARED_LIBRARIES += libatchannel
-LOCAL_REQUIRED_MODULES += libatchannel
-endif
 
 LOCAL_MODULE_TAGS := optional
 
