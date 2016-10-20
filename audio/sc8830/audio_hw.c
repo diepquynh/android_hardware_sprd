@@ -695,7 +695,6 @@ static const dev_names_para_t dev_names_digitalfm[] = {
     { AUDIO_DEVICE_IN_AUX_DIGITAL, "digital" },
     { AUDIO_DEVICE_IN_BACK_MIC, "back-mic" },
     { SPRD_AUDIO_IN_DUALMIC_VOICE, "dual-mic-voice" },
-    { AUDIO_DEVICE_IN_LINE_IN, "line"},
     //{ "linein-capture"},
 };
 #define FM_VOLUME_MAX 16
@@ -4194,23 +4193,6 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
         }
         ALOGE("adev_set_parameters fm volume :%d fm_volume_tbl[val] %x",val, gain);
     }
-    ret = str_parms_get_str(parms, "line_in", value, sizeof(value));
-    if(ret >= 0){
-        if(strcmp(value,"on") == 0){
-            pthread_mutex_lock(&adev->device_lock);
-            pthread_mutex_lock(&adev->lock);
-            adev->in_devices |= AUDIO_DEVICE_IN_LINE_IN;
-            pthread_mutex_unlock(&adev->lock);
-            pthread_mutex_unlock(&adev->device_lock);
-        }else if(strcmp(value,"off") == 0){
-            pthread_mutex_lock(&adev->device_lock);
-            pthread_mutex_lock(&adev->lock);
-            adev->in_devices &= ~AUDIO_DEVICE_IN_LINE_IN;
-            pthread_mutex_unlock(&adev->lock);
-            pthread_mutex_unlock(&adev->device_lock);
-        }
-        select_devices_signal(adev);
-    }
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
     if (ret >= 0) {
         val = atoi(value);
@@ -4669,8 +4651,6 @@ static uint32_t adev_get_supported_devices(const struct audio_hw_device *dev)
             AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET |
             AUDIO_DEVICE_IN_ALL_SCO |
             AUDIO_DEVICE_IN_VOICE_CALL |
-	    AUDIO_DEVICE_IN_FM_TUNER |
-            AUDIO_DEVICE_IN_LINE_IN |
             AUDIO_DEVICE_IN_DEFAULT);
 }
 
