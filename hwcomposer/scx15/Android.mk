@@ -55,6 +55,7 @@ LOCAL_SRC_FILES := \
 	SprdExternalDisplayDevice/SprdExternalDisplayDevice.cpp \
 	SprdUtil.cpp \
 	dump.cpp \
+	Utils.cpp \
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM) \
