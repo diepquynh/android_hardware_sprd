@@ -588,29 +588,6 @@ static int do_parse(AUDIO_TOTAL_T *audio_params_ptr, unsigned int params_size)
     return 0;
 }
 
-/* to initialize vbc eq parameters at productinfo
-   soft link to vendor/firmware/vbc_eq
-   when system boot
-   */
-int create_vb_effect_params(void)
-{
-    AUDIO_TOTAL_T * aud_params_ptr = NULL;
-    int ret = -1;
-    ALOGI("create_vb_effect_params...start");
-
-    //read audio params from source file.
-    aud_params_ptr = get_aud_paras();
-
-    ALOGI("create_vb_effect_params...start,aud_params_ptr:0x%x",aud_params_ptr);
-    //close fd
-    if (aud_params_ptr) {
-        ret = do_parse(aud_params_ptr, adev_get_audiomodenum4eng()*sizeof(AUDIO_TOTAL_T));
-    }
-
-    ALOGI("create_vb_effect_params...done");
-    return ret;
-}
-
 static AUDIO_TOTAL_T *get_aud_paras()
 {
     return s_vb_effect_ptr;

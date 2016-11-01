@@ -39,7 +39,6 @@ int vb_effect_loading(void);
 
 int vb_effect_profile_apply(void);
 
-int create_vb_effect_params(void);
 int  vb_da_effect_profile_apply(int index);
 int  vb_ad01_effect_profile_apply(int index);
 int  vb_ad23_effect_profile_apply(int index);
