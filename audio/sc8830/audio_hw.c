@@ -6263,8 +6263,7 @@ ret = dump_parse_xml();
 
     /* generate eq params file of vbc effect*/
     adev->eq_available = false;
-    //ret = create_vb_effect_params();
-    ret = 0;
+    ret = create_vb_effect_params();
     if (ret != 0) {
         ALOGW("Warning: Failed to create the parameters file of vbc_eq");
     } else {
