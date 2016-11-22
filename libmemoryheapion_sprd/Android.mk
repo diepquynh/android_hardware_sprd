@@ -17,30 +17,12 @@
 
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
+supported_boards := \
+	sc8830 \
+	scx15 \
 
-LOCAL_MODULE := libmemoryheapion
-
-LOCAL_SRC_FILES := \
-	MemoryHeapIon_SPRD.cpp
-
-LOCAL_ADDITIONAL_DEPENDENCIES += \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
-
-LOCAL_C_INCLUDES += \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-	$(LOCAL_PATH)/ \
-
-LOCAL_SHARED_LIBRARIES := \
-	libbinder \
-	liblog \
-	libcutils \
-	libutils
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-
-include $(BUILD_SHARED_LIBRARY)
+ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
+ifeq ($(SOC_SCX30G_V2),true)
+include $(call all-named-subdir-makefiles,scx30g_v2)
+else include $(call all-named-subdir-makefiles,scx15)
+endif

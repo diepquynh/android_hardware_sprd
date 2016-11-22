@@ -474,42 +474,6 @@ typedef struct{
    int    routeDev;
 }T_AT_CMD;
 
-#ifdef AUDIO_DEBUG
-typedef struct{
-    void* cache_buffer;
-    size_t buffer_length;
-    size_t write_flag;
-    size_t total_length;
-    bool more_one;
-    long sampleRate;
-    long channels;
-    int wav_fd;
-    FILE* dump_fd;
-} out_dump_t;
-
-typedef struct{
-    bool dump_to_cache;
-    bool dump_as_wav;
-    bool dump_sco;
-    bool dump_bt_sco;
-    bool dump_vaudio;
-    bool dump_music;
-    bool dump_in_read;
-    bool dump_in_read_noprocess;
-    bool dump_in_read_noresampler;
-    out_dump_t* out_sco;
-    out_dump_t* out_bt_sco;
-    out_dump_t* out_vaudio;
-    out_dump_t* out_music;
-    out_dump_t* in_read;
-    out_dump_t* in_read_noprocess;
-    out_dump_t* in_read_noresampler;
-}dump_info_t;
-
-typedef struct{
-    dump_info_t* dump_info;
-}ext_contrl_t;
-#endif
 struct tiny_audio_device {
     struct audio_hw_device hw_device;
 
@@ -561,9 +525,6 @@ struct tiny_private_ctl private_ctl;
 
     struct stream_routing_manager  routing_mgr;
     struct stream_routing_manager  voice_command_mgr;
-#ifdef AUDIO_DEBUG
-    ext_contrl_t* ext_contrl;
-#endif
     int voip_state;
     int voip_start;
     bool master_mute;
@@ -811,9 +772,6 @@ static void adev_config_parse_private(struct config_parse_state *s, const XML_Ch
 #endif
 #include "at_commands_generic.c"
 #include "mmi_audio_loop.c"
-#ifdef AUDIO_DEBUG
-#include "ext_control.c"
-#endif
 #define LOG_TAG "audio_hw_primary"
 
 static long getCurrentTimeUs()
@@ -2428,12 +2386,6 @@ static ssize_t out_write_vaudio(struct tiny_stream_out *out, const void* buffer,
     dump_info.dump_switch_info = DUMP_MUSIC_HWL_MIX_VAUDIO;
     dump_data(dump_info);
 #endif
-#ifdef AUDIO_DEBUG
-        if(adev->ext_contrl->dump_info->dump_vaudio){
-            do_dump(adev->ext_contrl->dump_info,
-                            (void*)buf,out_frames*frame_size);
-        }
-#endif
     }
     else
         usleep(out_frames*1000*1000/out->config.rate);
@@ -2483,12 +2435,6 @@ static ssize_t out_write_sco(struct tiny_stream_out *out, const void* buffer,
     dump_info.dump_switch_info = DUMP_MUSIC_HWL_VOIP_WRITE;
     dump_data(dump_info);
 #endif
-#ifdef AUDIO_DEBUG
-        if(adev->ext_contrl->dump_info->dump_sco){
-            do_dump(adev->ext_contrl->dump_info,
-                            (void*)buf,out_frames*frame_size/2);
-        }
-#endif
         }
     }
     else
@@ -2526,12 +2472,6 @@ static ssize_t out_write_bt_sco(struct tiny_stream_out *out, const void* buffer,
        //ret = pcm_write(out->pcm_voip, (void *)buf, out_frames*frame_size/2);
 #ifdef AUDIO_DUMP
        out_dump_doing(out->out_dump_fd, (void *)buf, out_frames*frame_size/2);
-#endif
-#ifdef AUDIO_DEBUG
-       if(adev->ext_contrl->dump_info->dump_bt_sco){
-            do_dump(adev->ext_contrl->dump_info,
-                            (void*) buf,out_frames*frame_size/2);
-       }
 #endif
         BLUE_TRACE("voip:out_write_bt_sco");
         ret = pcm_mmap_write(out->pcm_bt_sco, (void *)buf, out_frames*frame_size/2);
@@ -2714,12 +2654,6 @@ static ssize_t out_write(struct audio_stream_out *stream, const void* buffer,
 
 #ifdef AUDIO_DUMP
     out_dump_doing(out->out_dump_fd, (void *)buf, out_frames * frame_size);
-#endif
-#ifdef AUDIO_DEBUG
-    if(adev->ext_contrl->dump_info->dump_music){
-         do_dump(adev->ext_contrl->dump_info,
-                         (void*)buf,out_frames * frame_size);
-    }
 #endif
 #ifdef AUDIO_DUMP_EX
     dump_info.buf = buf;
@@ -2990,7 +2924,7 @@ static void audio_bt_sco_thread_destory(struct tiny_audio_device *adev)
     ALOGE("bt sco : duplicate thread destory before");
     ret = pthread_join(adev->bt_sco_manager.dup_thread, NULL);
     ALOGE("bt sco : duplicate thread destory ret is %d", ret);
-    adev->bt_sco_manager.dup_thread = NULL;
+    adev->bt_sco_manager.dup_thread = 0;
 
     pthread_mutex_destroy(&adev->bt_sco_manager.dup_mutex);
     pthread_mutex_destroy(&adev->bt_sco_manager.cond_mutex);
@@ -3054,7 +2988,7 @@ static int start_input_stream(struct tiny_stream_in *in)
 #endif
 
 #ifndef VOIP_DSP_PROCESS
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate );
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 #endif
     }
@@ -3073,7 +3007,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             ALOGE("%s:cannot open in->pcm : %s", __func__,pcm_get_error(in->pcm));
             goto err;
         }
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev), in->requested_rate );
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices), in->requested_rate );
         ALOGI("record process sco module created is %s.", in->active_rec_proc ? "successful" : "failed");
 
         if(in->requested_rate != in->config.rate) {
@@ -3189,7 +3123,7 @@ static int start_input_stream(struct tiny_stream_in *in)
             }
         }
         /* start to process pcm data captured, such as noise suppression.*/
-        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev),in->requested_rate);
+        in->active_rec_proc = init_rec_process(GetAudio_InMode_number_from_device(adev->in_devices),in->requested_rate);
         ALOGI("record process module created is %s.", in->active_rec_proc ? "successful" : "failed");
     }
 
@@ -3495,14 +3429,6 @@ static int get_next_buffer(struct resampler_buffer_provider *buffer_provider,
     dump_info.dump_switch_info =  DUMP_RECORD_HWL_AFTER_VBC;
     dump_data(dump_info);
 #endif
-#ifdef AUDIO_DEBUG
-        if(adev->ext_contrl->dump_info->dump_in_read_noresampler){
-            do_dump(adev->ext_contrl->dump_info,
-                            (void*)in->buffer,
-                           in->config.period_size *
-                           audio_stream_frame_size((const struct audio_stream *)(&in->stream.common)));
-        }
-#endif
 
         if (in->read_status != 0) {
             if(in->pcm) {
@@ -3701,12 +3627,6 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
             ALOGE("  peter: normal read 1 in");
 
     }
-#ifdef AUDIO_DEBUG
-    if(adev->ext_contrl->dump_info->dump_in_read_noprocess){
-         do_dump(adev->ext_contrl->dump_info,
-                         (void*)buffer,bytes);
-    }
-#endif
     if (ret == 0 && in->active_rec_proc && in->proc_buf)
             aud_rec_do_process(buffer, bytes,in->proc_buf,in->proc_buf_size);
 
@@ -3718,12 +3638,6 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer,
             in->pop_mute = false;
         }
     }
-#ifdef AUDIO_DEBUG
-    if(adev->ext_contrl->dump_info->dump_in_read){
-         do_dump(adev->ext_contrl->dump_info,
-                         (void*)buffer,bytes);
-    }
-#endif
 
 #ifdef AUDIO_DUMP_EX
     dump_info.buf = buffer;
@@ -4041,7 +3955,7 @@ static void audiodebug_process(struct tiny_audio_device *adev,struct str_parms *
             }
             write(modem->i2s_btsco_fm->ctrl_file_fd,"1",1);
         }else{
-            int i2s_ctrl;
+            FILE *i2s_ctrl;
             char * i2s_ctrl_value="1";
             adev->i2sfm_flag=0;
             i2s_ctrl = fopen("/proc/pin_switch/iis0_sys_sel/vbc_iis0","wb");
@@ -4056,7 +3970,7 @@ static void audiodebug_process(struct tiny_audio_device *adev,struct str_parms *
     //Audio HAL debug for Music/Vaudio/SCO/BT SCO/WAV/Cache /Log Level.
     ret = str_parms_get_str(parms, "hal_debug", value, sizeof(value));
     if (ret >= 0) {
-        int hal_audio_ctrl;
+        FILE *hal_audio_ctrl;
         pthread_mutex_lock(&adev->lock);
         hal_audio_ctrl = fopen("/dev/pipe/mmi.audio.ctrl","wb");
         if(hal_audio_ctrl < 0){
@@ -4271,15 +4185,6 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
 static char * adev_get_parameters(const struct audio_hw_device *dev,
         const char *keys)
 {
-#ifdef AUDIO_DEBUG
-    struct tiny_audio_device *adev = (struct tiny_audio_device *)dev;
-    if (strcmp(keys, "point_info") == 0) {
-        char* point_info;
-        ALOGE("keys: %s",keys);
-        point_info=get_pointinfo_hal(adev->cp_nbio_pipe);
-        return strdup(point_info);
-    }
-#endif
     return strdup("");
 }
 
@@ -4588,36 +4493,6 @@ static int adev_close(hw_device_t *device)
     free(adev->cp->i2s_fm);
     free(adev->cp);
     free(adev->pga_gain_nv);
-    //free ext_contrl
-#ifdef AUDIO_DEBUG
-    if(adev->ext_contrl->dump_info->out_bt_sco){
-        free(adev->ext_contrl->dump_info->out_bt_sco);
-    }
-    if(adev->ext_contrl->dump_info->out_sco){
-        free(adev->ext_contrl->dump_info->out_sco);
-    }
-    if(adev->ext_contrl->dump_info->out_vaudio){
-        free(adev->ext_contrl->dump_info->out_vaudio);
-    }
-    if(adev->ext_contrl->dump_info->out_music){
-        free(adev->ext_contrl->dump_info->out_music);
-    }
-    if(adev->ext_contrl->dump_info->in_read){
-        free(adev->ext_contrl->dump_info->in_read);
-    }
-    if(adev->ext_contrl->dump_info->in_read_noprocess){
-        free(adev->ext_contrl->dump_info->in_read_noprocess);
-    }
-    if(adev->ext_contrl->dump_info->in_read_noresampler){
-        free(adev->ext_contrl->dump_info->in_read_noresampler);
-    }
-    if(adev->ext_contrl->dump_info){
-        free(adev->ext_contrl->dump_info);
-    }
-    if(adev->ext_contrl){
-        free(adev->ext_contrl);
-    }
-#endif
 
     adev_free_audmode();
     mixer_close(adev->mixer);
@@ -6180,34 +6055,6 @@ static int adev_open(const hw_module_t* module, const char* name,
     adev->hw_device.close_input_stream = adev_close_input_stream;
     adev->hw_device.dump = adev_dump;
     adev->realCall = false;
-    //init ext_contrl
-#ifdef AUDIO_DEBUG
-    adev->ext_contrl = (ext_contrl_t*)malloc(sizeof(ext_contrl_t));
-    adev->ext_contrl->dump_info = (dump_info_t*)malloc(sizeof(dump_info_t));
-    adev->ext_contrl->dump_info->out_music = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->out_sco  = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->out_bt_sco  = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->out_vaudio  = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->in_read = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->in_read_noprocess = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->in_read_noresampler = (out_dump_t*)malloc(sizeof(out_dump_t));
-    adev->ext_contrl->dump_info->dump_to_cache = false;
-    adev->ext_contrl->dump_info->dump_as_wav = false;
-    adev->ext_contrl->dump_info->dump_music = false;
-    adev->ext_contrl->dump_info->dump_bt_sco = false;
-    adev->ext_contrl->dump_info->dump_sco = false;
-    adev->ext_contrl->dump_info->dump_vaudio = false;
-    adev->ext_contrl->dump_info->dump_in_read = false;
-    adev->ext_contrl->dump_info->dump_in_read_noprocess = false;
-    adev->ext_contrl->dump_info->dump_in_read_noresampler = false;
-    adev->ext_contrl->dump_info->out_bt_sco->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->out_sco->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->out_vaudio->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->out_music->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->in_read->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->in_read_noprocess->buffer_length = DefaultBufferLength;
-    adev->ext_contrl->dump_info->in_read_noresampler->buffer_length = DefaultBufferLength;
-#endif
     pthread_mutex_lock(&adev->lock);
     ret = adev_modem_parse(adev);
     pthread_mutex_unlock(&adev->lock);
@@ -6333,10 +6180,6 @@ vb_ctl_modem_monitor_open (adev);
 /*
 this is used to loopback test.
 */
-#ifdef AUDIO_DEBUG
-    ret = ext_control_open(adev);
-    if (ret)  ALOGW("Warning: audio ext_contrl can NOT work.");
-#endif
     ret =audiopara_tuning_manager_create(adev);
     if (ret)  ALOGW("Warning: audio tuning can NOT work.");
 
