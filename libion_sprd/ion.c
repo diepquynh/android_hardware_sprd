@@ -28,12 +28,7 @@
 #include <sys/types.h>
 
 #include <linux/ion.h>
-
-#ifdef SCX30G_V2
-#include <ion/ion_scx30g_v2.h>
-#else
 #include <ion/ion.h>
-#endif
 
 int ion_open()
 {
