@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef SPRD_HWC_SCX15_UTILS_H
-#define SPRD_HWC_SCX15_UTILS_H
+#ifndef HWCUTILS_UTILS_H
+#define HWCUTILS_UTILS_H
 
 uint64_t getUniqueId();
 
-#endif // SPRD_HWC_SCX15_UTILS_H
+#endif // HWCUTILS_UTILS_H

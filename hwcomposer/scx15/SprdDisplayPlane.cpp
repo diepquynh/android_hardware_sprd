@@ -40,7 +40,7 @@
 #include <ui/GraphicBufferAllocator.h>
 
 #include "SprdDisplayPlane.h"
-#include "Utils.h"
+#include "../HWCUtils/Utils.h"
 
 using namespace android;
 
