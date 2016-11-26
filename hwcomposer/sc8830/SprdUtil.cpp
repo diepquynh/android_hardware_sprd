@@ -223,7 +223,7 @@ bool SprdUtil::transformLayer(SprdHWLayer *l1, SprdHWLayer *l2,
             uint32_t stride;
             size_t size;
 
-            GraphicBufferAllocator::get().alloc(mFBInfo->fb_width, mFBInfo->fb_height, format, GRALLOC_USAGE_OVERLAY_BUFFER,
+            GraphicBufferAllocator::get().allocate(mFBInfo->fb_width, mFBInfo->fb_height, format, GRALLOC_USAGE_OVERLAY_BUFFER,
 						(buffer_handle_t*)&tmpDCAMBuffer, &stride, getUniqueId(), std::move("HWC"));
 
             MemoryHeapIon::Get_phy_addr_from_ion(tmpDCAMBuffer->share_fd, &(tmpDCAMBuffer->phyaddr), &size);
@@ -1124,9 +1124,9 @@ AllocGFXBuffer:
     }
 
     if(mGsp_cap.buf_type_support == GSP_ADDR_TYPE_PHYSICAL) {
-        GraphicBufferAllocator::get().alloc(width, height, format, GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&tmpBuffer, &stride, getUniqueId(), std::move("HWC"));
+        GraphicBufferAllocator::get().allocate(width, height, format, GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&tmpBuffer, &stride, getUniqueId(), std::move("HWC"));
     } else if(mGsp_cap.buf_type_support == GSP_ADDR_TYPE_IOVIRTUAL) {
-        GraphicBufferAllocator::get().alloc(width, height, format, 0, (buffer_handle_t*)&tmpBuffer, &stride, getUniqueId(), std::move("HWC"));
+        GraphicBufferAllocator::get().allocate(width, height, format, 0, (buffer_handle_t*)&tmpBuffer, &stride, getUniqueId(), std::move("HWC"));
     }
 
     if (tmpBuffer == NULL) {
@@ -1281,11 +1281,11 @@ int SprdUtil::gsp_process_va_copy2_pa(GSP_CONFIG_INFO_T *pgsp_cfg_info)
     if(copyTempBuffer == NULL) {
         //GraphicBufferAllocator::get().alloc(mFBInfo->fb_width, mFBInfo->fb_height, format, GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&copyTempBuffer, &stride);
         if(OSD_MAX_WIDTH*OSD_MAX_HEIGHT*4 > VIDEO_MAX_WIDTH*VIDEO_MAX_HEIGHT*1.5) {
-            GraphicBufferAllocator::get().alloc(OSD_MAX_WIDTH, OSD_MAX_HEIGHT, HAL_PIXEL_FORMAT_RGBA_8888,
+            GraphicBufferAllocator::get().allocate(OSD_MAX_WIDTH, OSD_MAX_HEIGHT, HAL_PIXEL_FORMAT_RGBA_8888,
 						GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&copyTempBuffer,
 						&stride, getUniqueId(), std::move("HWC"));
         } else {
-            GraphicBufferAllocator::get().alloc(VIDEO_MAX_WIDTH, VIDEO_MAX_HEIGHT, HAL_PIXEL_FORMAT_YCbCr_420_SP,
+            GraphicBufferAllocator::get().allocate(VIDEO_MAX_WIDTH, VIDEO_MAX_HEIGHT, HAL_PIXEL_FORMAT_YCbCr_420_SP,
 						GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&copyTempBuffer,
 						&stride, getUniqueId(), std::move("HWC"));
         }
