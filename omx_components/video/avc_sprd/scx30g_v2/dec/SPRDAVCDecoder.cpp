@@ -1082,7 +1082,7 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
                 add_startcode_len = 4;
                 dec_in.dataLen += add_startcode_len;
             }
-            memcpy((void *)mPbuf_stream_v+add_startcode_len, inHeader->pBuffer + inHeader->nOffset, inHeader->nFilledLen);
+            memcpy(mPbuf_stream_v+add_startcode_len, inHeader->pBuffer + inHeader->nOffset, inHeader->nFilledLen);
         } else {
             if (mPbuf_stream_v != NULL) {
                 memcpy(mPbuf_stream_v, bitstream, bufferSize);
@@ -1132,7 +1132,7 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
                 return ;
             }
             ALOGV("%s, %d, pBuffer: 0x%x, vaddr: 0x%x", __FUNCTION__, __LINE__, outHeader->pBuffer,vaddr);
-            uint8 *yuv = (uint8 *)(vaddr + outHeader->nOffset);
+            uint8 *yuv = (uint8 *)((char *)vaddr + outHeader->nOffset);
             ALOGV("%s, %d, yuv: %0x, mPicId: %d, outHeader: %0x, outHeader->pBuffer: %0x, outHeader->nTimeStamp: %lld",
                   __FUNCTION__, __LINE__, yuv, mPicId,outHeader, outHeader->pBuffer, outHeader->nTimeStamp);
             (*mH264Dec_SetCurRecPic)(mHandle, yuv, (uint8 *)picPhyAddr, (void *)outHeader, mPicId);
