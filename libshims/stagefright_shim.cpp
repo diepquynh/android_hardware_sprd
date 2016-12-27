@@ -20,3 +20,13 @@ extern "C" int _ZN7android19GraphicBufferMapper4lockEPK13native_handlejRKNS_4Rec
 extern "C" int _ZN7android19GraphicBufferMapper4lockEPK13native_handleiRKNS_4RectEPPv() {
     return _ZN7android19GraphicBufferMapper4lockEPK13native_handlejRKNS_4RectEPPv();
 }
+
+extern "C" int _ZN7android22GraphicBufferAllocator5allocEjjijPPK13native_handlePj();
+extern "C" int _ZN7android22GraphicBufferAllocator5allocEjjiiPPK13native_handlePi() {
+    return _ZN7android22GraphicBufferAllocator5allocEjjijPPK13native_handlePj();
+}
+
+extern "C" int _ZN7android5Fence4waitEi();
+extern "C" int _ZN7android5Fence4waitEj() {
+    return _ZN7android5Fence4waitEi();
+}
