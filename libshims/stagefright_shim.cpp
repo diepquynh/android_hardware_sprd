@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-#include <sys/types.h>
-#include <unistd.h>
+#include <utils/Singleton.h>
 
-#include <cutils/atomic.h>
-
-#include "Utils.h"
-
-uint64_t getUniqueId()
-{
-    static volatile int32_t nextId = 0;
-    uint64_t id = static_cast<uint64_t>(getpid()) << 32;
-    id |= static_cast<uint32_t>(android_atomic_inc(&nextId));
-    return id;
+extern "C" int _ZN7android19GraphicBufferMapper4lockEPK13native_handlejRKNS_4RectEPPv();
+extern "C" int _ZN7android19GraphicBufferMapper4lockEPK13native_handleiRKNS_4RectEPPv() {
+    return _ZN7android19GraphicBufferMapper4lockEPK13native_handlejRKNS_4RectEPPv();
 }

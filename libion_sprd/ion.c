@@ -72,22 +72,22 @@ int ion_alloc(int fd, size_t len, size_t align, unsigned int heap_id_mask,
         return ret;
 }
 
-int ion_free(int fd, ion_user_handle_t handle)
+int ion_free(int fd, ion_user_handle_t *handle)
 {
-        struct ion_handle_data *data = {
+        struct ion_handle_data data = {
                 .handle = handle,
         };
-        return ion_ioctl(fd, ION_IOC_FREE, data);
+        return ion_ioctl(fd, ION_IOC_FREE, &data);
 }
 
-int ion_map(int fd, ion_user_handle_t handle, size_t length, int prot,
+int ion_map(int fd, ion_user_handle_t *handle, size_t length, int prot,
             int flags, off_t offset, unsigned char **ptr, int *map_fd)
 {
-        struct ion_fd_data *data = {
+        struct ion_fd_data data = {
                 .handle = handle,
         };
 
-        int ret = ion_ioctl(fd, ION_IOC_MAP, data);
+        int ret = ion_ioctl(fd, ION_IOC_MAP, &data);
         if (ret < 0)
                 return ret;
         *map_fd = data.fd;
@@ -103,14 +103,14 @@ int ion_map(int fd, ion_user_handle_t handle, size_t length, int prot,
         return ret;
 }
 
-int ion_share(int fd, ion_user_handle_t handle, int *share_fd)
+int ion_share(int fd, ion_user_handle_t *handle, int *share_fd)
 {
         int map_fd;
-        struct ion_fd_data *data = {
+        struct ion_fd_data data = {
                 .handle = handle,
         };
 
-        int ret = ion_ioctl(fd, ION_IOC_SHARE, data);
+        int ret = ion_ioctl(fd, ION_IOC_SHARE, &data);
         if (ret < 0)
                 return ret;
         *share_fd = data.fd;

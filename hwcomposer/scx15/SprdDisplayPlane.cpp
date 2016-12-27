@@ -38,9 +38,7 @@
  *****************************************************************************/
 
 #include <ui/GraphicBufferAllocator.h>
-
 #include "SprdDisplayPlane.h"
-#include "Utils.h"
 
 using namespace android;
 
@@ -104,7 +102,7 @@ private_handle_t* SprdDisplayPlane:: createPlaneBuffer(int index)
         return NULL;
     }
 
-    GraphicBufferAllocator::get().allocate(mWidth, mHeight, mFormat, mPlaneUsage, (buffer_handle_t*)&BufHandle, &stride, getUniqueId(), std::move("HWC"));
+    GraphicBufferAllocator::get().alloc(mWidth, mHeight, mFormat, mPlaneUsage, (buffer_handle_t*)&BufHandle, &stride);
     if (BufHandle == NULL)
     {
         ALOGE("SprdDisplayPlane cannot alloc buffer");

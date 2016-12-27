@@ -32,6 +32,10 @@ ifeq ($(BOARD_USES_LINE_CALL), true)
 LOCAL_CFLAGS += -D_VOICE_CALL_VIA_LINEIN
 endif
 
+ifeq ($(TARGET_BUILD_VARIANT),userdebug)
+LOCAL_CFLAGS += -DAUDIO_DEBUG
+endif
+
 ifneq ($(filter scx35_sc9620referphone scx35_sc9620openphone scx35_sc9620openphone_zt, $(TARGET_BOARD)),)
 LOCAL_CFLAGS += -DVB_CONTROL_PARAMETER_V2
 endif
