@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libmemoryheapion
+LOCAL_MODULE := libmemoryheapion_sprd
 
 LOCAL_SRC_FILES := \
 	MemoryHeapIon_SPRD.cpp
