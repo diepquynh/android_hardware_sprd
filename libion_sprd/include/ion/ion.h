@@ -21,7 +21,7 @@
 #ifndef __SYS_CORE_ION_H
 #define __SYS_CORE_ION_H
 
-#include <linux/ion.h>
+#include <linux/ion_ex.h>
 
 __BEGIN_DECLS
 
