@@ -101,7 +101,7 @@ int MemoryHeapIon::get_gsp_iova(int *mmu_addr, int *size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		custom_data.cmd = ION_SPRD_CUSTOM_GSP_MAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		*mmu_addr = mmu_data.iova_addr;
 		*size = mmu_data.iova_size;
@@ -119,7 +119,7 @@ int MemoryHeapIon::free_gsp_iova(int mmu_addr, int size) {
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
-		custom_data.cmd = ION_SPRD_CUSTOM_GSP_UNMAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 	}
 	return 0;
@@ -133,7 +133,7 @@ int MemoryHeapIon::get_mm_iova(int *mmu_addr, int *size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		custom_data.cmd = ION_SPRD_CUSTOM_MM_MAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		*mmu_addr = mmu_data.iova_addr;
 		*size = mmu_data.iova_size;
@@ -151,7 +151,7 @@ int MemoryHeapIon::free_mm_iova(int mmu_addr, int size) {
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
-		custom_data.cmd = ION_SPRD_CUSTOM_MM_UNMAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 	}
 	return 0;
@@ -166,7 +166,7 @@ int MemoryHeapIon::Get_gsp_iova(int buffer_fd, int *mmu_addr, int *size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = buffer_fd;
-		custom_data.cmd = ION_SPRD_CUSTOM_GSP_MAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		*mmu_addr = mmu_data.iova_addr;
 		*size = mmu_data.iova_size;
@@ -185,7 +185,7 @@ int MemoryHeapIon::Get_mm_iova(int buffer_fd, int *mmu_addr, int *size) {
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer =  buffer_fd;
-		custom_data.cmd = ION_SPRD_CUSTOM_MM_MAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		*mmu_addr = mmu_data.iova_addr;
 		*size = mmu_data.iova_size;
@@ -206,7 +206,7 @@ int MemoryHeapIon::Free_gsp_iova(int buffer_fd, int mmu_addr, int size){
 		mmu_data.fd_buffer = buffer_fd;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
-		custom_data.cmd = ION_SPRD_CUSTOM_GSP_UNMAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		close(fd);
 	}
@@ -225,7 +225,7 @@ int MemoryHeapIon::Free_mm_iova(int buffer_fd, int mmu_addr, int size){
 		mmu_data.fd_buffer = buffer_fd;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
-		custom_data.cmd = ION_SPRD_CUSTOM_MM_UNMAP;
+		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		close(fd);
 	}
