@@ -1354,7 +1354,7 @@ int SPRDAVCDecoder::VSP_malloc_cb(unsigned int size_extra) {
                 return -1;
             }
 
-            mPbuf_extra_p =phy_addr;
+            mPbuf_extra_p = phy_addr;
             mPbuf_extra_size = buffer_size;
             mPbuf_extra_v = (uint8 *)mPmem_extra->base();
             ALOGI("pmem %p - %p - %d", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
