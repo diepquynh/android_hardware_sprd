@@ -100,7 +100,7 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	{
 		private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
-		ion_user_handle_t *ion_hnd;
+		ion_user_handle_t ion_hnd;
 		unsigned char *cpu_ptr;
 		int shared_fd;
 		int ret;
@@ -126,7 +126,7 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 			ion_flag = ION_FLAG_CACHED | ION_FLAG_CACHED_NEEDS_SYNC;
 		}
 
-		ret = ion_alloc(m->ion_client, size, 0, ion_heap_mask, ion_flag, ion_hnd);
+		ret = ion_alloc(m->ion_client, size, 0, ion_heap_mask, ion_flag, &ion_hnd);
 
 		if (ret != 0)
 		{
@@ -171,7 +171,7 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 			{
 				hnd->flags=(private_handle_t::PRIV_FLAGS_USES_ION)|(private_handle_t::PRIV_FLAGS_USES_PHY);
 			}
-			ALOGD_IF(mDebug>0,"get vadress:0x%x size:0x%x ion_hnd:%p",(int)cpu_ptr,size,hnd->ion_hnd);
+			ALOGD_IF(mDebug>0,"get vadress:0x%x size:0x%x ion_hnd:%p",(int)cpu_ptr,size, &hnd->ion_hnd);
 			hnd->share_fd = shared_fd;
 			hnd->ion_hnd = ion_hnd;
 			*pHandle = hnd;
@@ -486,7 +486,7 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 			hnd->format = format;
 			hnd->width = stride;
 			hnd->height = h;
-			ALOGD_IF(mDebug>0,"alloc buffer end handle:%p ion_hnd:%p",pHandle,hnd->ion_hnd);
+			ALOGD_IF(mDebug>0,"alloc buffer end handle:%p ion_hnd:%p",pHandle, &hnd->ion_hnd);
 		}
 	}
 
@@ -545,7 +545,7 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 	}
 
 	private_handle_t const *hnd = reinterpret_cast<private_handle_t const *>(handle);
-	ALOGD_IF(mDebug>0,"free buffer start handle:%p ion_hnd:%p flag:0x%x",handle,hnd->ion_hnd,hnd->flags);
+	ALOGD_IF(mDebug>0,"free buffer start handle:%p ion_hnd:%p flag:0x%x",handle, &hnd->ion_hnd,hnd->flags);
 		//LOGD("unmapping from %p, size=%d", base, size);
 
 	if (hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER)
@@ -588,7 +588,7 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 		/* Buffer might be unregistered so we need to check for invalid ump handle*/
 		if (0 != hnd->base)
 		{
-			ALOGD_IF(mDebug>0,"free vaddress:0x%x size:0x%x ion_hnd:%p",(uintptr_t)hnd->base,hnd->size,hnd->ion_hnd);
+			ALOGD_IF(mDebug>0,"free vaddress:0x%x size:0x%x ion_hnd:%p",(uintptr_t)hnd->base,hnd->size, &hnd->ion_hnd);
 			if (0 != munmap((void *)hnd->base, hnd->size))
 			{
 				AERR("Failed to munmap handle 0x%p", hnd);
@@ -599,7 +599,7 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 
 		if (0 != ion_free(m->ion_client, hnd->ion_hnd))
 		{
-			AERR("Failed to ion_free( ion_client: %d ion_hnd:%p )", m->ion_client, hnd->ion_hnd);
+			AERR("Failed to ion_free( ion_client: %d ion_hnd:%p )", m->ion_client, &hnd->ion_hnd);
 		}
 
 		memset((void *)hnd, 0, sizeof(*hnd));
