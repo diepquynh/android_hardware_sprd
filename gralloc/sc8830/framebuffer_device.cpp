@@ -153,10 +153,10 @@ uint32_t dither_open(uint32_t w, uint32_t h)
 
 		memset(dither, 0, sizeof(struct dither_info));
 
-		fp = fopen("/sys/module/mali/parameters/gpu_cur_freq", "r");
+		fp = fopen("/sys/module/mali/parameters/gpu_freq_cur", "r");
 		if(fp == NULL)
 		{
-			AERR( "can not open /sys/module/mali/parameters/gpu_cur_freq %x", fp);
+			AERR( "can not open /sys/module/mali/parameters/gpu_freq_cur %x", fp);
 			free (dither);
 			dither = NULL;
 			return 0;
@@ -292,7 +292,7 @@ static bool fb_is_dither_enable(struct dither_info *dither, private_handle_t con
 
 	if(fp == NULL)
 	{
-		AERR( "can not open /sys/module/mali/parameters/gpu_cur_freq %x", fp);
+		AERR( "can not open /sys/module/mali/parameters/gpu_freq_cur %x", fp);
 	}
 	else
 	{
