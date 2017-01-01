@@ -387,7 +387,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::releaseEncoder() {
     if (mPbuf_extra_v != NULL)
     {
         if(mIOMMUEnabled) {
-            mPmem_extra->free_mm_iova(mPbuf_extra_p, mPbuf_extra_size);
+            mPmem_extra->free_iova(ION_MM, mPbuf_extra_p, mPbuf_extra_size);
         }
         mPmem_extra.clear();
         mPbuf_extra_v = NULL;
@@ -398,7 +398,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::releaseEncoder() {
     if (mPbuf_stream_v != NULL)
     {
         if(mIOMMUEnabled) {
-            mPmem_stream->free_mm_iova(mPbuf_stream_p, mPbuf_stream_size);
+            mPmem_stream->free_iova(ION_MM, mPbuf_stream_p, mPbuf_stream_size);
         }
         mPmem_stream.clear();
         mPbuf_stream_v = NULL;
@@ -409,7 +409,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::releaseEncoder() {
     if (mPbuf_yuv_v != NULL)
     {
         if(mIOMMUEnabled) {
-            mYUVInPmemHeap->free_mm_iova(mPbuf_yuv_p, mPbuf_yuv_size);
+            mYUVInPmemHeap->free_iova(ION_MM, mPbuf_yuv_p, mPbuf_yuv_size);
         }
         mYUVInPmemHeap.clear();
         mPbuf_yuv_v = NULL;
