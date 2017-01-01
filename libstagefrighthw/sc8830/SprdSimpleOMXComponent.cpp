@@ -21,6 +21,7 @@
 #include "include/SprdSimpleOMXComponent.h"
 
 #include "gralloc_priv.h"
+#include "ion_sprd.h"
 
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/ALooper.h>
@@ -328,7 +329,7 @@ OMX_ERRORTYPE SprdSimpleOMXComponent::freeBuffer(
                 if (iommu_is_enable) {
                     BufferCtrlStruct *pBufCtrl = (BufferCtrlStruct*)(header->pOutputPortPrivate);
                     if(pBufCtrl->bufferFd > 0) {
-                        MemoryHeapIon::Free_mm_iova((int)(pBufCtrl->bufferFd), (int)(pBufCtrl->phyAddr), (int)(pBufCtrl->bufferSize));
+                        MemoryHeapIon::Free_iova(ION_MM, (int)(pBufCtrl->bufferFd), (int)(pBufCtrl->phyAddr), (int)(pBufCtrl->bufferSize));
                     }
                 }
 
