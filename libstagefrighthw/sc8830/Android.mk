@@ -32,6 +32,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/native/include/media/hardware \
 	$(LOCAL_PATH)/include \
 	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM) \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)/include \

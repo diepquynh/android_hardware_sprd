@@ -266,7 +266,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::initEncParams() {
     {
         int32 ret;
         if(mIOMMUEnabled) {
-            ret = mPmem_extra->get_mm_iova(&phy_addr, &size);
+            ret = mPmem_extra->get_iova(ION_MM, &phy_addr, &size);
         } else {
             ret = mPmem_extra->get_phy_addr_from_ion(&phy_addr, &size);
         }
@@ -295,7 +295,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::initEncParams() {
     {
         int32 ret;
         if(mIOMMUEnabled) {
-            ret = mPmem_stream->get_mm_iova(&phy_addr, &size);
+            ret = mPmem_stream->get_iova(ION_MM, &phy_addr, &size);
         } else {
             ret = mPmem_stream->get_phy_addr_from_ion(&phy_addr, &size);
         }
@@ -939,7 +939,7 @@ void SPRDMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
                         }
                         int ret,phy_addr, buffer_size;
                         if(mIOMMUEnabled) {
-                            ret = mYUVInPmemHeap->get_mm_iova(&phy_addr, &buffer_size);
+                            ret = mYUVInPmemHeap->get_iova(ION_MM, &phy_addr, &buffer_size);
                         } else {
                             ret = mYUVInPmemHeap->get_phy_addr_from_ion(&phy_addr, &buffer_size);
                         }
@@ -993,7 +993,7 @@ void SPRDMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
                     }
                     int ret,phy_addr, buffer_size;
                     if(mIOMMUEnabled) {
-                        ret = mYUVInPmemHeap->get_mm_iova(&phy_addr, &buffer_size);
+                        ret = mYUVInPmemHeap->get_iova(ION_MM, &phy_addr, &buffer_size);
                     } else {
                         ret = mYUVInPmemHeap->get_phy_addr_from_ion(&phy_addr, &buffer_size);
                     }

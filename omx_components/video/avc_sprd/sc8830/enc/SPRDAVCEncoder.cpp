@@ -705,7 +705,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::initEncParams() {
     {
         int32 ret;
         if (mIOMMUEnabled) {
-            ret = mPmem_extra->get_mm_iova(&phy_addr, &size);
+            ret = mPmem_extra->get_iova(ION_MM, &phy_addr, &size);
         } else {
             ret = mPmem_extra->get_phy_addr_from_ion(&phy_addr, &size);
         }
@@ -734,7 +734,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::initEncParams() {
     {
         int32 ret;
         if (mIOMMUEnabled) {
-            ret = mPmem_stream->get_mm_iova(&phy_addr, &size);
+            ret = mPmem_stream->get_iova(ION_MM, &phy_addr, &size);
         } else {
             ret = mPmem_stream->get_phy_addr_from_ion(&phy_addr, &size);
         }
@@ -1385,7 +1385,7 @@ void SPRDAVCEncoder::onMessageReceived(const sp<AMessage> &msg) {
            }
            int ret,phy_addr, buffer_size;
            if(mIOMMUEnabled) {
-               ret = mYUVInPmemHeap->get_mm_iova(&phy_addr, &buffer_size);
+               ret = mYUVInPmemHeap->get_iova(ION_MM, &phy_addr, &buffer_size);
            } else {
                ret = mYUVInPmemHeap->get_phy_addr_from_ion(&phy_addr, &buffer_size);
            }
@@ -1660,7 +1660,7 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                         }
                         int ret,phy_addr, buffer_size;
                         if(mIOMMUEnabled) {
-                            ret = mYUVInPmemHeap->get_mm_iova(&phy_addr, &buffer_size);
+                            ret = mYUVInPmemHeap->get_iova(ION_MM, &phy_addr, &buffer_size);
                         } else {
                             ret = mYUVInPmemHeap->get_phy_addr_from_ion(&phy_addr, &buffer_size);
                         }
@@ -1701,7 +1701,7 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                         //ALOGI("meijiaxi:pBuf->format:%d",pBuf->format);
                         if(HAL_PIXEL_FORMAT_YCbCr_420_SP == pBuf->format){
                             if (mIOMMUEnabled) {
-                                MemoryHeapIon::Get_mm_iova(pBuf->share_fd, &(pBuf->phyaddr), &size);
+                                MemoryHeapIon::Get_iova(ION_MM, pBuf->share_fd, &(pBuf->phyaddr), &size);
                             }else{
                                 MemoryHeapIon::Get_phy_addr_from_ion(pBuf->share_fd, &(pBuf->phyaddr), &size);
                             }
@@ -1739,7 +1739,7 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                     }
                     int ret,phy_addr, buffer_size;
                     if(mIOMMUEnabled) {
-                        ret = mYUVInPmemHeap->get_mm_iova(&phy_addr, &buffer_size);
+                        ret = mYUVInPmemHeap->get_iova(ION_MM, &phy_addr, &buffer_size);
                     } else {
                         ret = mYUVInPmemHeap->get_phy_addr_from_ion(&phy_addr, &buffer_size);
                     }
