@@ -387,16 +387,6 @@ MemoryHeapIon::MemoryHeapIon(const char* device, size_t size,
 	}
 }
 
-status_t MemoryHeapIon::ionInit(int ionFd, void *base, int size, int flags,
-			        const char* device, ion_user_handle_t handle,
-			        int ionMapFd) {
-	mIonDeviceFd = ionFd;
-	mIonHandle = handle;
-	MemoryHeapBase::init(ionMapFd, base, size, flags, device);
-	return NO_ERROR;
-}
-
-
 status_t MemoryHeapIon::mapIonFd(int fd, size_t size, unsigned long memory_type, int uflags)
 {
 	/* If size is 0, just fail the mmap. There is no way to get the size
