@@ -18,7 +18,7 @@
 #include <time.h>
 #include <signal.h>
 #include <sys/time.h>
-
+#include "eng_audio.h"
 
 //#ifdef __cplusplus
 //extern "c"

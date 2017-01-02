@@ -15,7 +15,7 @@
 
 #include "aud_enha.h"
 #include <cutils/sockets.h>
-
+#include "eng_audio.h"
 
 //#ifdef __cplusplus
 //extern "c"
