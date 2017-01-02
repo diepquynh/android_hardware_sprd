@@ -38,6 +38,12 @@
 
 typedef int ion_user_handle_t;
 
+enum {
+    GRALLOC_USAGE_OVERLAY_BUFFER        = 0x01000000,
+    GRALLOC_USAGE_VIDEO_BUFFER          = 0x02000000,
+    GRALLOC_USAGE_CAMERA_BUFFER         = 0x04000000,
+};
+
 /* NOTE:
  * If your framebuffer device driver is integrated with UMP, you will have to
  * change this IOCTL definition to reflect your integration with the framebuffer
