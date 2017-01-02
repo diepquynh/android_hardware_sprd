@@ -98,6 +98,42 @@ enum{
 	SET_CALIBRATION_ENABLE,
 };
 
+enum {
+    AUDIO_DEVICE_OUT_FM_HEADSET                = 0x10000000,
+    AUDIO_DEVICE_OUT_FM_SPEAKER                = 0x20000000,
+    AUDIO_DEVICE_OUT_ALL_FM   = (AUDIO_DEVICE_OUT_FM_HEADSET |
+                                 AUDIO_DEVICE_OUT_FM_SPEAKER),
+    AUDIO_DEVICE_OUT_ALL_EX   = (AUDIO_DEVICE_OUT_EARPIECE |
+                                 AUDIO_DEVICE_OUT_SPEAKER |
+                                 AUDIO_DEVICE_OUT_WIRED_HEADSET |
+                                 AUDIO_DEVICE_OUT_WIRED_HEADPHONE |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_SCO |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
+                                 AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER |
+                                 AUDIO_DEVICE_OUT_HDMI |
+                                 AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET |
+                                 AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET |
+                                 AUDIO_DEVICE_OUT_USB_ACCESSORY |
+                                 AUDIO_DEVICE_OUT_USB_DEVICE |
+                                 AUDIO_DEVICE_OUT_REMOTE_SUBMIX |
+                                 AUDIO_DEVICE_OUT_TELEPHONY_TX |
+                                 AUDIO_DEVICE_OUT_LINE |
+                                 AUDIO_DEVICE_OUT_HDMI_ARC |
+                                 AUDIO_DEVICE_OUT_SPDIF |
+                                 AUDIO_DEVICE_OUT_FM |
+                                 AUDIO_DEVICE_OUT_AUX_LINE |
+                                 AUDIO_DEVICE_OUT_SPEAKER_SAFE |
+                                 AUDIO_DEVICE_OUT_IP |
+                                 AUDIO_DEVICE_OUT_BUS |
+                                 AUDIO_DEVICE_OUT_PROXY |
+                                 AUDIO_DEVICE_OUT_FM_HEADSET |
+                                 AUDIO_DEVICE_OUT_FM_SPEAKER |
+                                 AUDIO_DEVICE_OUT_DEFAULT),
+};
+
 typedef unsigned char  uint8;
 typedef          char  int8;
 typedef unsigned short uint16;
