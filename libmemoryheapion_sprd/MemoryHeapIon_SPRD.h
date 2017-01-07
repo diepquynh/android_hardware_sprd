@@ -26,7 +26,7 @@
 #include <utils/SortedVector.h>
 #include <utils/threads.h>
 
-typedef int ion_user_handle_t;
+struct ion_handle;
 
 namespace android {
 
@@ -63,7 +63,7 @@ public:
 
 private:
 	int mIonDeviceFd;  /* fd we get from open("/dev/ion") */
-	ion_user_handle_t mIonHandle;  /* handle we get from ION_IOC_ALLOC */
+	struct ion_handle *mIonHandle;  /* handle we get from ION_IOC_ALLOC */
 };
 
 // ---------------------------------------------------------------------------
