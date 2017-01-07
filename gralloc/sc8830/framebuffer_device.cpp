@@ -192,12 +192,12 @@ uint32_t dither_open(uint32_t w, uint32_t h)
 
 void dither_close(uint32_t handle)
 {
-	if (0 != handle)
+	if (NULL != handle)
 	{
 		struct dither_info *dither = (struct dither_info *)handle;
 
 		img_dither_deinit(dither->alg_handle);
-		dither->alg_handle = 0;
+		dither->alg_handle = NULL;
 		if(dither->fp) {
 			fclose(dither->fp);
 		}
