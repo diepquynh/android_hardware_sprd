@@ -522,7 +522,7 @@ status_t MemoryHeapIon::mapIonFd(int fd, size_t size, unsigned long memory_type,
 	data.len = size;
 	data.align = getpagesize();
 #if (ION_DRIVER_VERSION == 1)
-	data.heap_id_mask = memory_type;
+	data.heap_mask = memory_type;
 	//if cached buffer , force set the lowest two bits 11
 	if((memory_type&(1<<31))) {
 		data.flags = ((memory_type&(1<<31)) | 3);
