@@ -7,7 +7,7 @@
 #include <utils/Log.h>
 #include <linux/fb.h>
 #include <sys/stat.h>
-
+#include "gralloc_priv.h"
 
 #define BI_RGB          0
 #define BI_BITFIELDS    3
