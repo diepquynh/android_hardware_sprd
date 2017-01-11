@@ -42,6 +42,18 @@ enum {
     GRALLOC_USAGE_CAMERA_BUFFER         = 0x04000000,
 };
 
+enum {
+    HAL_PIXEL_FORMAT_YCbCr_422_P        = 0x12,
+    HAL_PIXEL_FORMAT_YCbCr_420_P        = 0x13,
+    HAL_PIXEL_FORMAT_YCbCr_420_I        = 0x15,
+    HAL_PIXEL_FORMAT_CbYCrY_422_I       = 0x16,
+    HAL_PIXEL_FORMAT_CbYCrY_420_I       = 0x17,
+    HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED = 0x18,
+    HAL_PIXEL_FORMAT_YCbCr_420_SP       = 0x19,
+    HAL_PIXEL_FORMAT_YCrCb_420_SP_TILED = 0x1A,
+    HAL_PIXEL_FORMAT_YCrCb_422_SP       = 0x1B,
+    HAL_PIXEL_FORMAT_YCrCb_420_P        = 0x1C,
+};
 /* NOTE:
  * If your framebuffer device driver is integrated with UMP, you will have to
  * change this IOCTL definition to reflect your integration with the framebuffer
