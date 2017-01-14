@@ -330,14 +330,14 @@ status_t SPRDMPEG4Decoder::initDecoder() {
     mHandle->VSP_bindCb = BindFrameWrapper;
     mHandle->VSP_unbindCb = UnbindFrameWrapper;
 
-    int32 phy_addr = 0;
-    int32 size = 0, size_stream;
+    unsigned long phy_addr = 0;
+    size_t size = 0, size_stream;
 
     size_stream = ONEFRAME_BITSTREAM_BFR_SIZE;
     if (mDecoderSwFlag) {
         mPbuf_stream_v = (unsigned char*)malloc(size_stream * sizeof(unsigned char));
-        mPbuf_stream_p = (int32)0;
-        mPbuf_stream_size = (int32)size_stream;
+        mPbuf_stream_p = 0;
+        mPbuf_stream_size = size_stream;
     } else {
         if (mIOMMUEnabled) {
             mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
@@ -704,10 +704,11 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalUseBuffer(
         } else {
             bool iommu_is_enable = MemoryHeapIon::Mm_iommu_is_enabled();
             if (iommu_is_enable) {
-                int picPhyAddr = 0, bufferSize = 0;
+                unsigned long picPhyAddr = 0;
+				size_t bufferSize = 0;
                 native_handle_t *pNativeHandle = (native_handle_t *)((*header)->pBuffer);
                 struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd,&picPhyAddr, &bufferSize);
 
                 pBufCtrl->pMem = NULL;
                 pBufCtrl->bufferFd = private_h->share_fd;
@@ -757,8 +758,8 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
             return SprdSimpleOMXComponent::allocateBuffer(header, portIndex, appPrivate, size);
         } else {
             MemoryHeapIon* pMem = NULL;
-            int phyAddr = 0;
-            int bufferSize = 0;
+            unsigned long phyAddr = 0;
+            size_t bufferSize = 0;
             unsigned char* pBuffer = NULL;
             OMX_U32 size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
 
@@ -996,7 +997,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             if(video_format.i_extra>0 && (mPbuf_stream_v != NULL)) {
                 memcpy(mPbuf_stream_v, vol_data[0],vol_size);
                 video_format.p_extra = (uint8 *)mPbuf_stream_v;
-                video_format.p_extra_phy = (uint32)mPbuf_stream_p;
+                video_format.p_extra_phy = mPbuf_stream_p;
             } else {
                 video_format.i_extra = 0;
                 video_format.p_extra = NULL;
@@ -1126,7 +1127,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             memcpy(mPbuf_stream_v, bitstream, bufferSize);
         }
         dec_in.pStream= (uint8 *) mPbuf_stream_v;
-        dec_in.pStream_phy= (uint32) mPbuf_stream_p;
+        dec_in.pStream_phy= mPbuf_stream_p;
         dec_in.dataLen = bufferSize;
         dec_in.beLastFrm = 0;
         dec_in.expected_IVOP = mNeedIVOP;
@@ -1464,7 +1465,9 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
         }
         int fd = mPmem_extra->getHeapID();
         if(fd>=0) {
-            int ret,phy_addr, buffer_size;
+            int ret;
+			unsigned long phy_addr;
+			size_t buffer_size;
             if (mIOMMUEnabled) {
                 ret = mPmem_extra->get_iova(ION_MM, &phy_addr, &buffer_size);
             } else {

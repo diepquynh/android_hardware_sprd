@@ -359,19 +359,19 @@ status_t SPRDAVCDecoder::initDecoder() {
     mHandle->VSP_unbindCb = UnbindFrameWrapper;
     mHandle->VSP_extMemCb = ExtMemAllocWrapper;
 
-    int32 phy_addr = 0;
-    int32 size = 0, size_stream;
+    unsigned long phy_addr = 0;
+    size_t size = 0, size_stream;
 
     size_stream = H264_DECODER_STREAM_BUFFER_SIZE;
     if (mDecoderSwFlag) {
         mPbuf_stream_v = (unsigned char*)malloc(size_stream * sizeof(unsigned char));
-        mPbuf_stream_p = (int32)0;
-        mPbuf_stream_size = (int32)size_stream;
+        mPbuf_stream_p = 0;
+        mPbuf_stream_size = size_stream;
     } else {
         if (mIOMMUEnabled) {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
         } else {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
         }
         if (mPmem_stream->getHeapID() < 0) {
             ALOGE("Failed to alloc bitstream pmem buffer, getHeapID failed");
@@ -387,7 +387,7 @@ status_t SPRDAVCDecoder::initDecoder() {
                 ALOGE("Failed to alloc bitstream pmem buffer, get phy addr failed");
                 return OMX_ErrorInsufficientResources;
             } else {
-                mPbuf_stream_v = (unsigned char*)mPmem_stream->base();
+                mPbuf_stream_v = (unsigned char*)mPmem_stream->getBase();
                 mPbuf_stream_p = (int32)phy_addr;
                 mPbuf_stream_size = (int32)size;
                 ALOGI("pmem %p - %p - %d", mPbuf_stream_p, mPbuf_stream_v, mPbuf_stream_size);
@@ -748,10 +748,11 @@ OMX_ERRORTYPE SPRDAVCDecoder::internalUseBuffer(
         } else {
             bool iommu_is_enable = MemoryHeapIon::Mm_iommu_is_enabled();
             if (iommu_is_enable) {
-                int picPhyAddr = 0, bufferSize = 0;
+                unsigned long picPhyAddr = 0;
+				size_t bufferSize = 0;
                 native_handle_t *pNativeHandle = (native_handle_t *)((*header)->pBuffer);
                 struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd, &picPhyAddr, &bufferSize);
 
                 pBufCtrl->pMem = NULL;
                 pBufCtrl->bufferFd = private_h->share_fd;
@@ -801,15 +802,15 @@ OMX_ERRORTYPE SPRDAVCDecoder::allocateBuffer(
             return SprdSimpleOMXComponent::allocateBuffer(header, portIndex, appPrivate, size);
         } else {
             MemoryHeapIon* pMem = NULL;
-            int phyAddr = 0;
-            int bufferSize = 0;
+            unsigned long phyAddr = 0;
+            size_t bufferSize = 0;
             unsigned char* pBuffer = NULL;
             OMX_U32 size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
 
             if (mIOMMUEnabled) {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
             } else {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
             }
 
             if(pMem->getHeapID() < 0) {
@@ -829,7 +830,7 @@ OMX_ERRORTYPE SPRDAVCDecoder::allocateBuffer(
                 }
             }
 
-            pBuffer = (unsigned char*)(pMem->base());
+            pBuffer = (unsigned char*)(pMem->getBase());
             BufferPrivateStruct* bufferPrivate = new BufferPrivateStruct();
             bufferPrivate->pMem = pMem;
             bufferPrivate->phyAddr = phyAddr;
@@ -1056,8 +1057,8 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
         uint8_t *bitstream = inHeader->pBuffer + inHeader->nOffset;
         int32_t bufferSize = inHeader->nFilledLen;
 
-        dec_in.pStream = (uint8 *) mPbuf_stream_v;
-        dec_in.pStream_phy = (uint32) mPbuf_stream_p;
+        dec_in.pStream = mPbuf_stream_v;
+        dec_in.pStream_phy = mPbuf_stream_p;
         dec_in.dataLen = bufferSize;
         dec_in.beLastFrm = 0;
         dec_in.expected_IVOP = mNeedIVOP;
@@ -1094,7 +1095,7 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
         outHeader->nTimeStamp = inHeader->nTimeStamp;
         outHeader->nFlags = inHeader->nFlags;
 
-        unsigned int picPhyAddr = 0;
+        unsigned long picPhyAddr = 0;
         if(!mDecoderSwFlag) {
             pBufCtrl= (BufferCtrlStruct*)(outHeader->pOutputPortPrivate);
             if(pBufCtrl->phyAddr != 0) {
@@ -1109,7 +1110,7 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
                     native_handle_t *pNativeHandle = (native_handle_t *)outHeader->pBuffer;
                     struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
                     int bufferSize = 0;
-                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,&picPhyAddr, &bufferSize);
                     pBufCtrl->phyAddr = picPhyAddr;
                 }
             }
@@ -1481,13 +1482,15 @@ int SPRDAVCDecoder::VSP_malloc_cb(unsigned int size_extra) {
         }
 
         if (mIOMMUEnabled) {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, size_extra, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, size_extra, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
         } else {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, size_extra, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, size_extra, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
         }
         int fd = mPmem_extra->getHeapID();
         if(fd >= 0) {
-            int ret,phy_addr, buffer_size;
+            int ret;
+			unsigned long phy_addr;
+			size_t buffer_size;
 
             if (mIOMMUEnabled) {
                 ret = mPmem_extra->get_iova(ION_MM, &phy_addr, &buffer_size);
@@ -1499,9 +1502,9 @@ int SPRDAVCDecoder::VSP_malloc_cb(unsigned int size_extra) {
                 return -1;
             }
 
-            mPbuf_extra_p =phy_addr;
+            mPbuf_extra_p = phy_addr;
             mPbuf_extra_size = buffer_size;
-            mPbuf_extra_v = (uint8 *)mPmem_extra->base();
+            mPbuf_extra_v = (uint8 *)mPmem_extra->getBase();
             ALOGI("pmem %p - %p - %d", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
 
             extra_mem[HW_NO_CACHABLE].common_buffer_ptr =(uint8 *) mPbuf_extra_v;

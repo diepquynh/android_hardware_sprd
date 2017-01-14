@@ -97,13 +97,13 @@ private:
 
     sp<MemoryHeapIon> mPmem_stream;
     unsigned char* mPbuf_stream_v;
-    int32 mPbuf_stream_p;
-    int32 mPbuf_stream_size;
+    unsigned long mPbuf_stream_p;
+    size_t mPbuf_stream_size;
 
     sp<MemoryHeapIon> mPmem_extra;
     unsigned char*  mPbuf_extra_v;
-    int32  mPbuf_extra_p;
-    int32  mPbuf_extra_size;
+    unsigned long mPbuf_extra_p;
+    size_t mPbuf_extra_size;
 
     OMX_BOOL iUseAndroidNativeBuffer[2];
 
