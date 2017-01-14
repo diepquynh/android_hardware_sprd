@@ -23,13 +23,13 @@ LOCAL_C_INCLUDES := \
                 external/jhead \
                 external/sqlite/dist \
                 system/media/camera/include \
-                $(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-                $(TOP)/vendor/sprd/open-source/libs/libmemoryheapion
+                $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
+                $(LOCAL_PATH)/../../libmemoryheapion
 
-ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
-LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libgpu/gralloc/midgard
+ifeq ($(SOC_SCX30G_V2),true)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/scx30g_v2
 else
-LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libgpu/gralloc/utgard
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/sc8830
 endif
 
 include $(shell find $(LOCAL_PATH) -name 'Sprdroid.mk')
