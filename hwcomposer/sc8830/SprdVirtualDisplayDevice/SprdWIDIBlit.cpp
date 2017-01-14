@@ -148,8 +148,8 @@ bool SprdWIDIBlit:: threadLoop()
     unsigned int width = 0;
     unsigned int height = 0;
     int format = -1;
-    int size = -1;
-    int size2 = 1;
+    size_t size = -1;
+    size_t size2 = 1;
 
 
     HWC_TRACE_BEGIN_WIDIBLIT;

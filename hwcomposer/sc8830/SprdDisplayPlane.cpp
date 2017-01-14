@@ -95,7 +95,7 @@ private_handle_t* SprdDisplayPlane:: createPlaneBuffer(int index)
 {
     private_handle_t* BufHandle = NULL;
     uint32_t stride;
-    int size;
+    size_t size;
 
     if (index < 0)
     {
