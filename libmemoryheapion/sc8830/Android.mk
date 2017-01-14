@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libmemoryheapion_sprd
+LOCAL_MODULE := libmemoryheapion
 
 LOCAL_SRC_FILES := \
 	MemoryHeapIon.cpp
@@ -34,7 +34,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)/ \
 
 LOCAL_SHARED_LIBRARIES := \
-	libbinder \
 	liblog \
 	libcutils \
 	libutils
