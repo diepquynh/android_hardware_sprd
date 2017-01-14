@@ -256,8 +256,8 @@ status_t SPRDVPXDecoder::initDecoder() {
     MMCodecBuffer InterMemBfr;
     MMCodecBuffer ExtraMemBfr;
     MMDecVideoFormat VideoFormat;
-    int32 phy_addr = 0;
-    int32 size = 0, size_stream;
+    unsigned long phy_addr = 0;
+    size_t size = 0, size_stream;
 
     size_stream = ONEFRAME_BITSTREAM_BFR_SIZE;
     if (mIOMMUEnabled) {
@@ -280,8 +280,8 @@ status_t SPRDVPXDecoder::initDecoder() {
             return OMX_ErrorInsufficientResources;
         } else {
             mPbuf_stream_v = (uint8 *)mPmem_stream->base();
-            mPbuf_stream_p = (int32)phy_addr;
-            mPbuf_stream_size = (int32)size;
+            mPbuf_stream_p = phy_addr;
+            mPbuf_stream_size = size;
         }
     }
 
@@ -311,7 +311,7 @@ status_t SPRDVPXDecoder::initDecoder() {
             return OMX_ErrorInsufficientResources;
         } else {
             mPbuf_extra_v = (uint8 *)mPmem_extra->base();
-            mPbuf_extra_p = (uint32)phy_addr;
+            mPbuf_extra_p = phy_addr;
         }
     }
 
@@ -320,7 +320,7 @@ status_t SPRDVPXDecoder::initDecoder() {
     InterMemBfr.size = size_inter;
 
     ExtraMemBfr.common_buffer_ptr = (uint8 *)mPbuf_extra_v;
-    ExtraMemBfr.common_buffer_ptr_phy = (uint32)mPbuf_extra_p;
+    ExtraMemBfr.common_buffer_ptr_phy = mPbuf_extra_p;
     ExtraMemBfr.size = size_extra;
 
     VideoFormat.yuv_format = YUV420SP_NV12;
@@ -541,10 +541,11 @@ OMX_ERRORTYPE SPRDVPXDecoder::internalUseBuffer(
         } else {
             bool iommu_is_enable = MemoryHeapIon::Mm_iommu_is_enabled();
             if (iommu_is_enable) {
-                int picPhyAddr = 0, bufferSize = 0;
+                unsigned long picPhyAddr = 0;
+				size_t bufferSize = 0;
                 native_handle_t *pNativeHandle = (native_handle_t *)((*header)->pBuffer);
                 struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                MemoryHeapIon::Get_iova(ION_MM, private_h->share_fd, &picPhyAddr, &bufferSize);
 
                 pBufCtrl->pMem = NULL;
                 pBufCtrl->bufferFd = private_h->share_fd;
@@ -591,8 +592,8 @@ OMX_ERRORTYPE SPRDVPXDecoder::allocateBuffer(
     {
 
         MemoryHeapIon* pMem = NULL;
-        int phyAddr = 0;
-        int bufferSize = 0;
+        unsigned long phyAddr = 0;
+        size_t bufferSize = 0;
         unsigned char* pBuffer = NULL;
         OMX_U32 size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
 
@@ -754,7 +755,7 @@ void SPRDVPXDecoder::onQueueFilled(OMX_U32 portIndex) {
             memcpy(mPbuf_stream_v, bitstream, bufferSize);
         }
         dec_in.pStream= (uint8 *) mPbuf_stream_v;
-        dec_in.pStream_phy= (uint32) mPbuf_stream_p;
+        dec_in.pStream_phy = mPbuf_stream_p;
         dec_in.dataLen = bufferSize;
         dec_in.beLastFrm = 0;
         dec_in.expected_IVOP = 0;
@@ -763,7 +764,7 @@ void SPRDVPXDecoder::onQueueFilled(OMX_U32 portIndex) {
 
         dec_out.frameEffective = 0;
 
-        int picPhyAddr = 0;
+        unsigned long picPhyAddr = 0;
 
         pBufCtrl= (BufferCtrlStruct*)(outHeader->pOutputPortPrivate);
         if(pBufCtrl->phyAddr != 0) {
@@ -777,8 +778,8 @@ void SPRDVPXDecoder::onQueueFilled(OMX_U32 portIndex) {
             } else {
                 native_handle_t *pNativeHandle = (native_handle_t *)outHeader->pBuffer;
                 struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                int bufferSize = 0;
-                MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                size_t bufferSize = 0;
+                MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,&picPhyAddr, &bufferSize);
                 pBufCtrl->phyAddr = picPhyAddr;
             }
         }
