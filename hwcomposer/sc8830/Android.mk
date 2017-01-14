@@ -37,7 +37,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libhardware \
 	libui \
 	libsync \
-	libmemoryheapion_sprd \
+	libmemoryheapion \
 
 LOCAL_SRC_FILES := \
 	SprdHWComposer.cpp \
@@ -61,7 +61,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM) \
-	$(LOCAL_PATH)/../../libmemoryheapion_sprd/ \
+	$(LOCAL_PATH)/../../libmemoryheapion/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/
 
