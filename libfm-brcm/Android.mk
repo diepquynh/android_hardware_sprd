@@ -51,11 +51,68 @@ LOCAL_MODULE    := fm.$(TARGET_BOARD_PLATFORM)
 LOCAL_PROGUARD_ENABLED:=disabled
 
 LOCAL_PRELINK_MODULE := false
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-
+LOCAL_MODULE_RELATIVE_PATH := hw
 
 
 include $(BUILD_SHARED_LIBRARY)
+
+#
+# FmDaemon
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES:= \
+	  FmDaemon.cpp
+
+ifneq ($(TARGET_BUILD_VARIANT),user)
+LOCAL_CFLAGS:=    -DFM_UDP_SERVER
+endif
+
+LOCAL_C_INCLUDES:=\
+        $(call include-path-for, bluedroid ) \
+        system/bluetooth/bluedroid/include  \
+        external/bluetooth/bluez/lib
+
+LOCAL_SHARED_LIBRARIES := \
+          libbluedroid \
+          libcutils    \
+          libutils
+
+#LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE:=FmDaemon
+
+include $(BUILD_EXECUTABLE)
+
+
+#
+# Fm
+#
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES:= \
+	  FmDaemon.cpp
+
+LOCAL_CFLAGS:= \
+
+
+LOCAL_C_INCLUDES:=\
+          $(call include-path-for, bluedroid ) \
+          system/bluetooth/bluedroid/include  \
+          external/bluetooth/bluez/lib
+
+LOCAL_SHARED_LIBRARIES := \
+          libbluedroid   \
+          libcutils      \
+          libutils
+
+#LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE:=FmTest
+
+include $(BUILD_EXECUTABLE)
 
 endif
 endif

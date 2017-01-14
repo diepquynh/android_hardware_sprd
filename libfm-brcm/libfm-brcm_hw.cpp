@@ -30,7 +30,6 @@
 
 #include <cutils/log.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -45,7 +44,7 @@
 #include <btl_if.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include "fm.h"
+#include <hardware/fm.h>
 #include <CMutex.h>
 #include <com_broadcom_bt_service_fm_FmReceiverService_int.h>
 #define     DEBUG_VALUE 0
