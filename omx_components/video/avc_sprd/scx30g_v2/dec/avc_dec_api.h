@@ -31,7 +31,8 @@ typedef unsigned char		BOOLEAN;
 typedef unsigned char		uint8;
 typedef unsigned short		uint16;
 typedef unsigned int		uint32;
-//typedef unsigned int		uint;
+typedef unsigned long long 	uint64;
+typedef signed long long 	int64;
 
 typedef signed char			int8;
 typedef signed short		int16;
@@ -84,8 +85,8 @@ typedef struct
 {
     AVCProfile profile;
     AVCLevel   level;
-    int32 max_width;
-    int32 max_height;
+    uint32 max_width;
+    uint32 max_height;
 } MMDecCapability;
 
 typedef enum
@@ -130,7 +131,7 @@ typedef struct
     int32	frame_height;
     int32	i_extra;
     void 	*p_extra;
-    uint32 p_extra_phy;
+    unsigned long p_extra_phy;
     //int32	uv_interleaved;
     int32   yuv_format;
 } MMDecVideoFormat;
@@ -139,7 +140,7 @@ typedef struct
 typedef struct
 {
     uint8	*common_buffer_ptr;     // Pointer to buffer used when decoding
-    uint32 common_buffer_ptr_phy;
+    unsigned long common_buffer_ptr_phy;
     uint32	size;            		// Number of bytes decoding buffer
 
     int32 	frameBfr_num;			//YUV frame buffer number
@@ -160,12 +161,12 @@ typedef struct
 typedef struct
 {
     uint8		*pStream;          	// Pointer to stream to be decoded
-    uint32		pStream_phy;          	// Pointer to stream to be decoded, phy
+    unsigned long pStream_phy;          	// Pointer to stream to be decoded, phy
     uint32		dataLen;           	// Number of bytes to be decoded
     int32		beLastFrm;			// whether the frame is the last frame.  1: yes,   0: no
 
     int32		expected_IVOP;		// control flag, seek for IVOP,
-    int32		pts;                // presentation time stamp
+    uint64		nTimeStamp;                // time stamp, it is PTS or DTS
 
     int32		beDisplayed;		// whether the frame to be displayed    1: display   0: not //display
 
@@ -185,13 +186,16 @@ typedef struct
 
     int32   is_transposed;	//the picture is transposed or not, in 8800S4, it should always 0.
 
-    int32	pts;            //presentation time stamp
+    uint64	pts;            //presentation time stamp
     int32	frameEffective;
 
     int32	err_MB_num;		//error MB number
     void *pBufferHeader;
     int reqNewBuf;
     int32 mPicId;
+
+    BOOLEAN sawSPS;
+    BOOLEAN sawPPS;
 } MMDecOutput;
 
 typedef enum
@@ -228,6 +232,7 @@ typedef struct
 
 typedef int (*FunctionType_BufCB)(void *userdata,void *pHeader);
 typedef int (*FunctionType_MallocCB)(void* aUserData, unsigned int size_extra);
+typedef int (*FunctionType_MbinfoMallocCB)(void* aUserData, unsigned int size_mbinfo, unsigned long *pPhyAddr);
 
 /* Application controls, this structed shall be allocated */
 /*    and initialized in the application.                 */
@@ -250,6 +255,7 @@ typedef struct tagAVCHandle
     FunctionType_BufCB VSP_bindCb;
     FunctionType_BufCB VSP_unbindCb;
     FunctionType_MallocCB VSP_extMemCb;
+    FunctionType_MbinfoMallocCB VSP_mbinfoMemCb;
 } AVCHandle;
 
 /**----------------------------------------------------------------------------*
@@ -294,7 +300,7 @@ MMDecRet H264DecDecode(AVCHandle *avcHandle, MMDecInput *pInput,MMDecOutput *pOu
 MMDecRet H264DecRelease(AVCHandle *avcHandle);
 
 void H264Dec_ReleaseRefBuffers(AVCHandle *avcHandle);
-MMDecRet H264Dec_GetLastDspFrm(AVCHandle *avcHandle, void **pOutput, int32 *picId);
+MMDecRet H264Dec_GetLastDspFrm(AVCHandle *avcHandle, void **pOutput, int32 *picId, uint64 *pts);
 void H264Dec_SetCurRecPic(AVCHandle *avcHandle, uint8 *pFrameY,uint8 *pFrameY_phy,void *pBufferHeader, int32 picId);
 
 
@@ -306,9 +312,9 @@ typedef MMDecRet (*FT_H264GetCodecCapability)(AVCHandle *avcHandle, MMDecCapabil
 typedef MMDecRet (*FT_H264DecMemInit)(AVCHandle *avcHandle, MMCodecBuffer *pBuffer);
 typedef MMDecRet (*FT_H264DecDecode)(AVCHandle *avcHandle, MMDecInput *pInput,MMDecOutput *pOutput);
 typedef MMDecRet (*FT_H264DecRelease)(AVCHandle *avcHandle);
-typedef void (* FT_H264Dec_SetCurRecPic)(AVCHandle *avcHandle, uint8 *pFrameY,uint8 *pFrameY_phy,void *pBufferHeader, int32 picId);
-typedef MMDecRet (* FT_H264Dec_GetLastDspFrm)(AVCHandle *avcHandle, void **pOutput, int32 *picId);
-typedef void (* FT_H264Dec_ReleaseRefBuffers)(AVCHandle *avcHandle);
+typedef void (*FT_H264Dec_SetCurRecPic)(AVCHandle *avcHandle, uint8 *pFrameY,uint8 *pFrameY_phy,void *pBufferHeader, int32 picId);
+typedef MMDecRet (*FT_H264Dec_GetLastDspFrm)(AVCHandle *avcHandle, void **pOutput, int32 *picId, uint64 *pts);
+typedef void (*FT_H264Dec_ReleaseRefBuffers)(AVCHandle *avcHandle);
 typedef MMDecRet (*FT_H264DecSetparam)(AVCHandle *avcHandle, MMDecVideoFormat * pVideoFormat);
 
 /**----------------------------------------------------------------------------*
