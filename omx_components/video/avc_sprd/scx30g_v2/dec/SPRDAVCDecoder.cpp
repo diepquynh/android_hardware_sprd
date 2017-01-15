@@ -1109,7 +1109,7 @@ void SPRDAVCDecoder::onQueueFilled(OMX_U32 portIndex) {
                 } else {
                     native_handle_t *pNativeHandle = (native_handle_t *)outHeader->pBuffer;
                     struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                    int bufferSize = 0;
+                    size_t bufferSize = 0;
                     MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,&picPhyAddr, &bufferSize);
                     pBufCtrl->phyAddr = picPhyAddr;
                 }
