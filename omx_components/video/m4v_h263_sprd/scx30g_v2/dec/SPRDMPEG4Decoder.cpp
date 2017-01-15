@@ -656,8 +656,8 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalSetParameter(
 
         if (defParams->nBufferCountActual
                 != port->mDef.nBufferCountActual) {
-            CHECK_GE(defParams->nBufferCountActual,
-                     port->mDef.nBufferCountMin);
+            if (defParams->nBufferCountActual < port->mDef.nBufferCountMin)
+                return OMX_ErrorUnsupportedSetting;
 
             port->mDef.nBufferCountActual = defParams->nBufferCountActual;
         }
@@ -1577,11 +1577,11 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::getExtensionIndex(
         return OMX_ErrorNone;
     }	else if (strcmp(name, SPRD_INDEX_PARAM_USE_ANB) == 0) {
         ALOGI("getExtensionIndex:%s",SPRD_INDEX_PARAM_USE_ANB);
-        *index = OMX_IndexParamUseAndroidNativeBuffer2;
+        *index = (OMX_INDEXTYPE) OMX_IndexParamUseAndroidNativeBuffer2;
         return OMX_ErrorNone;
     }  else if (strcmp(name, SPRD_INDEX_CONFIG_THUMBNAIL_MODE) == 0) {
         ALOGI("getExtensionIndex:%s",SPRD_INDEX_CONFIG_THUMBNAIL_MODE);
-        *index = OMX_IndexConfigThumbnailMode;
+        *index = (OMX_INDEXTYPE) OMX_IndexConfigThumbnailMode;
         return OMX_ErrorNone;
     }
 

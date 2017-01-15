@@ -576,7 +576,7 @@ SPRDAVCEncoder::SPRDAVCEncoder(
       mVideoBitRate(192000),
       mBitrate(0),
       mEncSceneMode(0),
-      mVideoColorFormat(OMX_SPRD_COLOR_FormatYVU420SemiPlanar),
+      mVideoColorFormat((OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar),
       mStoreMetaData(OMX_FALSE),
       mPrependSPSPPS(OMX_FALSE),
       mIOMMUEnabled(false),
@@ -977,7 +977,7 @@ void SPRDAVCEncoder::initPorts() {
 
     def.format.video.cMIMEType = const_cast<char *>("video/raw");
     def.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
-    def.format.video.eColorFormat = OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
+    def.format.video.eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
     def.format.video.xFramerate = (mVideoFrameRate << 16);  // Q16 format
     def.format.video.nBitrate = mVideoBitRate;
     def.format.video.nFrameWidth = mVideoWidth;
@@ -1049,7 +1049,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalGetParameter(
         if (formatParams->nPortIndex == 0) {
             formatParams->eCompressionFormat = OMX_VIDEO_CodingUnused;
             if (formatParams->nIndex == 0) {
-                formatParams->eColorFormat = OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
+                formatParams->eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
             } else if (formatParams->nIndex == 1) {
                 formatParams->eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
             } else if (formatParams->nIndex == 2) {
@@ -1177,7 +1177,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalGetParameter(
                 pDescribeColorFormat->eColorFormat,
                 pDescribeColorFormat->nFrameWidth, pDescribeColorFormat->nFrameHeight);
 
-        if (fmt != OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
+        if (fmt != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
             fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
             fmt != OMX_COLOR_FormatYUV420Planar) {
             ALOGW("do not know color format 0x%x = %d", fmt, fmt);
@@ -1209,7 +1209,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalGetParameter(
         image.mPlane[image.Y].mVertSubsampling = 1;
 
         switch (fmt) {
-            case OMX_SPRD_COLOR_FormatYVU420SemiPlanar:
+            case (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar:
             // NV21
             image.mPlane[image.V].mOffset = pDescribeColorFormat->nStride*pDescribeColorFormat->nSliceHeight;
             image.mPlane[image.V].mColInc = 2;
@@ -1300,7 +1300,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalSetParameter(
         if (def->nPortIndex == 0) {
             if (def->format.video.eCompressionFormat != OMX_VIDEO_CodingUnused ||
                     (def->format.video.eColorFormat != OMX_COLOR_FormatYUV420Flexible &&
-                     def->format.video.eColorFormat != OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
+                     def->format.video.eColorFormat != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatYUV420SemiPlanar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatYUV420Planar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatAndroidOpaque)) {
@@ -1324,7 +1324,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalSetParameter(
         //translate Flexible 8-bit YUV format to our default YUV format
         if (def->format.video.eColorFormat == OMX_COLOR_FormatYUV420Flexible) {
             ALOGI("internalSetParameter, translate Flexible 8-bit YUV format to SPRD YVU420SemiPlanar");
-            def->format.video.eColorFormat = OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
+            def->format.video.eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
         }
 
         OMX_ERRORTYPE err = SprdSimpleOMXComponent::internalSetParameter(index, params);
@@ -1374,7 +1374,7 @@ OMX_ERRORTYPE SPRDAVCEncoder::internalSetParameter(
         if (formatParams->nPortIndex == 0) {
             if (formatParams->eCompressionFormat != OMX_VIDEO_CodingUnused ||
                     ((formatParams->nIndex == 0 &&
-                      formatParams->eColorFormat != OMX_SPRD_COLOR_FormatYVU420SemiPlanar) ||
+                      formatParams->eColorFormat != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar) ||
                      (formatParams->nIndex == 1 &&
                       formatParams->eColorFormat != OMX_COLOR_FormatYUV420SemiPlanar) ||
                      (formatParams->nIndex == 2 &&
@@ -1676,7 +1676,7 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                     ALOGI("format:0x%x, usage:0x%x", private_h->format, private_h->usage);
 
                     if ((mPbuf_yuv_v == NULL) &&
-                        !((mVideoColorFormat == OMX_SPRD_COLOR_FormatYVU420SemiPlanar ||
+                        !((mVideoColorFormat == (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar ||
                             mVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar) &&
                            (private_h->usage == GRALLOC_USAGE_HW_VIDEO_ENCODER))) {
                         size_t yuv_size = ((mVideoWidth+15)&(~15)) * ((mVideoHeight+15)&(~15)) *3/2;
@@ -1759,7 +1759,7 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                         }
                     } else if(private_h->usage == GRALLOC_USAGE_HW_VIDEO_ENCODER ||
                                 mVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar ||
-                                mVideoColorFormat == OMX_SPRD_COLOR_FormatYVU420SemiPlanar) {
+                                mVideoColorFormat == (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar) {
                         unsigned long py_addr=0;
                         size_t buf_size=0;
                         int fd = private_h->share_fd;

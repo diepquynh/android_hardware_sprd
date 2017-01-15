@@ -12,7 +12,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/native/include/ui \
 	frameworks/native/include/utils \
 	frameworks/native/include/media/hardware \
-	$(LOCAL_PATH)/../../../../../gralloc/$(TARGET_BOARD_PLATFORM) \
+	$(LOCAL_PATH)/../../../../../gralloc/scx30g_v2 \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video 
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
