@@ -340,9 +340,9 @@ status_t SPRDMPEG4Decoder::initDecoder() {
         mPbuf_stream_size = size_stream;
     } else {
         if (mIOMMUEnabled) {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
         } else {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
         }
         if (mPmem_stream->getHeapID() < 0) {
             ALOGE("Failed to alloc bitstream pmem buffer, getHeapID failed");
@@ -359,7 +359,7 @@ status_t SPRDMPEG4Decoder::initDecoder() {
                 ALOGE("Failed to alloc bitstream pmem buffer, get phy addr failed");
                 return OMX_ErrorInsufficientResources;
             } else {
-                mPbuf_stream_v = (uint8 *)mPmem_stream->base();
+                mPbuf_stream_v = (uint8 *)mPmem_stream->getBase();
                 mPbuf_stream_p = phy_addr;
                 mPbuf_stream_size = size;
                 ALOGI("pmem %p - %p - %d", mPbuf_stream_p, mPbuf_stream_v, mPbuf_stream_size);
@@ -764,9 +764,9 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
             OMX_U32 size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
 
             if (mIOMMUEnabled) {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
             } else {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
             }
             if(pMem->getHeapID() < 0) {
                 ALOGE("Failed to alloc outport pmem buffer");
@@ -785,7 +785,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
                 }
             }
 
-            pBuffer = (unsigned char*)(pMem->base());
+            pBuffer = (unsigned char*)(pMem->getBase());
             BufferPrivateStruct* bufferPrivate = new BufferPrivateStruct();
             bufferPrivate->pMem = pMem;
             bufferPrivate->phyAddr = phyAddr;
@@ -1080,7 +1080,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
         MMDecInput dec_in;
         MMDecOutput dec_out;
 
-        unsigned int picPhyAddr = 0;
+        unsigned long picPhyAddr = 0;
 
         if(!mDecoderSwFlag) {
             pBufCtrl= (BufferCtrlStruct*)(outHeader->pOutputPortPrivate);
@@ -1095,8 +1095,8 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
                 } else {
                     native_handle_t *pNativeHandle = (native_handle_t *)outHeader->pBuffer;
                     struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                    int bufferSize = 0;
-                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
+                    size_t bufferSize = 0;
+                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd, &picPhyAddr, &bufferSize);
                     pBufCtrl->phyAddr = picPhyAddr;
                 }
             }
@@ -1459,9 +1459,9 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
     } else {
 
         if (mIOMMUEnabled) {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
         } else {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
         }
         int fd = mPmem_extra->getHeapID();
         if(fd>=0) {
@@ -1480,7 +1480,7 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
 
             mPbuf_extra_p = phy_addr;
             mPbuf_extra_size = buffer_size;
-            mPbuf_extra_v = (uint8 *)mPmem_extra->base();
+            mPbuf_extra_v = (uint8 *)mPmem_extra->getgetBase();
             ALOGI("pmem %p - %p - %d", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
             extra_mem[HW_NO_CACHABLE].common_buffer_ptr =(uint8 *) mPbuf_extra_v;
             extra_mem[HW_NO_CACHABLE].common_buffer_ptr_phy = (void *)mPbuf_extra_p;
