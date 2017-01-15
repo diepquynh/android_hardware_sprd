@@ -31,8 +31,6 @@
 #define SPRD_INDEX_PARAM_PREPEND_SPSPPS_TO_IDR "OMX.google.android.index.prependSPSPPSToIDRFrames"
 #define SPRD_INDEX_CONFIG_THUMBNAIL_MODE "OMX.sprd.index.ThumbnailMode"
 
-namespace android {
-
 typedef enum SPRD_OMX_COLOR_FORMATTYPE {
     OMX_SPRD_COLOR_FormatYVU420SemiPlanar = 0x7FD00001,
 } SPRD_OMX_COLOR_FORMATTYPE;
