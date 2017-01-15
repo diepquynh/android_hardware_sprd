@@ -246,10 +246,10 @@ SPRDAVCDecoder::SPRDAVCDecoder(
 
     char value_dump[PROPERTY_VALUE_MAX];
 
-    property_get("h264dec.yuv.dump", value_dump, "false");
+    //property_get("h264dec.yuv.dump", value_dump, "false");
     mDumpYUVEnabled = !strcmp(value_dump, "true");
 
-    property_get("h264dec.strm.dump", value_dump, "false");
+    //property_get("h264dec.strm.dump", value_dump, "false");
     mDumpStrmEnabled = !strcmp(value_dump, "true");
     ALOGI("%s, mDumpYUVEnabled: %d, mDumpStrmEnabled: %d", __FUNCTION__, mDumpYUVEnabled, mDumpStrmEnabled);
 
