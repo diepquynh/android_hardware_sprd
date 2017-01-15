@@ -18,7 +18,7 @@
 #define SPRD_MPEG4_DECODER_H_
 
 #include "SprdSimpleOMXComponent.h"
-#include <MemoryHeapIon.h>
+#include "MemoryHeapIon.h"
 #include "m4v_h263_dec_api.h"
 
 #define SPRD_ION_DEV "/dev/ion"
@@ -36,6 +36,8 @@ struct SPRDMPEG4Decoder : public SprdSimpleOMXComponent {
                      const OMX_CALLBACKTYPE *callbacks,
                      OMX_PTR appData,
                      OMX_COMPONENTTYPE **component);
+
+	OMX_ERRORTYPE initCheck() const;
 
 protected:
     virtual ~SPRDMPEG4Decoder();
@@ -80,7 +82,7 @@ protected:
 private:
     enum {
         kNumInputBuffers  = 8,
-        kNumOutputBuffers = 5,
+        kNumOutputBuffers = 3,
     };
 
     enum {
@@ -95,50 +97,57 @@ private:
         OUTPUT_FRAMES_FLUSHED,
     };
 
+    enum OutputPortSettingChange{
+        NONE,
+        AWAITING_DISABLED,
+        AWAITING_ENABLED
+    };
+
+    OMX_ERRORTYPE mInitCheck;
+
     tagMP4Handle *mHandle;
 
     size_t mInputBufferCount;
+    int mSetFreqCount;
 
     int32_t mWidth, mHeight;
     int32_t mCropLeft, mCropTop, mCropRight, mCropBottom;
 
-    int32 mMaxWidth, mMaxHeight;
-    int mSetFreqCount;
+    int32_t mMaxWidth, mMaxHeight;
 
+    EOSStatus mEOSStatus;
+    OutputPortSettingChange mOutputPortSettingsChange;
+
+    bool mHeadersDecoded;
     bool mSignalledError;
+    bool mDecoderSwFlag;
+    bool mChangeToSwDec;
+    bool mAllocateBuffers;
+    bool mNeedIVOP;
     bool mInitialized;
     bool mFramesConfigured;
-
-    int32_t mNumSamplesOutput;
-
     bool mIOMMUEnabled;
+    int mIOMMUID;
+    bool mStopDecode;
+    OMX_BOOL mThumbnailMode;
+
     uint8_t *mCodecInterBuffer;
     uint8_t *mCodecExtraBuffer;
 
     sp<MemoryHeapIon> mPmem_stream;
-    unsigned char* mPbuf_stream_v;
+    uint8_t* mPbuf_stream_v;
     unsigned long mPbuf_stream_p;
     size_t mPbuf_stream_size;
 
     sp<MemoryHeapIon> mPmem_extra;
-    unsigned char*  mPbuf_extra_v;
-    unsigned long mPbuf_extra_p;
+    uint8_t*  mPbuf_extra_v;
+    unsigned long  mPbuf_extra_p;
     size_t  mPbuf_extra_size;
 
     uint8_t *mPVolHeader;
     int32_t  mPVolHeaderSize;
 
-    OMX_BOOL iUseAndroidNativeBuffer[2];
-
     void* mLibHandle;
-    bool mDecoderSwFlag;
-    bool mChangeToHwDec;
-    EOSStatus mEOSStatus;
-    bool mNeedIVOP;
-    bool mHeadersDecoded;
-    bool mAllocateBuffers;
-    bool mStopDecode;
-    OMX_BOOL mThumbnailMode;
     FT_MP4DecSetCurRecPic mMP4DecSetCurRecPic;
     FT_MP4DecInit mMP4DecInit;
     FT_MP4DecVolHeader mMP4DecVolHeader;
@@ -152,6 +161,8 @@ private:
     FT_MP4DecGetLastDspFrm mMP4DecGetLastDspFrm;
     FT_MP4GetCodecCapability mMP4GetCodecCapability;
 
+    OMX_BOOL iUseAndroidNativeBuffer[2];
+
     static int32_t extMemoryAllocWrapper(void *userData, unsigned int extra_mem_size);
     static int32_t BindFrameWrapper(void *aUserData, void *pHeader, int flag);
     static int32_t UnbindFrameWrapper(void *aUserData, void *pHeader, int flag);
@@ -159,12 +170,6 @@ private:
     int extMemoryAlloc(unsigned int extra_mem_size) ;
     int VSP_bind_cb(void *pHeader,int flag);
     int VSP_unbind_cb(void *pHeader,int flag);
-
-    enum {
-        NONE,
-        AWAITING_DISABLED,
-        AWAITING_ENABLED
-    } mOutputPortSettingsChange;
 
     void initPorts();
     status_t initDecoder();

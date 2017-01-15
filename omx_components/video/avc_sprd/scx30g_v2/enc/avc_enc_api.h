@@ -190,7 +190,7 @@ typedef enum
 typedef struct
 {
     uint8 *common_buffer_ptr;     // Pointer to buffer used when decoding
-    void *common_buffer_ptr_phy;
+    unsigned long common_buffer_ptr_phy;
     uint32	size;            		// Number of bytes decoding buffer
 
     int32 	frameBfr_num;			//YUV frame buffer number
@@ -219,8 +219,7 @@ typedef struct
 //    int32	uv_interleaved;				//tmp add
     int32    yuv_format;
     int32    b_anti_shake;
-
-    int32 cabac_en;
+    int32    cabac_en;
 } MMEncVideoInfo;
 
 // Encoder config structure
@@ -240,7 +239,8 @@ typedef struct
 
     uint32	profileAndLevel;
 
-    uint32 PrependSPSPPSEnalbe;	// 0: disable, 1: disable
+    uint32  PrependSPSPPSEnalbe;        // 0: disable, 1: disable
+    uint32  EncSceneMode;
 } MMEncConfig;
 
 // Encoder input structure
@@ -262,6 +262,8 @@ typedef struct
     int32    org_img_height;
     int32    crop_x;
     int32    crop_y;
+    int32    bitrate;
+    bool     ischangebitrate;
 } MMEncIn;
 
 // Encoder output structure
