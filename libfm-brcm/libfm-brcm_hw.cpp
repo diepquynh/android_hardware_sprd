@@ -40,7 +40,7 @@
 #include <arpa/inet.h>
 #include <cutils/properties.h>
 #include <sys/time.h>
-
+#include <stdlib.h>
 #include <btl_if.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
