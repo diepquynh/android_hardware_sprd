@@ -1480,7 +1480,7 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
 
             mPbuf_extra_p = phy_addr;
             mPbuf_extra_size = buffer_size;
-            mPbuf_extra_v = (uint8 *)mPmem_extra->getgetBase();
+            mPbuf_extra_v = (uint8 *)mPmem_extra->getBase();
             ALOGI("pmem %p - %p - %d", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
             extra_mem[HW_NO_CACHABLE].common_buffer_ptr =(uint8 *) mPbuf_extra_v;
             extra_mem[HW_NO_CACHABLE].common_buffer_ptr_phy = (void *)mPbuf_extra_p;
