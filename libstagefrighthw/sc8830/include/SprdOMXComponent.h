@@ -44,6 +44,13 @@ typedef enum SPRD_OMX_INDEXTYPE {
     OMX_IndexConfigThumbnailMode,
 } SPRD_OMX_INDEXTYPE;
 
+typedef struct OMX_VIDEO_CONFIG_ENCODERSCENEMODE {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_U32 nPortIndex;
+    OMX_U32 nMode;
+} OMX_VIDEO_CONFIG_ENCODERSCENEMODE;
+
 namespace android {
 
 typedef struct BufferCtrlStruct
