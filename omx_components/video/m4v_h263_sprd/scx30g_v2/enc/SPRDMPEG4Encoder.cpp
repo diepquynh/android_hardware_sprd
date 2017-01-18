@@ -211,7 +211,7 @@ SPRDMPEG4Encoder::SPRDMPEG4Encoder(
       mVideoHeight(144),
       mVideoFrameRate(30),
       mVideoBitRate(192000),
-      mVideoColorFormat((OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar),
+      mVideoColorFormat(OMX_COLOR_FormatYUV420SemiPlanar),
       mPFrames(29),
       mStoreMetaData(OMX_FALSE),
       mIOMMUEnabled(false),
@@ -414,11 +414,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::initEncParams() {
     mEncInfo.is_h263 = mIsH263;
     mEncInfo.frame_width = mVideoWidth;
     mEncInfo.frame_height = mVideoHeight;
-    if (mVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar) {
-        mEncInfo.yuv_format = MMENC_YUV420SP_NV12;
-    } else {
-        mEncInfo.yuv_format = MMENC_YUV420SP_NV21;
-    }
+    mEncInfo.yuv_format = MMENC_YUV420SP_NV21;
     mEncInfo.time_scale = 1000;
 #ifdef ANTI_SHAKE
     mEncInfo.b_anti_shake = 1;
@@ -556,7 +552,7 @@ void SPRDMPEG4Encoder::initPorts() {
 
     def.format.video.cMIMEType = const_cast<char *>("video/raw");
     def.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
-    def.format.video.eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
+    def.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
     def.format.video.xFramerate = (mVideoFrameRate << 16);  // Q16 format
     def.format.video.nBitrate = mVideoBitRate;
     def.format.video.nFrameWidth = mVideoWidth;
@@ -629,18 +625,16 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalGetParameter(
             return OMX_ErrorUndefined;
         }
 
-        if (formatParams->nIndex > 3) {
+        if (formatParams->nIndex > 2) {
             return OMX_ErrorNoMore;
         }
 
         if (formatParams->nPortIndex == 0) {
             formatParams->eCompressionFormat = OMX_VIDEO_CodingUnused;
             if (formatParams->nIndex == 0) {
-                formatParams->eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
-            } else if (formatParams->nIndex == 1) {
-                formatParams->eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
-            } else if(formatParams->nIndex == 2) {
                 formatParams->eColorFormat = OMX_COLOR_FormatYUV420Planar;
+            } else if(formatParams->nIndex == 1) {
+                formatParams->eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
             } else {
                 formatParams->eColorFormat = OMX_COLOR_FormatAndroidOpaque;
             }
@@ -755,8 +749,7 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalGetParameter(
                 pDescribeColorFormat->eColorFormat,
                 pDescribeColorFormat->nFrameWidth, pDescribeColorFormat->nFrameHeight);
 
-        if (fmt != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
-            fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
+        if (fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
             fmt != OMX_COLOR_FormatYUV420Planar) {
             ALOGW("do not know color format 0x%x = %d", fmt, fmt);
             return OMX_ErrorUnsupportedSetting;
@@ -787,20 +780,6 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalGetParameter(
         image.mPlane[image.Y].mVertSubsampling = 1;
 
         switch (fmt) {
-            case (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar:
-            // NV21
-            image.mPlane[image.V].mOffset = pDescribeColorFormat->nStride*pDescribeColorFormat->nSliceHeight;
-            image.mPlane[image.V].mColInc = 2;
-            image.mPlane[image.V].mRowInc = pDescribeColorFormat->nStride;
-            image.mPlane[image.V].mHorizSubsampling = 2;
-            image.mPlane[image.V].mVertSubsampling = 2;
-
-            image.mPlane[image.U].mOffset = image.mPlane[image.V].mOffset + 1;
-            image.mPlane[image.U].mColInc = 2;
-            image.mPlane[image.U].mRowInc = pDescribeColorFormat->nStride;
-            image.mPlane[image.U].mHorizSubsampling = 2;
-            image.mPlane[image.U].mVertSubsampling = 2;
-            break;
 
             case OMX_COLOR_FormatYUV420SemiPlanar:
                 // FIXME: NV21 for sw-encoder, NV12 for decoder and hw-encoder
@@ -878,7 +857,6 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalSetParameter(
         if (def->nPortIndex == 0) {
             if (def->format.video.eCompressionFormat != OMX_VIDEO_CodingUnused ||
                     (def->format.video.eColorFormat != OMX_COLOR_FormatYUV420Flexible &&
-                     def->format.video.eColorFormat != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatYUV420SemiPlanar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatYUV420Planar &&
                      def->format.video.eColorFormat != OMX_COLOR_FormatAndroidOpaque)) {
@@ -903,10 +881,12 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalSetParameter(
         }
 
         //translate Flexible 8-bit YUV format to our default YUV format
+#if 0
         if (def->format.video.eColorFormat == OMX_COLOR_FormatYUV420Flexible) {
             ALOGI("internalSetParameter, translate Flexible 8-bit YUV format to SPRD YVU420SemiPlanar");
             def->format.video.eColorFormat = (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar;
         }
+#endif
 
         OMX_ERRORTYPE err = SprdSimpleOMXComponent::internalSetParameter(index, params);
         if (OMX_ErrorNone != err) {
@@ -949,19 +929,17 @@ OMX_ERRORTYPE SPRDMPEG4Encoder::internalSetParameter(
             return OMX_ErrorUndefined;
         }
 
-        if (formatParams->nIndex > 3) {
+        if (formatParams->nIndex > 2) {
             return OMX_ErrorNoMore;
         }
 
         if (formatParams->nPortIndex == 0) {
             if (formatParams->eCompressionFormat != OMX_VIDEO_CodingUnused ||
                     ((formatParams->nIndex == 0 &&
-                      formatParams->eColorFormat != (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar) ||
-                     (formatParams->nIndex == 1 &&
+                      formatParams->eColorFormat != OMX_COLOR_FormatYUV420Planar) ||
+                      (formatParams->nIndex == 1 &&
                       formatParams->eColorFormat != OMX_COLOR_FormatYUV420SemiPlanar) ||
                       (formatParams->nIndex == 2 &&
-                      formatParams->eColorFormat != OMX_COLOR_FormatYUV420Planar) ||
-                      (formatParams->nIndex == 3 &&
                       formatParams->eColorFormat != OMX_COLOR_FormatAndroidOpaque))) {
                 return OMX_ErrorUndefined;
             }
@@ -1194,8 +1172,7 @@ void SPRDMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
                     ALOGI("format:0x%x, usage:0x%x", private_h->format, private_h->usage);
 
                     if ((mPbuf_yuv_v == NULL) &&
-                        !((mVideoColorFormat == (OMX_COLOR_FORMATTYPE) OMX_SPRD_COLOR_FormatYVU420SemiPlanar||
-                        mVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar)&&
+                        !((mVideoColorFormat == OMX_COLOR_FormatYUV420SemiPlanar)&&
                         (private_h->usage == GRALLOC_USAGE_HW_VIDEO_ENCODER))) {
 
                         size_t yuv_size = ((mVideoWidth+15)&(~15)) * ((mVideoHeight+15)&(~15)) *3/2;
