@@ -31,8 +31,7 @@ typedef unsigned char		BOOLEAN;
 typedef unsigned char		uint8;
 typedef unsigned short		uint16;
 typedef unsigned int		uint32;
-typedef unsigned long long 	uint64;
-typedef signed long long 	int64;
+//typedef unsigned int		uint;
 
 typedef signed char			int8;
 typedef signed short		int16;
@@ -90,7 +89,7 @@ typedef struct
     int32	frame_height;
     int32	i_extra;
     uint8 *p_extra;
-    unsigned long p_extra_phy;
+    uint32 p_extra_phy;
     //int32	uv_interleaved;
     int32   yuv_format;
 } MMDecVideoFormat;
@@ -99,7 +98,7 @@ typedef struct
 typedef struct
 {
     uint8	*common_buffer_ptr;     // Pointer to buffer used when decoding
-    unsigned long common_buffer_ptr_phy;
+    void *common_buffer_ptr_phy;
     uint32	size;            		// Number of bytes decoding buffer
 
     int32 	frameBfr_num;			//YUV frame buffer number
@@ -122,12 +121,12 @@ typedef struct
 typedef struct
 {
     uint8		*pStream;          	// Pointer to stream to be decoded. Virtual address.
-    unsigned long pStream_phy;          	// Pointer to stream to be decoded. Physical address.
+    uint32 pStream_phy;          	// Pointer to stream to be decoded. Physical address.
     uint32		dataLen;           	// Number of bytes to be decoded
     int32		beLastFrm;			// whether the frame is the last frame.  1: yes,   0: no
 
     int32		expected_IVOP;		// control flag, seek for IVOP,
-    uint64		nTimeStamp;                // time stamp, it maybe PTS or DTS
+    int32		pts;                // presentation time stamp
 
     int32		beDisplayed;		// whether the frame to be displayed    1: display   0: not //display
 
@@ -147,7 +146,7 @@ typedef struct
 
     int32   is_transposed;	//the picture is transposed or not, in 8800H5, it should always 0.
 
-    uint64	pts;            //presentation time stamp
+    int32	pts;            //presentation time stamp
     int32	frameEffective;
 
     int32	err_MB_num;		//error MB number
