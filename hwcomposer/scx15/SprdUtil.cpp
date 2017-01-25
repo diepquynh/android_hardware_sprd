@@ -41,7 +41,7 @@
 
 #include "dump.h"
 #include "SprdUtil.h"
-#include "../HWCUtils/Utils.h"
+#include <Utils.h>
 
 using namespace android;
 
