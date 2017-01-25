@@ -25,6 +25,7 @@ LOCAL_CFLAGS := \
 LOCAL_ARM_MODE := arm
 
 LOCAL_SHARED_LIBRARIES := \
+	libcolorformat_switcher \
 	libstagefright \
 	libstagefright_omx \
 	libstagefright_foundation \

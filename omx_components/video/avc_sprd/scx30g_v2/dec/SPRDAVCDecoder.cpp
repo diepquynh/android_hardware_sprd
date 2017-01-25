@@ -28,6 +28,7 @@
 #include <dlfcn.h>
 #include <media/hardware/HardwareAPI.h>
 #include <ui/GraphicBufferMapper.h>
+#include <colorformat_switcher.h>
 
 #include "gralloc_priv.h"
 #include "ion_sprd.h"
@@ -215,7 +216,7 @@ SPRDAVCDecoder::SPRDAVCDecoder(
     }
 
     initPorts();
-
+    
     iUseAndroidNativeBuffer[OMX_DirInput] = OMX_FALSE;
     iUseAndroidNativeBuffer[OMX_DirOutput] = OMX_FALSE;
 }
@@ -291,6 +292,7 @@ void SPRDAVCDecoder::initPorts() {
     def.format.video.bFlagErrorConcealment = OMX_FALSE;
     def.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
     def.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+    setColorFormat(def.format.video.eColorFormat);
     def.format.video.pNativeWindow = NULL;
 
     def.nBufferSize =
@@ -632,11 +634,13 @@ OMX_ERRORTYPE SPRDAVCDecoder::internalSetParameter(
             iUseAndroidNativeBuffer[OMX_DirOutput] = OMX_FALSE;
 
             pOutPort->mDef.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+            setColorFormat(pOutPort->mDef.format.video.eColorFormat);
         } else {
             ALOGI("internalSetParameter, enable AndroidNativeBuffer");
             iUseAndroidNativeBuffer[OMX_DirOutput] = OMX_TRUE;
 
             pOutPort->mDef.format.video.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+            setColorFormat(pOutPort->mDef.format.video.eColorFormat);
         }
         return OMX_ErrorNone;
     }
@@ -924,6 +928,7 @@ OMX_ERRORTYPE SPRDAVCDecoder::setConfig(
             pInPort->mDef.nBufferCountActual = 2;
             pOutPort->mDef.nBufferCountActual = 2;
             pOutPort->mDef.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
+            setColorFormat(pOutPort->mDef.format.video.eColorFormat);
             if(!mDecoderSwFlag) {
                 mChangeToSwDec = true;
             }
