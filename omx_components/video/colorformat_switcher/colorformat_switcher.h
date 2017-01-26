@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#ifndef _COLORFORMAT_SWITCHER_H_
+#define _COLORFORMAT_SWITCHER_H_
+
 #include <OMX_IVCommon.h>
 
 void setColorFormat(OMX_COLOR_FORMATTYPE &eNativeColorFormat);
+
+#endif /* _COLORFORMAT_SWITCHER_H_ */
