@@ -21,15 +21,18 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+
 LOCAL_MODULE := libcolorformat_switcher
+
 LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES := \
-	libstagefright
+
 LOCAL_C_INCLUDES += \
 	$(TOP)/hardware/sprd/gralloc/sc8830 \
 	$(TOP)/frameworks/av/include/media/ \
-	$(TOP)/frameworks/native/include/media/openmax \
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-	$(LOCAL_PATH)
+	$(TOP)/frameworks/native/include/media/openmax
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
+
 LOCAL_SRC_FILES := colorformat_switcher.cpp
+
 include $(BUILD_SHARED_LIBRARY)
