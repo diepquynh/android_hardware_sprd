@@ -22,5 +22,5 @@ supported_boards := \
 	scx15 \
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
-include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM))
+include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM) HWCUtils)
 endif
