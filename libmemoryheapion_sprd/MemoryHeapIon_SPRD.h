@@ -52,10 +52,10 @@ public:
 	static int Free_gsp_iova(int buffer_fd, int mmu_addr, int size);
 	static int Get_mm_iova(int buffer_fd,int *mmu_addr, int *size);
 	static int Free_mm_iova(int buffer_fd,int mmu_addr, int size);
-	int get_iova(int id, int *mmu_addr, int *size);
-	int free_iova(int id, int mmu_addr, int size);
-	static int Get_iova(int id, int buffer_fd, int *mmu_addr, int *size);
-	static int Free_iova(int id, int buffer_fd, int mmu_addr, int size);
+	int get_iova(int master_id, int *mmu_addr, int *size);
+	int free_iova(int master_id, int mmu_addr, int size);
+	static int Get_iova(int master_id, int buffer_fd, int *mmu_addr, int *size);
+	static int Free_iova(int master_id, int buffer_fd, int mmu_addr, int size);
 	static int Get_phy_addr_from_ion(int fd, int *phy_addr, int *size); /* fd is "fd of the corresponding ion hanlde" */
 	static int Flush_ion_buffer(int buffer_fd, void *v_addr,void *p_addr, int size);
 	static bool Gsp_iommu_is_enabled(void);

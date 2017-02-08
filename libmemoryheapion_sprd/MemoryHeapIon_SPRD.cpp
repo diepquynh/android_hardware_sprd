@@ -115,7 +115,7 @@ int MemoryHeapIon::get_gsp_iova(int *mmu_addr, int *size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		mmu_data.master_id = ION_GSP0;
+		mmu_data.master_id = ION_GSP;
 		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		ret = ioctl(mIonDeviceFd,ION_IOC_CUSTOM,&custom_data);
@@ -139,7 +139,7 @@ int MemoryHeapIon::free_gsp_iova(int mmu_addr, int size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		mmu_data.master_id = ION_GSP0;
+		mmu_data.master_id = ION_GSP;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
 		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
@@ -212,7 +212,7 @@ int MemoryHeapIon::Get_gsp_iova(int buffer_fd, int *mmu_addr, int *size) {
 		struct ion_mmu_data mmu_data;
 		struct ion_custom_data  custom_data;
 		mmu_data.fd_buffer = buffer_fd;
-		mmu_data.master_id = ION_GSP1;
+		mmu_data.master_id = ION_GSP;
 		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
@@ -266,7 +266,7 @@ int MemoryHeapIon::Free_gsp_iova(int buffer_fd, int mmu_addr, int size){
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer = buffer_fd;
-		mmu_data.master_id = ION_GSP1;
+		mmu_data.master_id = ION_GSP;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
 		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
@@ -308,7 +308,7 @@ int MemoryHeapIon::Free_mm_iova(int buffer_fd, int mmu_addr, int size){
 	return 0;
 }
 
-int MemoryHeapIon::Get_iova(int id, int buffer_fd, int *mmu_addr, int *size) {
+int MemoryHeapIon::Get_iova(int master_id, int buffer_fd, int *mmu_addr, int *size) {
 	int fd = open("/dev/ion", O_SYNC);
 
 	if(fd<0) {
@@ -320,7 +320,7 @@ int MemoryHeapIon::Get_iova(int id, int buffer_fd, int *mmu_addr, int *size) {
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer = buffer_fd;
-		mmu_data.master_id = id;
+		mmu_data.master_id = master_id;
 		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
@@ -335,7 +335,7 @@ int MemoryHeapIon::Get_iova(int id, int buffer_fd, int *mmu_addr, int *size) {
 	return 0;
 }
 
-int MemoryHeapIon::Free_iova(int id, int buffer_fd, int mmu_addr, int size){
+int MemoryHeapIon::Free_iova(int master_id, int buffer_fd, int mmu_addr, int size){
 	int fd = open("/dev/ion", O_SYNC);
 
 	if(fd<0) {
@@ -347,7 +347,7 @@ int MemoryHeapIon::Free_iova(int id, int buffer_fd, int mmu_addr, int size){
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer = buffer_fd;
-		mmu_data.master_id = id;
+		mmu_data.master_id = master_id;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
 		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
@@ -362,7 +362,7 @@ int MemoryHeapIon::Free_iova(int id, int buffer_fd, int mmu_addr, int size){
 	return 0;
 }
 
-int MemoryHeapIon::get_iova(int id, int *mmu_addr, int *size) {
+int MemoryHeapIon::get_iova(int master_id, int *mmu_addr, int *size) {
 
 	if(mIonDeviceFd < 0) {
 		ALOGE("%s:open dev ion error!",__func__);
@@ -373,7 +373,7 @@ int MemoryHeapIon::get_iova(int id, int *mmu_addr, int *size) {
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		mmu_data.master_id = id;
+		mmu_data.master_id = master_id;
 		custom_data.cmd = ION_SPRD_CUSTOM_MAP;
 		custom_data.arg = (unsigned long)&mmu_data;
 		ret = ioctl(mIonDeviceFd,ION_IOC_CUSTOM,&custom_data);
@@ -387,7 +387,7 @@ int MemoryHeapIon::get_iova(int id, int *mmu_addr, int *size) {
 	return 0;
 }
 
-int MemoryHeapIon::free_iova(int id, int mmu_addr, int size){
+int MemoryHeapIon::free_iova(int master_id, int mmu_addr, int size){
 
 	if(mIonDeviceFd < 0) {
 		ALOGE("%s:open dev ion error!",__func__);
@@ -398,7 +398,7 @@ int MemoryHeapIon::free_iova(int id, int mmu_addr, int size){
 		struct ion_custom_data  custom_data;
 
 		mmu_data.fd_buffer = MemoryHeapBase::getHeapID();
-		mmu_data.master_id = id;
+		mmu_data.master_id = master_id;
 		mmu_data.iova_addr = mmu_addr;
 		mmu_data.iova_size = size;
 		custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
