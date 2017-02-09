@@ -108,7 +108,6 @@ enum {
                                  AUDIO_DEVICE_OUT_AUX_LINE |
                                  AUDIO_DEVICE_OUT_SPEAKER_SAFE |
                                  AUDIO_DEVICE_OUT_IP |
-                                 AUDIO_DEVICE_OUT_BUS |
                                  AUDIO_DEVICE_OUT_PROXY |
                                  AUDIO_DEVICE_OUT_FM_HEADSET |
                                  AUDIO_DEVICE_OUT_FM_SPEAKER |
