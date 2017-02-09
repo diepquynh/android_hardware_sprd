@@ -21,10 +21,6 @@
 #include <media/stagefright/foundation/ABase.h>
 #include <media/stagefright/foundation/AString.h>
 #include <utils/RefBase.h>
-<<<<<<< HEAD
-#include <MemoryHeapIon_SPRD.h>
-=======
->>>>>>> c0d7a14... libstagefrighthw: Import sc8830 code from SPRD vendor
 #include <OMX_Component.h>
 #include <MemoryHeapIon.h>
 
