@@ -54,7 +54,13 @@ enum ION_SPRD_CUSTOM_CMD {
     ION_SPRD_CUSTOM_MSYNC
 };
 #else
+
+#ifdef SC8810_BOARD
 #include "ion.h"
+#else
+#include <linux/ion.h>
+#endif
+
 #include <video/ion_sprd.h>
 #endif
 

@@ -29,7 +29,11 @@ LOCAL_ADDITIONAL_DEPENDENCIES += \
 
 LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include \
-	$(TOP)/hardware/samsung/sprd/kernel_headers/$(TARGET_BOARD_PLATFORM)
+	$(TOP)/hardware/sprd/kernel_headers/$(TARGET_BOARD_PLATFORM)
+
+ifdef ($(TARGET_BOARD_PLATFORM),sc8810)
+LOCAL_CFLAGS += -DSC8810_BOARD
+endif
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)/ \
