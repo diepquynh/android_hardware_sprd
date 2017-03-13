@@ -221,8 +221,11 @@ bool SprdUtil::transformLayer(SprdHWLayer *l1, SprdHWLayer *l2,
 #ifdef SCAL_ROT_TMP_BUF
         if (tmpDCAMBuffer == NULL) {
             uint32_t stride;
+#ifdef SCX30G_V2
             size_t size;
-
+#else
+	    int size;
+#endif
             GraphicBufferAllocator::get().allocate(mFBInfo->fb_width, mFBInfo->fb_height, format, GRALLOC_USAGE_OVERLAY_BUFFER,
 						(buffer_handle_t*)&tmpDCAMBuffer, &stride, getUniqueId(), std::move("HWC"));
 
