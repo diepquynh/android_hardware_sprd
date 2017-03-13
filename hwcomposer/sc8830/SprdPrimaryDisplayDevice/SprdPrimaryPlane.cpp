@@ -165,8 +165,13 @@ void SprdPrimaryPlane::AttachFramebufferTargetLayer(hwc_layer_1_t *FBTargetLayer
 {
     const native_handle_t *pNativeHandle = FBTargetLayer->handle;
     struct private_handle_t *privateH = (struct private_handle_t *)pNativeHandle;
+#ifdef SCX30G_V2
     unsigned long phy_addr = 0;
     size_t size = 0;
+#else
+    int phy_addr = 0;
+    int size = 0;
+#endif
 
     mDisplayFormat = privateH->format;
 
@@ -190,9 +195,13 @@ bool SprdPrimaryPlane::SetDisplayParameters(hwc_layer_1_t *AndroidLayer)
 
     const native_handle_t *pNativeHandle = AndroidLayer->handle;
     struct private_handle_t *privateH = (struct private_handle_t *)pNativeHandle;
+#ifdef SCX30G_V2
     unsigned long phy_addr = 0;
     size_t size = 0;
-
+#else
+    int phy_addr = 0;
+    int size = 0;
+#endif
     if (privateH == NULL)
     {
         ALOGE("SetDisplayParameters privateH is NULL");

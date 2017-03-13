@@ -219,10 +219,12 @@ bool SprdUtil::transformLayer(SprdHWLayer *l1, SprdHWLayer *l2,
 #ifdef SCAL_ROT_TMP_BUF
         if (tmpDCAMBuffer == NULL) {
             uint32_t stride;
+#ifdef SCX30G_V2
             size_t size;
-
+#else
+	        int size;
+#endif
             GraphicBufferAllocator::get().alloc(mFBInfo->fb_width, mFBInfo->fb_height, format, GRALLOC_USAGE_OVERLAY_BUFFER, (buffer_handle_t*)&tmpDCAMBuffer, &stride);
-
             MemoryHeapIon::Get_phy_addr_from_ion(tmpDCAMBuffer->share_fd, &(tmpDCAMBuffer->phyaddr), &size);
             if (tmpDCAMBuffer == NULL) {
                 ALOGE("Cannot alloc the tmpBuffer ION buffer");
