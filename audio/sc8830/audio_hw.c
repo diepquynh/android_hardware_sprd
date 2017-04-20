@@ -1926,8 +1926,8 @@ static int start_output_stream(struct tiny_stream_out *out)
         /* FIXME: only works if only one output can be active at a time*/
         adev->out_devices &= (~AUDIO_DEVICE_OUT_ALL_EX);
         adev->out_devices |= out->devices;
-        if(adev->out_devices & AUDIO_DEVICE_OUT_ALL_SCO)
-            i2s_pin_mux_sel(adev, 2);
+        //if(adev->out_devices & AUDIO_DEVICE_OUT_ALL_SCO)
+            i2s_pin_mux_sel(adev, AP_TYPE);
 
 	adev->prev_out_devices = ~adev->out_devices;
         select_devices_signal(adev);
@@ -2277,7 +2277,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
             }
             else {
                 if(adev->out_devices & AUDIO_DEVICE_OUT_ALL_SCO) {
-                    i2s_pin_mux_sel(adev, 2);
+                    i2s_pin_mux_sel(adev, AP_TYPE);
                 }
             }
             cur_mode = adev->mode;
@@ -2946,7 +2946,7 @@ static int start_input_stream(struct tiny_stream_in *in)
         adev->in_devices |= in->device;
         if((in->device & ~ AUDIO_DEVICE_BIT_IN) & AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET) {
             if(!adev->voip_start) {
-                i2s_pin_mux_sel(adev, 2);
+                i2s_pin_mux_sel(adev, AP_TYPE);
             }else {
                 if(adev->cp_type == CP_TG)
                     i2s_pin_mux_sel(adev,1);
