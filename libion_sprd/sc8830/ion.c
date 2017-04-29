@@ -169,14 +169,6 @@ int ion_import(int fd, int share_fd, ion_user_handle_t *handle)
     return ret;
 }
 
-int ion_invalidate_fd(int fd, int handle_fd)
-{
-    struct ion_fd_data data = {
-        .fd = handle_fd,
-    };
-    return ion_ioctl(fd, ION_IOC_INVALIDATE, &data);
-}
-
 int ion_sync_fd(int fd, int handle_fd)
 {
     struct ion_fd_data data = {
