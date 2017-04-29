@@ -68,6 +68,11 @@ public:
         unsigned long *mmu_addr, size_t *size);
     static int Free_iova(int master_id, int buffer_fd,
         unsigned long mmu_addr, size_t size);
+    int get_kaddr(uint64_t *kaddr, size_t *size);
+    int free_kaddr();
+    static int Get_kaddr(int buffer_fd,
+                    uint64_t *kaddr, size_t *size);
+    static int Free_kaddr(int buffer_fd);
     static bool IOMMU_is_enabled(int master_id);
 
 private:

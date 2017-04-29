@@ -601,6 +601,105 @@ int MemoryHeapIon::Free_iova(int master_id, int buffer_fd,
     return 0;
 }
 
+int MemoryHeapIon::get_kaddr(uint64_t *kaddr, size_t *size) {
+    if (mIonDeviceFd < 0) {
+        ALOGE("%s:open dev ion error!",__func__);
+        return -1;
+    } else {
+        int ret;
+        struct ion_kmap_data kmap_data;
+        struct ion_custom_data  custom_data;
+
+        kmap_data.fd_buffer = mFD;
+        custom_data.cmd = ION_SPRD_CUSTOM_MAP_KERNEL;
+        custom_data.arg = (unsigned long)&kmap_data;
+        ret = ioctl(mIonDeviceFd, ION_IOC_CUSTOM, &custom_data);
+        *kaddr = kmap_data.kaddr;
+        *size = kmap_data.size;
+        if (ret) {
+            ALOGE("%s: return error: %d", __func__, ret);
+            return -2;
+        }
+     }
+
+    return 0;
+}
+
+int MemoryHeapIon::free_kaddr() {
+    if (mIonDeviceFd < 0) {
+        ALOGE("%s:open dev ion error!", __func__);
+        return -1;
+    } else {
+        int ret;
+        struct ion_kunmap_data kunmap_data;
+        struct ion_custom_data  custom_data;
+
+        kunmap_data.fd_buffer = mFD;
+        custom_data.cmd = ION_SPRD_CUSTOM_UNMAP_KERNEL;
+        custom_data.arg = (unsigned long)&kunmap_data;
+        ret = ioctl(mIonDeviceFd, ION_IOC_CUSTOM, &custom_data);
+        if (ret) {
+            ALOGE("%s: return error: %d", __func__, ret);
+            return -2;
+        }
+     }
+
+    return 0;
+}
+
+int MemoryHeapIon::Get_kaddr(int buffer_fd,
+                uint64_t *kaddr, size_t *size) {
+    int fd = open("/dev/ion", O_SYNC);
+
+    if (fd < 0) {
+        ALOGE("%s:open dev ion error!", __func__);
+        return -1;
+    } else {
+        int ret;
+        struct ion_kmap_data kmap_data;
+        struct ion_custom_data  custom_data;
+
+        kmap_data.fd_buffer =  buffer_fd;
+        custom_data.cmd = ION_SPRD_CUSTOM_MAP_KERNEL;
+        custom_data.arg = (unsigned long)&kmap_data;
+        ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
+        *kaddr = kmap_data.kaddr;
+        *size = kmap_data.size;
+        close(fd);
+        if (ret) {
+            ALOGE("%s: return error: %d", __func__, ret);
+            return -2;
+        }
+    }
+
+    return 0;
+}
+
+int MemoryHeapIon::Free_kaddr(int buffer_fd) {
+    int fd = open("/dev/ion", O_SYNC);
+
+    if (fd < 0) {
+        ALOGE("%s:open dev ion error!", __func__);
+        return -1;
+    } else {
+        int ret;
+        struct ion_kunmap_data kunmap_data;
+        struct ion_custom_data  custom_data;
+
+        kunmap_data.fd_buffer =  buffer_fd;
+        custom_data.cmd = ION_SPRD_CUSTOM_UNMAP_KERNEL;
+        custom_data.arg = (unsigned long)&kunmap_data;
+        ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
+        close(fd);
+        if (ret) {
+            ALOGE("%s: return error: %d", __func__, ret);
+            return -2;
+        }
+    }
+
+    return 0;
+}
+
 bool MemoryHeapIon::IOMMU_is_enabled(int master_id)
 {
     int ret;
