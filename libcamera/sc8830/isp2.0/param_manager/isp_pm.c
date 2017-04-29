@@ -204,8 +204,7 @@ static isp_s32 isp_pm_context_init(isp_pm_handle_t handle)
 						blk_ptr = (void *)(isp_cxt_start_addr + offset);
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
-							|| (PNULL == blk_header_ptr)
-							|| (PNULL == &mode_param_ptr->resolution)) {
+							|| (PNULL == blk_header_ptr)) {
 							ISP_LOGE ("param is null error: blk_addr:%p, param:%p, header:%p, resolution:%p",
 								blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;
@@ -260,8 +259,7 @@ static isp_s32 isp_pm_context_update(isp_pm_handle_t handle, struct isp_pm_mode_
 						blk_ptr = (void *)(isp_cxt_start_addr + offset);
 						param_data_ptr = (void *)blk_header_ptr->absolute_addr;
 						if ((PNULL == blk_ptr) || (PNULL == param_data_ptr)
-							|| (PNULL == blk_header_ptr)
-							|| (PNULL == &mode_param_ptr->resolution)) {
+							|| (PNULL == blk_header_ptr)) {
 							ISP_LOGE ("param is null error: blk_addr:%p, param:%p, header:%p, resolution:%p",
 								blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 							rtn = ISP_ERROR;

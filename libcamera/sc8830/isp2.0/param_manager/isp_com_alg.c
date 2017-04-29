@@ -540,15 +540,15 @@ int32_t isp_scaling_lsc_gain(uint16_t *dst, uint16_t *src, struct isp_size *dst_
 			src_x >>= 16;
 
 			if (src_x < dst_size->w - 1) {
-				src_l[0] = src_line[0] +src_x;
-				src_l[1] = src_line[0] + src_x + 1;
-				src_l[2] = src_line[1] +src_x;
-				src_l[3] = src_line[1] +src_x + 1;
+				src_l[0] = (uint32_t)src_line[0] +src_x;
+				src_l[1] = (uint32_t)src_line[0] + src_x + 1;
+				src_l[2] = (uint32_t)src_line[1] +src_x;
+				src_l[3] = (uint32_t)src_line[1] +src_x + 1;
 			} else {
 				src_x = dst_size->w - 1;
-				src_l[0] =src_line[0] + src_x;
+				src_l[0] = (uint32_t)src_line[0] + src_x;
 				src_l[1] = src_l[0];
-				src_l[2] =src_line[1] + src_x;
+				src_l[2] = (uint32_t)src_line[1] + src_x;
 				src_l[3] = src_l[3];
 			}
 

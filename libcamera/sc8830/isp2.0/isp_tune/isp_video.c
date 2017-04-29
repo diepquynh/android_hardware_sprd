@@ -351,7 +351,8 @@ uint32_t ispvideo_GetImgDataLen(unsigned char* dig_ptr)
 unsigned char* ispvideo_GetImgDataInfo(unsigned char* dig_ptr, uint32_t* packet_sn, uint32_t* total_pack,
 											uint32_t* img_width, uint32_t* img_height, uint32_t* img_headlen)
 {
-	unsigned char* data_ptr = NULL, tmp_ptr;
+	uint32_t* tmp_ptr = NULL;
+	unsigned char* data_ptr = NULL;
 	ISP_IMAGE_HEADER_T img_info;
 
 	if (!dig_ptr || !packet_sn || !total_pack || !img_width || !img_height) {
@@ -359,9 +360,9 @@ unsigned char* ispvideo_GetImgDataInfo(unsigned char* dig_ptr, uint32_t* packet_
 		return data_ptr;
 	}
 
-	tmp_ptr = dig_ptr + 1 + sizeof(MSG_HEAD_T);
+	tmp_ptr = (unsigned char *)(dig_ptr + 1 + sizeof(MSG_HEAD_T));
 
-	memcpy(&img_info, tmp_ptr, sizeof(ISP_IMAGE_HEADER_T));
+	memcpy(&img_info, (void *)tmp_ptr, sizeof(ISP_IMAGE_HEADER_T));
 	*img_headlen = img_info.headlen;
 	*packet_sn = img_info.packetsn;
 	*total_pack = img_info.totalpacket;
@@ -2523,7 +2524,7 @@ int down_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,
 {
 	int rtn =0x00;
 
-	uint32_t offset_tmp = NULL;
+	uint32_t offset_tmp = 0;
 	uint16_t lnc_ct = sub_type;
 
 	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
@@ -2551,7 +2552,7 @@ int down_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,
 {
 	int rtn =0x00;
 
-	uint32_t offset_tmp = NULL;
+	uint32_t offset_tmp = 0;
 
 	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
 	uint32_t len_block_info = sizeof(struct sensor_fix_param_block_info);
@@ -4166,7 +4167,7 @@ void send_img_data(uint32_t format, uint32_t width, uint32_t height, char *imgpt
 		pthread_mutex_unlock(&ispstream_lock);
 	}
 
-	return ret;
+	//return ret;
 }
 
 void send_capture_complete_msg()

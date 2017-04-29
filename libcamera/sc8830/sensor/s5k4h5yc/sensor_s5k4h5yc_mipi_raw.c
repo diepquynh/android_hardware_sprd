@@ -1989,7 +1989,7 @@ static unsigned long _s5k4h5yc_access_val(unsigned long param)
 			rtn = _s5k4h5yc_get_golden_data((unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA:
-			*(uint32_t*)param_ptr->pval = lsc_golden_data;
+			*(uint32_t*)param_ptr->pval = (unsigned long)lsc_golden_data;
 			break;
 		default:
 			break;

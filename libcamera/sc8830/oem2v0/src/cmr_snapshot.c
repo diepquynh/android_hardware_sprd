@@ -1617,7 +1617,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 				uint32_t to_w;
 
 				from_addr = (char*)mem_ptr->cap_raw.addr_vir.addr_y + (trim_start_y * mem_ptr->cap_raw.size.width + trim_start_x) * raw_pixel_width / 8;
-				to_addr = mem_ptr->cap_raw.addr_vir.addr_y;
+				to_addr = (char *)mem_ptr->cap_raw.addr_vir.addr_y;
 
 				from_w = mem_ptr->cap_raw.size.width * raw_pixel_width / 8;
 				to_w = trim_width * raw_pixel_width / 8;

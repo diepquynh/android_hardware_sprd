@@ -90,6 +90,28 @@ typedef struct {
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
 
+typedef struct mCameraInfo {
+     /**
+      * The direction that the camera faces to. It should be CAMERA_FACING_BACK
+      * or CAMERA_FACING_FRONT.
+      */
+     int facing;
+ 
+     /**
+      * The orientation of the camera image. The value is the angle that the
+      * camera image needs to be rotated clockwise so it shows correctly on the
+      * display in its natural orientation. It should be 0, 90, 180, or 270.
+      *
+      * For example, suppose a device has a naturally tall screen. The
+      * back-facing camera sensor is mounted in landscape. You are looking at
+      * the screen. If the top side of the camera sensor is aligned with the
+      * right edge of the screen in natural orientation, the value should be
+      * 90. If the top side of a front-facing camera sensor is aligned with the
+      * right of the screen, the value should be 270.
+      */
+     int orientation;
+ } oldCameraInfo;
+ 
 class SprdCameraHardware : public virtual RefBase {
 public:
 	SprdCameraHardware(int cameraId);
@@ -143,8 +165,8 @@ public:
 	static int                   getPropertyAtv();
 	static int                   getNumberOfCameras();
 	static int                   getCameraInfo(int cameraId, struct camera_info *cameraInfo);
-	static const CameraInfo      kCameraInfo[];
-	static const CameraInfo      kCameraInfo3[];
+	static const mCameraInfo     kCameraInfo[];
+	static const mCameraInfo     kCameraInfo3[];
 	static int                   switch_monitor_thread_init(void *p_data);
 	static int                   switch_monitor_thread_deinit(void *p_data);
 	static void*                 switch_monitor_thread_proc(void *p_data);

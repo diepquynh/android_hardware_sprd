@@ -4746,7 +4746,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cfg_cap_rot    = handle->prev_cxt[camera_id].prev_param.encode_angle;
 	is_cfg_rot_cap = handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
 	sensor_info    = &handle->prev_cxt[camera_id].sensor_info;
-        flip_on        = &handle->prev_cxt[camera_id].prev_param.flip_on;
+        flip_on        = handle->prev_cxt[camera_id].prev_param.flip_on;
 
 	CMR_LOGI("preview_eb %d, snapshot_eb %d, video_eb %d",
 		handle->prev_cxt[camera_id].prev_param.preview_eb,

@@ -132,9 +132,16 @@ static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
+enum {
+    CAMERA_CMD_SET_FLIP_ON = 12,
+    MULTI_FRAME_SHOT_START            = 1261,
+    AUTO_LOW_LIGHT_SET                = 1351,
+    HDR_PICTURE_MODE_CHANGE           = 1273,
+};
+
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
 
-const CameraInfo SprdCameraHardware::kCameraInfo[] = {
+const oldCameraInfo SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -147,7 +154,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 #endif
 };
 
-const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
+const oldCameraInfo SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -6774,8 +6781,8 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 
 	ssize_t offset = frame->buf_id;
 	camera_frame_metadata_t metadata;
-	metadata.light_condition = frame->lls_info;
-	LOGI("receivePreviewFrame lls_info = %d frame->type = %d", metadata.light_condition, frame->type);
+	//metadata.light_condition = frame->lls_info;
+	//LOGI("receivePreviewFrame lls_info = %d frame->type = %d", metadata.light_condition, frame->type);
 	camera_face_t face_info[FACE_DETECT_NUM];
 	uint32_t k = 0;
 	int width, height, frame_size;
@@ -7028,14 +7035,14 @@ void SprdCameraHardware::receiveRawPicture(struct camera_frame_type *frame)
 				if (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE){
 					camera_memory_t *mem = mGetMemory_cb(-1, frame_size * 3 / 2, 1, 0);
 					memcpy(mem->data, (void*)(frame->y_vir_addr), frame_size);
-					memcpy(mem->data + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
+					memcpy((char *)(mem->data) + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
 					mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 					mem->release(mem);
 				}
 			} else {
 				camera_memory_t *mem = mGetMemory_cb(-1, frame_size * 3 / 2, 1, 0);
 				memcpy(mem->data, (void*)(frame->y_vir_addr), frame_size);
-				memcpy(mem->data + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
+				memcpy((char *)mem->data + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
 				mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 				mem->release(mem);
 			}
@@ -7195,7 +7202,7 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame)
 				camera_memory_t *mem = mGetMemory_cb(-1, (mJpegSize+isp_info_size), 1, 0);
 				memcpy(mem->data, encInfo->outPtr, mJpegSize);
 				if (isp_info_addr) {
-					memcpy((mem->data+mJpegSize),isp_info_addr,isp_info_size);
+					memcpy((char *)(mem->data)+mJpegSize,isp_info_addr,isp_info_size);
 				}
 				mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 				mem->release(mem);
@@ -7204,7 +7211,7 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame)
 			camera_memory_t *mem = mGetMemory_cb(-1, (mJpegSize+isp_info_size), 1, 0);
 			memcpy(mem->data, encInfo->outPtr, mJpegSize);
 			if (isp_info_addr) {
-				memcpy((mem->data+mJpegSize),isp_info_addr,isp_info_size);
+				memcpy((char *)(mem->data)+mJpegSize,isp_info_addr,isp_info_size);
 			}
 			mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 			mem->release(mem);
@@ -8615,7 +8622,7 @@ static int HAL_getCameraInfo(int cameraId, struct camera_info *cameraInfo)
 	return SprdCameraHardware::getCameraInfo(cameraId, cameraInfo);
 }
 
-#define SET_METHOD(m) m : HAL_camera_device_##m
+#define SET_METHOD(m) .m = HAL_camera_device_##m
 
 static camera_device_ops_t camera_device_ops = {
 	SET_METHOD(set_preview_window),
@@ -8755,26 +8762,26 @@ done:
 }
 
 static hw_module_methods_t camera_module_methods = {
-	open : HAL_camera_device_open
+		.open = HAL_camera_device_open
 };
 
 extern "C" {
 	struct camera_module HAL_MODULE_INFO_SYM = {
-		common : {
-		tag : HARDWARE_MODULE_TAG,
-		version_major : 1,
-		version_minor : 0,
-		id : CAMERA_HARDWARE_MODULE_ID,
-		name : "Sprd camera HAL",
-		author : "Spreadtrum Corporation",
-		methods : &camera_module_methods,
-		dso : NULL,
-		reserved : {0},
+		.common = {
+		.tag = HARDWARE_MODULE_TAG,
+		.version_major = 1,
+		.version_minor = 0,
+		.id = CAMERA_HARDWARE_MODULE_ID,
+		.name = "Sprd camera HAL",
+		.author = "Spreadtrum Corporation",
+		.methods = &camera_module_methods,
+		.dso = NULL,
+		.reserved = {0},
 		},
-		get_number_of_cameras : HAL_getNumberOfCameras,
-		get_camera_info : HAL_getCameraInfo,
-		set_callbacks : NULL,
-		get_vendor_tag_ops : NULL,
+		.get_number_of_cameras = HAL_getNumberOfCameras,
+		.get_camera_info = HAL_getCameraInfo,
+		.set_callbacks = NULL,
+		.get_vendor_tag_ops = NULL,
 		//reserved : {0,0,0,0,0,0,0},
 	};
 }

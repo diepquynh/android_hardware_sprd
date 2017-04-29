@@ -53,7 +53,7 @@ typedef char            isp_s8;
 typedef void*           isp_handle;
 
 #ifndef PNULL
-#define PNULL ((void*)0)
+#define PNULL 0
 #endif
 
 #define ISP_FIX_10BIT_UNIT 1024

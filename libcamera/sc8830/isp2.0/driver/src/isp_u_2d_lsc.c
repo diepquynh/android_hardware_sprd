@@ -335,7 +335,7 @@ isp_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 		ISP_LOGE("lsc memory error: %x %x %x", file->reserved, buf_addr, lens_info->buf_len);
 		return ret;
 	} else {
-		memcpy(file->reserved, buf_addr, lens_info->buf_len);
+		memcpy((char *)file->reserved, (char *)buf_addr, lens_info->buf_len);
 	}
 
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,

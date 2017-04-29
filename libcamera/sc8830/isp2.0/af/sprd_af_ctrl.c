@@ -206,7 +206,7 @@ sprd_af_handle_t sprd_af_init(isp_ctrl_context* handle)
 		af_tuning = (struct af_tuning_param *)malloc(sizeof(struct af_tuning_param )*af_pm_output.param_num);
 		if (NULL == af_tuning) {
 			ISP_LOGE("AF_TAG: malloc failed!");
-			return ISP_ERROR;
+			return (void *)ISP_ERROR;
 		}
 		for (i=0; i<af_pm_output.param_num; i++) {
 			af_tuning[i].cfg_mode = (af_pm_output.param_data->id & 0xffff0000) >> 16;

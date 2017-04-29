@@ -196,7 +196,7 @@ cmr_int Sensor_Ioctl(SENSOR_IOCTL_CMD_E sns_cmd, void *arg)
 	cmr_u32 ret = CMR_CAMERA_SUCCESS;
 
 
-	struct sensor_drv_context *sensor_cxt = sensor_get_dev_cxt();
+	struct sensor_drv_context *sensor_cxt = (char *)sizeof(sensor_get_dev_cxt());
 
 	if (SENSOR_IOCTL_GET_STATUS != sns_cmd) {
 		SCI_Trace_Dcam("cmd = %d, arg = %p.\n", sns_cmd, arg);
@@ -391,7 +391,7 @@ int write_sensor_shutter(uint32_t shutter_val)
 	unsigned long expsure_line=0x00;
 	uint32_t dummy=0x00;
 
-	struct sensor_drv_context *sensor_cxt = sensor_get_dev_cxt();
+	struct sensor_drv_context *sensor_cxt = (char *)sizeof(sensor_get_dev_cxt());
 	SENSOR_EXP_INFO_T *psensorinfo = Sensor_GetInfo();
 	cmr_uint mode;
 
@@ -975,7 +975,7 @@ int write_otp_pownoff()
 {
 	int ret = 0;
 	if(p_camera_device){
-		ret = stop_camera(p_camera_device);
+		//ret = stop_camera(p_camera_device);
 		p_camera_device=NULL;
 	}
 

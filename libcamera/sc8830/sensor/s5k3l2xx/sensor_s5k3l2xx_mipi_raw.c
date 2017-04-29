@@ -1617,7 +1617,7 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param)
 
 
 	preview_exposure = Sensor_ReadReg(0x202);
-	_s5k3l2xx_ReadGain(&gain);
+	_s5k3l2xx_ReadGain(gain);
 
 	Sensor_SetMode(param);
 	Sensor_SetMode_WaitDone();
