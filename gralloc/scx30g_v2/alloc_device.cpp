@@ -418,7 +418,7 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 
 	ALOGD_IF(mDebug,"alloc buffer start w:%d h:%d format:0x%x usage:0x%x",w,h,format,usage);
 
-	if (format == HAL_PIXEL_FORMAT_YCbCr_420_888 || format == HAL_PIXEL_FORMAT_YCrCb_420_SP || format == HAL_PIXEL_FORMAT_YV12
+	if (format == 21 || format == HAL_PIXEL_FORMAT_YCbCr_420_888 || format == HAL_PIXEL_FORMAT_YCrCb_420_SP || format == HAL_PIXEL_FORMAT_YV12
 		|| format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED
 	/* HAL_PIXEL_FORMAT_YCbCr_420_SP, HAL_PIXEL_FORMAT_YCbCr_420_P, HAL_PIXEL_FORMAT_YCbCr_422_I are not defined in Android.
  	 * To enable Mali DDK EGLImage support for those formats, firstly, you have to add them in Android system/core/include/system/graphics.h.
@@ -429,6 +429,7 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 	{
 		switch (format)
 		{
+			case 21:
 			case HAL_PIXEL_FORMAT_YCbCr_420_SP:
                             stride = GRALLOC_ALIGN(w, 16);
                             size = GRALLOC_ALIGN(h, 16) * (stride + GRALLOC_ALIGN(stride / 2, 16));
