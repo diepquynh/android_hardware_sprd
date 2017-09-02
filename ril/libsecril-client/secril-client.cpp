@@ -59,9 +59,15 @@ namespace android {
 #define REQ_SET_TWO_MIC_CTRL        108
 #define REQ_SET_DHA_CTRL        109
 #define REQ_SET_LOOPBACK            110
+#define REQ_SEND_MODEM          111
+#define REQ_SET_AUDIO_MODE      112
+#define REQ_SET_CLOCK_MODE      113
+#define REQ_SET_PDN             114
 
 // OEM request function ID
 #define OEM_FUNC_SOUND          0x08
+#define OEM_FUNC_MODEM          0x11
+#define OEM_FUNC_PDN            0x53
 
 // OEM request sub function ID
 #define OEM_SND_SET_VOLUME_CTRL     0x03
@@ -75,26 +81,16 @@ namespace android {
 #define OEM_SND_GET_MUTE        0x0C
 #define OEM_SND_SET_TWO_MIC_CTL     0x0D
 #define OEM_SND_SET_DHA_CTL     0x0E
+#define OEM_SND_SET_AUDIO_MODE      0x10
+#define OEM_SND_SET_CLOCK_MODE      0x11
 
 #define OEM_SND_TYPE_VOICE          0x01 // Receiver(0x00) + Voice(0x01)
 #define OEM_SND_TYPE_SPEAKER        0x11 // SpeakerPhone(0x10) + Voice(0x01)
 #define OEM_SND_TYPE_HEADSET        0x31 // Headset(0x30) + Voice(0x01)
 #define OEM_SND_TYPE_BTVOICE        0x41 // BT(0x40) + Voice(0x01)
 
-#ifdef SAMSUNG_NEXT_GEN_MODEM
-#define OEM_SND_AUDIO_PATH_EARPIECE           0x01
-#define OEM_SND_AUDIO_PATH_HEADSET            0x02
-#define OEM_SND_AUDIO_PATH_HFK                0x06
-#define OEM_SND_AUDIO_PATH_BLUETOOTH          0x04
-#define OEM_SND_AUDIO_PATH_STEREO_BLUETOOTH   0x05
-#define OEM_SND_AUDIO_PATH_SPEAKER            0x07
-#define OEM_SND_AUDIO_PATH_HEADPHONE          0x08
-#define OEM_SND_AUDIO_PATH_BT_NSEC_OFF        0x09
-#define OEM_SND_AUDIO_PATH_MIC1               0x0A
-#define OEM_SND_AUDIO_PATH_MIC2               0x0B
-#define OEM_SND_AUDIO_PATH_BT_WB              0x0C
-#define OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF     0x0D
-#else
+#define OEM_MODEM_CTRL              0x63
+
 #define OEM_SND_AUDIO_PATH_EARPIECE     0x01
 #define OEM_SND_AUDIO_PATH_HEADSET      0x02
 #define OEM_SND_AUDIO_PATH_HFK                0x03
@@ -107,7 +103,6 @@ namespace android {
 #define OEM_SND_AUDIO_PATH_MIC2 0x0A
 #define OEM_SND_AUDIO_PATH_BT_WB  0x0B
 #define OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF  0x0C
-#endif
 
 //---------------------------------------------------------------------------
 // Type definitions
@@ -134,6 +129,7 @@ typedef struct _RilClientPrv {
     int             pipefd[2];
     fd_set          sock_rfds;  // for read with select()
     RecordStream    *p_rs;
+    pthread_mutex_t mutex_token;
     uint32_t        token_pool; // each bit in token_pool used for token.
                                 // so, pool size is 32.
     pthread_t       tid_reader; // socket reader thread id
@@ -142,7 +138,9 @@ typedef struct _RilClientPrv {
     UnsolHandler    unsol_handlers[REQ_POOL_SIZE];  // unsolicited response handler list
     RilOnError      err_cb;         // error callback
     void            *err_cb_data;   // error callback data
-    uint8_t b_del_handler;
+    uint8_t         b_del_handler;
+    uint32_t        data;
+    pthread_mutex_t mutex_modem;
 } RilClientPrv;
 
 
@@ -170,6 +168,26 @@ static bool isValidTwoMicCtrl(TwoMicSolDevice device, TwoMicSolReport report);
 static char ConvertSoundType(SoundType type);
 static char ConvertAudioPath(AudioPath path);
 
+
+//---------------------------------------------------------------------------
+// Local variables
+//---------------------------------------------------------------------------
+uint32_t    condition = 1;
+uint8_t     BufferTemp[0x758];
+uint32_t    RespLen;
+
+
+extern "C"
+int callBackSecureSimLock(HRilClient handle, const void *data, size_t datalen) {
+    RespLen = datalen;
+
+    if (datalen > 0)
+        memcpy(&BufferTemp, data, 0x1D6);
+
+    condition = 0;
+
+    return RIL_CLIENT_ERR_SUCCESS;
+}
 
 /**
  * @fn  int RegisterUnsolicitedHandler(HRilClient client, uint32_t id, RilOnUnsolicited handler)
@@ -311,6 +329,7 @@ int RegisterErrorCallback(HRilClient client, RilOnError cb, void *data) {
     return RIL_CLIENT_ERR_SUCCESS;
 }
 
+void savelog(int value) {}
 
 /**
  * @fn  HRilClient OpenClient_RILD(void)
@@ -321,6 +340,8 @@ int RegisterErrorCallback(HRilClient client, RilOnError cb, void *data) {
  */
 extern "C"
 HRilClient OpenClient_RILD(void) {
+    pthread_mutexattr_t attr;
+
     HRilClient client = (HRilClient)malloc(sizeof(struct RilClient));
     if (client == NULL)
         return NULL;
@@ -335,6 +356,10 @@ HRilClient OpenClient_RILD(void) {
 
     ((RilClientPrv *)(client->prv))->parent = client;
     ((RilClientPrv *)(client->prv))->sock = -1;
+
+    pthread_mutexattr_settype(&attr, 1);
+    pthread_mutex_init(&(((RilClientPrv *)(client->prv))->mutex_token), &attr);
+    pthread_mutex_init(&(((RilClientPrv *)(client->prv))->mutex_modem), &attr);
 
     return client;
 }
@@ -424,7 +449,7 @@ int Connect_QRILD(HRilClient client) {
 
     // Open client socket and connect to server.
     //client_prv->sock = socket_loopback_client(RILD_PORT, SOCK_STREAM);
-    client_prv->sock = socket_local_client(MULTI_CLIENT_Q_SOCKET_NAME, ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM );
+    client_prv->sock = socket_local_client(MULTI_CLIENT_Q_SOCKET_NAME, ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
 
     if (client_prv->sock < 0) {
         RLOGE("%s: Connecting failed. %s(%d)", __FUNCTION__, strerror(errno), errno);
@@ -663,11 +688,7 @@ int SetCallVolume(HRilClient client, SoundType type, int vol_level) {
  * Set external sound device path for noise reduction.
  */
 extern "C"
-#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
 int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode)
-#else
-int SetCallAudioPath(HRilClient client, AudioPath path)
-#endif
 {
     RilClientPrv *client_prv;
     int ret;
@@ -696,9 +717,7 @@ int SetCallAudioPath(HRilClient client, AudioPath path)
     data[2] = 0x00;     // data length
     data[3] = 0x06;     // data length
     data[4] = ConvertAudioPath(path); // audio path
-#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
     data[5] = mode; // ExtraVolume
-#endif
 
     RegisterRequestCompleteHandler(client, REQ_SET_AUDIO_PATH, NULL);
 
@@ -986,7 +1005,7 @@ int SetDhaSolution(HRilClient client, DhaSolMode mode, DhaSolSelect select, char
         return RIL_CLIENT_ERR_CONNECT;
     }
 
-    RLOGE("%s: DHA mode=%d, select=%d", __FUNCTION__,mode, select);
+    RLOGD("%s: DHA mode=%d, select=%d", __FUNCTION__,mode, select);
 
     // Make raw data
     data[0] = OEM_FUNC_SOUND;
@@ -1026,7 +1045,7 @@ int SetLoopbackTest(HRilClient client, LoopbackMode mode, AudioPath path) {
 
     client_prv = (RilClientPrv *)(client->prv);
 
-    if (client_prv->sock < 0 ) {
+    if (client_prv->sock < 0) {
         RLOGE("%s: Not connected.", __FUNCTION__);
         return RIL_CLIENT_ERR_CONNECT;
     }
@@ -1049,6 +1068,140 @@ int SetLoopbackTest(HRilClient client, LoopbackMode mode, AudioPath path) {
     return ret;
 }
 
+/**
+ * Set audio mode
+ */
+extern "C"
+int SetAudioMode(HRilClient client, uint32_t mode, uint32_t select) {
+    RilClientPrv *client_prv;
+    int ret;
+    char data[6] = {0,};
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    if (client_prv->sock < 0) {
+        RLOGE("%s: Not connected.", __FUNCTION__);
+        return RIL_CLIENT_ERR_CONNECT;
+    }
+
+    // Make raw data
+    data[0] = OEM_FUNC_SOUND;
+    data[1] = OEM_SND_SET_AUDIO_MODE;
+    data[2] = 0x00;     // data length
+    data[3] = 0x06;     // data length
+    data[4] = (mode==1)?1:0;
+    data[5] = select;
+
+    RegisterRequestCompleteHandler(client, REQ_SET_AUDIO_MODE, NULL);
+
+    ret = SendOemRequestHookRaw(client, REQ_SET_AUDIO_MODE, data, sizeof(data));
+    if (ret != RIL_CLIENT_ERR_SUCCESS) {
+        RegisterRequestCompleteHandler(client, REQ_SET_AUDIO_MODE, NULL);
+    }
+
+    return ret;
+}
+
+/**
+ * Set sound clock mode
+ */
+extern "C"
+int SetSoundClockMode(HRilClient client, uint32_t mode) {
+    RilClientPrv *client_prv;
+    int ret;
+    char data[5] = {0,};
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    if (client_prv->sock < 0) {
+        RLOGE("%s: Not connected.", __FUNCTION__);
+        return RIL_CLIENT_ERR_CONNECT;
+    }
+
+    if (mode > 6) {
+        RLOGE("%s: Invalid sound audio mode", __FUNCTION__);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    // Make raw data
+    data[0] = OEM_FUNC_SOUND;
+    data[1] = OEM_SND_SET_CLOCK_MODE;
+    data[2] = 0x00;     // data length
+    data[3] = 0x05;     // data length
+    data[4] = mode;
+
+    RLOGD("%s: Set sound clock mode : %d", __FUNCTION__, mode);
+
+    RegisterRequestCompleteHandler(client, REQ_SET_CLOCK_MODE, NULL);
+
+    ret = SendOemRequestHookRaw(client, REQ_SET_CLOCK_MODE, data, sizeof(data));
+    if (ret != RIL_CLIENT_ERR_SUCCESS) {
+        RegisterRequestCompleteHandler(client, REQ_SET_CLOCK_MODE, NULL);
+    }
+
+    return ret;
+}
+
+/**
+ * Send to modem
+ */
+extern "C"
+int ConvertReturnValue(uint32_t respLen, int resReq, int mode, int *result) {
+    RLOGW("%s: Not implanted.", __FUNCTION__);
+    return 0;
+}
+
+extern "C"
+int ModemAPI_Send_request(HRilClient client, char *data, char *dataH, size_t dataLen, uint32_t mode) {
+    RLOGW("%s: Not implanted.", __FUNCTION__);
+    return 0;
+}
+
+extern "C"
+int SetupPublicSafetyPdn(HRilClient client, char value, RilOnComplete handler) {
+    RilClientPrv *client_prv;
+    int ret;
+    char data[5] = {0,};
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    if (client_prv->sock < 0) {
+        RLOGE("%s: Not connected.", __FUNCTION__);
+        return RIL_CLIENT_ERR_CONNECT;
+    }
+
+    // Make raw data
+    data[0] = OEM_FUNC_PDN;
+    data[1] = 0x02;
+    data[2] = 0x00;     // data length
+    data[3] = 0x05;     // data length
+    data[4] = value;
+
+    RegisterRequestCompleteHandler(client, REQ_SET_PDN, NULL);
+
+    ret = SendOemRequestHookRaw(client, REQ_SET_PDN, data, sizeof(data));
+    if (ret != RIL_CLIENT_ERR_SUCCESS) {
+        RLOGE("%s: failed.", __FUNCTION__);
+        RegisterRequestCompleteHandler(client, REQ_SET_PDN, NULL);
+    }
+
+    return ret;
+}
 
 /**
  * @fn  int InvokeOemRequestHookRaw(HRilClient client, char *data, size_t len)
@@ -1079,6 +1232,39 @@ int InvokeOemRequestHookRaw(HRilClient client, char *data, size_t len) {
     return SendOemRequestHookRaw(client, REQ_OEM_HOOK_RAW, data, len);
 }
 
+/**
+ * Get set client data
+ */
+extern "C"
+int SetClientData(HRilClient client, uint32_t enable) {
+    RilClientPrv *client_prv;
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    client_prv->data = enable;
+
+    return RIL_CLIENT_ERR_SUCCESS;
+}
+
+extern "C"
+int GetClientData(HRilClient client) {
+    RilClientPrv *client_prv;
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return 0;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    return client_prv->data;
+}
+
 
 static int SendOemRequestHookRaw(HRilClient client, int req_id, char *data, size_t len) {
     int token = 0;
@@ -1092,10 +1278,22 @@ static int SendOemRequestHookRaw(HRilClient client, int req_id, char *data, size
 
     client_prv = (RilClientPrv *)(client->prv);
 
+    pthread_mutex_lock(&(client_prv->mutex_modem));
+
+    if (client_prv->sock < 0 ) {
+        RLOGE("%s: Not connected.", __FUNCTION__);
+        pthread_mutex_unlock(&(client_prv->mutex_modem));
+        return RIL_CLIENT_ERR_AGAIN;
+    }
+
     // Allocate a token.
+    pthread_mutex_lock(&(client_prv->mutex_token));
     token = AllocateToken(&(client_prv->token_pool));
+    pthread_mutex_unlock(&(client_prv->mutex_token));
+
     if (token == 0) {
         RLOGE("%s: No token.", __FUNCTION__);
+        pthread_mutex_unlock(&(client_prv->mutex_modem));
         return RIL_CLIENT_ERR_AGAIN;
     }
 
@@ -1131,14 +1329,20 @@ static int SendOemRequestHookRaw(HRilClient client, int req_id, char *data, size
     // check if the handler for specified event is NULL and deregister token
     // to prevent token pool overflow
     if(!FindReqHandler(client_prv, token, &check_req_id)) {
+        pthread_mutex_lock(&(client_prv->mutex_token));
         FreeToken(&(client_prv->token_pool), token);
+        pthread_mutex_unlock(&(client_prv->mutex_token));
         ClearReqHistory(client_prv, token);
     }
+
+    pthread_mutex_unlock(&(client_prv->mutex_modem));
 
     return RIL_CLIENT_ERR_SUCCESS;
 
 error:
+    pthread_mutex_lock(&(client_prv->mutex_token));
     FreeToken(&(client_prv->token_pool), token);
+    pthread_mutex_unlock(&(client_prv->mutex_token));
     ClearReqHistory(client_prv, token);
 
     if (ret == -EPIPE || ret == -EBADFD) {
@@ -1146,6 +1350,8 @@ error:
         client_prv->sock = -1;
         client_prv->b_connect = 0;
     }
+
+    pthread_mutex_unlock(&(client_prv->mutex_modem));
 
     return RIL_CLIENT_ERR_UNKNOWN;
 }
@@ -1155,11 +1361,11 @@ static bool isValidSoundType(SoundType type) {
     return (type >= SOUND_TYPE_VOICE && type <= SOUND_TYPE_BTVOICE);
 }
 
-
 static bool isValidAudioPath(AudioPath path) {
-    return (path >= SOUND_AUDIO_PATH_EARPIECE && path <= OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF);
+    return ((path >= SOUND_AUDIO_PATH_EARPIECE && path <= SOUND_AUDIO_PATH_14) ||
+            (path >= SOUND_AUDIO_PATH_30 && path <= SOUND_AUDIO_PATH_42) ||
+            (path >= SOUND_AUDIO_PATH_50 && path <= SOUND_AUDIO_PATH_53));
 }
-
 
 static bool isValidSoundClockCondition(SoundClockCondition condition) {
     return (condition >= SOUND_CLOCK_STOP && condition <= SOUND_CLOCK_START);
@@ -1218,6 +1424,48 @@ static char ConvertAudioPath(AudioPath path) {
             return OEM_SND_AUDIO_PATH_BT_WB;
         case SOUND_AUDIO_PATH_BLUETOOTH_WB_NO_NR:
             return OEM_SND_AUDIO_PATH_BT_WB_NSEC_OFF;
+        case SOUND_AUDIO_PATH_11:
+            return 0x0D;
+        case SOUND_AUDIO_PATH_12:
+            return 0x17;
+        case SOUND_AUDIO_PATH_13:
+            return 0x18;
+        case SOUND_AUDIO_PATH_14:
+            return 0x0E;
+        case SOUND_AUDIO_PATH_30:
+            return 0x1F;
+        case SOUND_AUDIO_PATH_31:
+            return 0x20;
+        case SOUND_AUDIO_PATH_32:
+            return 0x24;
+        case SOUND_AUDIO_PATH_33:
+            return 0x22;
+        case SOUND_AUDIO_PATH_34:
+            return 0x23;
+        case SOUND_AUDIO_PATH_35:
+            return 0x25;
+        case SOUND_AUDIO_PATH_36:
+            return 0x26;
+        case SOUND_AUDIO_PATH_37:
+            return OEM_SND_AUDIO_PATH_MIC1;
+        case SOUND_AUDIO_PATH_38:
+            return OEM_SND_AUDIO_PATH_MIC2;
+        case SOUND_AUDIO_PATH_39:
+            return 0x27;
+        case SOUND_AUDIO_PATH_40:
+            return 0x28;
+        case SOUND_AUDIO_PATH_41:
+            return 0x29;
+        case SOUND_AUDIO_PATH_42:
+            return 0x2A;
+        case SOUND_AUDIO_PATH_50:
+            return 0x32;
+        case SOUND_AUDIO_PATH_51:
+            return 0x33;
+        case SOUND_AUDIO_PATH_52:
+            return 0x34;
+        case SOUND_AUDIO_PATH_53:
+            return 0x35;
 
         default:
             return OEM_SND_AUDIO_PATH_EARPIECE;
@@ -1368,6 +1616,7 @@ static int processSolicited(RilClientPrv *prv, Parcel &p) {
     RilOnComplete req_func = NULL;
     int ret = RIL_CLIENT_ERR_SUCCESS;
     uint32_t req_id = 0;
+    uint8_t vtoken = 0;
 
     RLOGV("%s()", __FUNCTION__);
 
@@ -1377,7 +1626,11 @@ static int processSolicited(RilClientPrv *prv, Parcel &p) {
         return RIL_CLIENT_ERR_IO;
     }
 
-    if (IsValidToken(&(prv->token_pool), token) == 0) {
+    pthread_mutex_lock(&(prv->mutex_token));
+    vtoken = IsValidToken(&(prv->token_pool), token);
+    pthread_mutex_unlock(&(prv->mutex_token));
+
+    if (vtoken == 0) {
         RLOGE("%s: Invalid Token", __FUNCTION__);
         return RIL_CLIENT_ERR_INVAL;    // Invalid token.
     }
@@ -1417,8 +1670,8 @@ static int processSolicited(RilClientPrv *prv, Parcel &p) {
         RLOGV("[*] Call handler");
         req_func(prv->parent, data, len);
 
-        if(prv->b_del_handler) {
-         prv->b_del_handler = 0;
+        if (prv->b_del_handler) {
+            prv->b_del_handler = 0;
             RegisterRequestCompleteHandler(prv->parent, req_id, NULL);
         }
     } else {
@@ -1426,7 +1679,10 @@ static int processSolicited(RilClientPrv *prv, Parcel &p) {
     }
 
 error:
+    pthread_mutex_lock(&(prv->mutex_token));
     FreeToken(&(prv->token_pool), token);
+    pthread_mutex_unlock(&(prv->mutex_token));
+
     ClearReqHistory(prv, token);
     return ret;
 }
@@ -1567,7 +1823,7 @@ static RilOnComplete FindReqHandler(RilClientPrv *prv, int token, uint32_t *id) 
             for (j = 0; j < REQ_POOL_SIZE; j++) {
                 printf("[*] %s(): token(%d), req_id(%d), history_id(%d)\n", __FUNCTION__, token, prv->history[i].id, prv->history[i].id);
                 if (prv->req_handlers[j].id == prv->history[i].id) {
-              *id = prv->req_handlers[j].id;
+                    *id = prv->req_handlers[j].id;
                     return prv->req_handlers[j].handler;
                 }
             }

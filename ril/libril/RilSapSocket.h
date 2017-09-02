@@ -227,7 +227,6 @@ class RilSapSocket : public RilSocket {
         static void sOnRequestComplete(RIL_Token t,
         RIL_Errno e, void *response, size_t responselen);
 
-#if defined(ANDROID_MULTI_SIM)
         /**
          * Class method that selects the socket on which the onUnsolicitedResponse
          * is called.
@@ -239,18 +238,6 @@ class RilSapSocket : public RilSocket {
          */
         static void sOnUnsolicitedResponse(int unsolResponse, const void *data,
         size_t datalen, RIL_SOCKET_ID socket_id);
-#else
-        /**
-         * Class method that selects the socket on which the onUnsolicitedResponse
-         * is called.
-         *
-         * @param Message id.
-         * @param Response data.
-         * @param Response data length.
-         */
-        static void sOnUnsolicitedResponse(int unsolResponse, const void *data,
-        size_t datalen);
-#endif
 };
 
 #endif /*RIL_UIM_SOCKET_H_INCLUDED*/

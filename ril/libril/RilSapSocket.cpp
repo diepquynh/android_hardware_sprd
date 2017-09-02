@@ -16,7 +16,6 @@
 
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
-#define RIL_SHLIB
 #include "telephony/ril.h"
 #include "RilSapSocket.h"
 #include "pb_decode.h"
@@ -71,7 +70,6 @@ void RilSapSocket::sOnRequestComplete (RIL_Token t,
     }
 }
 
-#if defined(ANDROID_MULTI_SIM)
 void RilSapSocket::sOnUnsolicitedResponse(int unsolResponse,
         const void *data,
         size_t datalen,
@@ -81,14 +79,6 @@ void RilSapSocket::sOnUnsolicitedResponse(int unsolResponse,
         sap_socket->onUnsolicitedResponse(unsolResponse, (void *)data, datalen);
     }
 }
-#else
-void RilSapSocket::sOnUnsolicitedResponse(int unsolResponse,
-       const void *data,
-       size_t datalen) {
-    RilSapSocket *sap_socket = getSocketById(RIL_SOCKET_1);
-    sap_socket->onUnsolicitedResponse(unsolResponse, (void *)data, datalen);
-}
-#endif
 
 void RilSapSocket::printList() {
     RilSapSocketList *current = head;
@@ -125,30 +115,6 @@ void RilSapSocket::initSapSocket(const char *socketName,
             addSocketToList(socketName, RIL_SOCKET_1, uimFuncs);
         }
     }
-
-#if (SIM_COUNT >= 2)
-    if (strcmp(socketName, "sap_uim_socket2") == 0) {
-        if(!SocketExists(socketName)) {
-            addSocketToList(socketName, RIL_SOCKET_2, uimFuncs);
-        }
-    }
-#endif
-
-#if (SIM_COUNT >= 3)
-    if (strcmp(socketName, "sap_uim_socket3") == 0) {
-        if(!SocketExists(socketName)) {
-            addSocketToList(socketName, RIL_SOCKET_3, uimFuncs);
-        }
-    }
-#endif
-
-#if (SIM_COUNT >= 4)
-    if (strcmp(socketName, "sap_uim_socket4") == 0) {
-        if(!SocketExists(socketName)) {
-            addSocketToList(socketName, RIL_SOCKET_4, uimFuncs);
-        }
-    }
-#endif
 }
 
 void RilSapSocket::addSocketToList(const char *socketName, RIL_SOCKET_ID socketid,
@@ -161,6 +127,7 @@ void RilSapSocket::addSocketToList(const char *socketName, RIL_SOCKET_ID socketi
         RilSapSocketList* listItem = (RilSapSocketList*)malloc(sizeof(RilSapSocketList));
         if (!listItem) {
             RLOGE("addSocketToList: OOM");
+            delete socket;
             return;
         }
         listItem->socket = socket;
@@ -288,11 +255,7 @@ void RilSapSocket::dispatchRequest(MsgHeader *req) {
         req->id,
         req->error );
 
-#if defined(ANDROID_MULTI_SIM)
         uimFuncs->onRequest(req->id, req->payload->bytes, req->payload->size, currRequest, id);
-#else
-        uimFuncs->onRequest(req->id, req->payload->bytes, req->payload->size, currRequest);
-#endif
     }
 }
 
@@ -501,11 +464,7 @@ void RilSapSocket::dispatchDisconnect(MsgHeader *req) {
 
     RLOGD("Sending disconnect on command close!");
 
-#if defined(ANDROID_MULTI_SIM)
     uimFuncs->onRequest(req->id, req->payload->bytes, req->payload->size, currRequest, id);
-#else
-    uimFuncs->onRequest(req->id, req->payload->bytes, req->payload->size, currRequest);
-#endif
 }
 
 void RilSapSocket::onCommandsSocketClosed() {

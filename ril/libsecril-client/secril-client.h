@@ -46,6 +46,11 @@ typedef int (*RilOnUnsolicited)(HRilClient handle, const void *data, size_t data
 
 typedef int (*RilOnError)(void *data, int error);
 
+//---------------------------------------------------------------------------
+// Callbacks
+//---------------------------------------------------------------------------
+
+int callBackSecureSimLock(HRilClient handle, const void *data, size_t datalen);
 
 //---------------------------------------------------------------------------
 // Client APIs
@@ -148,18 +153,39 @@ typedef enum _AudioPath {
     SOUND_AUDIO_PATH_MIC1,
     SOUND_AUDIO_PATH_MIC2,
     SOUND_AUDIO_PATH_BLUETOOTH_WB,
-    SOUND_AUDIO_PATH_BLUETOOTH_WB_NO_NR
+    SOUND_AUDIO_PATH_BLUETOOTH_WB_NO_NR,
+    SOUND_AUDIO_PATH_11,
+    SOUND_AUDIO_PATH_12,
+    SOUND_AUDIO_PATH_13,
+    SOUND_AUDIO_PATH_14,
+
+    SOUND_AUDIO_PATH_30 = 30,
+    SOUND_AUDIO_PATH_31,
+    SOUND_AUDIO_PATH_32,
+    SOUND_AUDIO_PATH_33,
+    SOUND_AUDIO_PATH_34,
+    SOUND_AUDIO_PATH_35,
+    SOUND_AUDIO_PATH_36,
+    SOUND_AUDIO_PATH_37,
+    SOUND_AUDIO_PATH_38,
+    SOUND_AUDIO_PATH_39,
+    SOUND_AUDIO_PATH_40,
+    SOUND_AUDIO_PATH_41,
+    SOUND_AUDIO_PATH_42,
+
+    SOUND_AUDIO_PATH_50 = 50,
+    SOUND_AUDIO_PATH_51,
+    SOUND_AUDIO_PATH_52,
+    SOUND_AUDIO_PATH_53
 } AudioPath;
 
 /**
  * ExtraVolume
  */
-#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
 typedef enum _ExtraVolume {
     ORIGINAL_PATH,
     EXTRA_VOLUME_PATH
 } ExtraVolume;
-#endif
 
 /**
  * Clock adjustment parameters.
@@ -246,11 +272,7 @@ int SetCallVolume(HRilClient client, SoundType type, int vol_level);
 /**
  * Set external sound device path for noise reduction.
  */
-#ifdef RIL_CALL_AUDIO_PATH_EXTRAVOLUME
 int SetCallAudioPath(HRilClient client, AudioPath path, ExtraVolume mode);
-#else
-int SetCallAudioPath(HRilClient client, AudioPath path);
-#endif
 
 /**
  * Set modem clock to master or slave.
@@ -288,6 +310,32 @@ int SetDhaSolution(HRilClient client, DhaSolMode mode, DhaSolSelect select, char
  * Set Loopback Test Mode and Path
  */
 int SetLoopbackTest(HRilClient client, LoopbackMode mode, AudioPath path);
+
+/**
+ * Set audio mode
+ */
+int SetAudioMode(HRilClient client, uint32_t mode, uint32_t select);
+
+/**
+ * Set sound clock mode
+ */
+int SetSoundClockMode(HRilClient client, uint32_t mode);
+
+/**
+ * Send to modem
+ */
+int ConvertReturnValue(uint32_t respLen, int resReq, int mode, int *result);
+
+int ModemAPI_Send_request(HRilClient client, char *data, char *dataH, size_t dataLen, uint32_t mode);
+
+int SetupPublicSafetyPdn(HRilClient client, char value, RilOnComplete handler);
+
+/**
+ * Get set client data
+ */
+int GetClientData(HRilClient client);
+
+int SetClientData(HRilClient client, uint32_t enable);
 
 #ifdef __cplusplus
 };
