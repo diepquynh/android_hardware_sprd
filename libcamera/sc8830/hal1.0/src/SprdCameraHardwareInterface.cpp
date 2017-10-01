@@ -132,9 +132,16 @@ static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
+enum {
+    CAMERA_CMD_SET_FLIP_ON = 12,
+    MULTI_FRAME_SHOT_START            = 1261,
+    AUTO_LOW_LIGHT_SET                = 1351,
+    HDR_PICTURE_MODE_CHANGE           = 1273,
+};
+
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
 
-const CameraInfo SprdCameraHardware::kCameraInfo[] = {
+const oldCameraInfo SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -147,7 +154,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 #endif
 };
 
-const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
+const oldCameraInfo SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/

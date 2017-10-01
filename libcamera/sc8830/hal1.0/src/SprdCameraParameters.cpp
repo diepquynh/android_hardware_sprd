@@ -140,7 +140,7 @@ void SprdCameraParameters::setDefault(ConfigType config)
 
 	for (int i=0; i<count; i++) {
 		set(element[i].key, element[i].value);
-//		LOGI("SetDefault: key = %s, value = %s", element[i].key, element[i].value);
+		LOGI("SetDefault: key = %s, value = %s", element[i].key, element[i].value);
 	}
 }
 
