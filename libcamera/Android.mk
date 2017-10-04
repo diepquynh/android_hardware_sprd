@@ -22,9 +22,9 @@ supported_boards := \
 	scx15 \
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
-include $(call all-makefiles-under,$(TARGET_BOARD_PLATFORM))
+include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM))
 endif
 
 ifeq ($(SOC_SCX30G_V2),true)
-include $(call all-makefiles-under,sc8830)
+include $(call all-named-subdir-makefiles,sc8830)
 endif
