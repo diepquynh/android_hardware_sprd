@@ -6781,8 +6781,7 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 
 	ssize_t offset = frame->buf_id;
 	camera_frame_metadata_t metadata;
-	metadata.light_condition = frame->lls_info;
-	LOGI("receivePreviewFrame lls_info = %d frame->type = %d", metadata.light_condition, frame->type);
+	LOGI("receivePreviewFrame lls_info = %d frame->type = %d", frame->lls_info, frame->type);
 	camera_face_t face_info[FACE_DETECT_NUM];
 	uint32_t k = 0;
 	int width, height, frame_size;
