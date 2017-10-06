@@ -50,6 +50,8 @@ else
 LOCAL_CFLAGS += -DVOIP_DSP_PROCESS
 endif
 
+LOCAL_LDLIBS += \
+	-Idl
 
 LOCAL_C_INCLUDES += \
 	external/tinyalsa/include \
@@ -57,9 +59,11 @@ LOCAL_C_INCLUDES += \
 	system/media/audio_utils/include \
 	system/media/audio_effects/include \
 	$(LOCAL_PATH)/record_process \
+	$(LOCAL_PATH)/DumpData
 
 LOCAL_SRC_FILES := \
 	audio_hw.c \
+	DumpData/dumpdata.c \
 	record_process/aud_proc_config.c.arm \
 	record_process/aud_filter_calc.c.arm \
 
@@ -79,7 +83,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libvbeffect \
 	libvbpga \
 	libnvexchange \
-	libdumpdata \
 	libhardware_legacy \
 
 LOCAL_REQUIRED_MODULES := \
@@ -92,7 +95,6 @@ LOCAL_REQUIRED_MODULES := \
 	libvbeffect \
 	libvbpga \
 	libnvexchange \
-	libdumpdata \
 	libhardware_legacy \
 
 LOCAL_MODULE_TAGS := optional
