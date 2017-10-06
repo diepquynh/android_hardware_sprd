@@ -415,7 +415,7 @@ struct config_element sprd_front_camera_hardware_config[] = {
 	{"whitebalance-values", "auto,incandescent,fluorescent,daylight,cloudy-daylight"},
 	{"whitebalance", "auto"},
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
-	{"picture-size-values", "2880x1920,2576x1932,2048x1536,1600x1200,1280x960,640x480"},
+	{"picture-size-values", "2576x1932,2048x1536,1600x1200,1280x960,640x480"},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
 	{"picture-size-values", "2048x1536,1600x1200,1280x960,640x480"},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
