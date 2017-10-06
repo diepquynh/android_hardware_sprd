@@ -447,6 +447,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 endif
 
 LOCAL_CFLAGS += \
+	-fno-stack-protector \
 	-fno-strict-aliasing \
 	-Wno-unused-parameter \
 	-DCHIP_ENDIAN_LITTLE \
