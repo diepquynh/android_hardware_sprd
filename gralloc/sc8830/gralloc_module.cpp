@@ -40,11 +40,21 @@ static int s_ump_is_open = 0;
 #include <sys/mman.h>
 #endif
 
+#ifdef ADVERTISE_GRALLOC1
+#include <gralloc1-adapter.h>
+#endif
+
 static pthread_mutex_t s_map_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static int gralloc_device_open(const hw_module_t* module, const char* name, hw_device_t** device)
 {
 	int status = -EINVAL;
+
+#ifdef ADVERTISE_GRALLOC1
+	if (!strcmp(name, GRALLOC_HARDWARE_MODULE_ID)) {
+		return gralloc1_adapter_device_open(module, name, device);
+	}
+#endif
 
 	if (!strncmp(name, GRALLOC_HARDWARE_GPU0, MALI_GRALLOC_HARDWARE_MAX_STR_LEN))
 	{
@@ -69,6 +79,12 @@ static int gralloc_register_buffer(gralloc_module_t const *module, buffer_handle
 
 	// if this handle was created in this process, then we keep it as is.
 	private_handle_t *hnd = (private_handle_t *)handle;
+
+#ifdef ADVERTISE_GRALLOC1
+	if (hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER) {
+		return 0;
+	}
+#endif
 
 	ALOGD_IF(mDebug>1,"register buffer  handle:%p ion_hnd:0x%p",handle,hnd->ion_hnd);
 
@@ -385,6 +401,90 @@ static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle
 	return 0;
 }
 
+#ifdef ADVERTISE_GRALLOC1
+static int gralloc_perform(struct gralloc_module_t const* module,
+                    int operation, ... )
+{
+    int res = -EINVAL;
+    va_list args;
+    if(!module)
+        return res;
+
+    va_start(args, operation);
+    switch (operation) {
+        case GRALLOC1_ADAPTER_PERFORM_GET_REAL_MODULE_API_VERSION_MINOR:
+            {
+                auto outMinorVersion = va_arg(args, int*);
+                *outMinorVersion = 0;
+            } break;
+        case GRALLOC1_ADAPTER_PERFORM_SET_USAGES:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto producerUsage = va_arg(args, uint64_t);
+                auto consumerUsage = va_arg(args, uint64_t);
+                hnd->producer_usage = producerUsage;
+                hnd->consumer_usage = consumerUsage;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_DIMENSIONS:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outWidth = va_arg(args, int*);
+                auto outHeight = va_arg(args, int*);
+                *outWidth = hnd->width;
+                *outHeight = hnd->height;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_FORMAT:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outFormat = va_arg(args, int*);
+                *outFormat = hnd->format;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_PRODUCER_USAGE:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outUsage = va_arg(args, uint64_t*);
+                *outUsage = hnd->producer_usage;
+            } break;
+        case GRALLOC1_ADAPTER_PERFORM_GET_CONSUMER_USAGE:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outUsage = va_arg(args, uint64_t*);
+                *outUsage = hnd->consumer_usage;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_BACKING_STORE:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outBackingStore = va_arg(args, uint64_t*);
+                *outBackingStore = hnd->backing_store;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_NUM_FLEX_PLANES:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outNumFlexPlanes = va_arg(args, int*);
+                (void) hnd;
+                // for simpilicity
+                *outNumFlexPlanes = 4;
+            } break;
+
+        case GRALLOC1_ADAPTER_PERFORM_GET_STRIDE:
+            {
+                auto hnd =  va_arg(args, private_handle_t*);
+                auto outStride = va_arg(args, int*);
+                *outStride = hnd->width;
+            } break;
+        default:
+            break;
+    }
+    va_end(args);
+    return res;
+}
+#endif
+
 // There is one global instance of the module
 
 static struct hw_module_methods_t gralloc_module_methods =
@@ -398,7 +498,11 @@ private_module_t::private_module_t()
 #define INIT_ZERO(obj) (memset(&(obj),0,sizeof((obj))))
 
 	base.common.tag = HARDWARE_MODULE_TAG;
+#ifdef ADVERTISE_GRALLOC1
+	base.common.version_major = GRALLOC1_ADAPTER_MODULE_API_VERSION_1_0;
+#else
 	base.common.version_major = 1;
+#endif
 	base.common.version_minor = 0;
 	base.common.id = GRALLOC_HARDWARE_MODULE_ID;
 	base.common.name = "Graphics Memory Allocator Module";
@@ -412,7 +516,11 @@ private_module_t::private_module_t()
 	base.lock = gralloc_lock;
 	base.lock_ycbcr = gralloc_lock_ycbcr;
 	base.unlock = gralloc_unlock;
+#ifdef ADVERTISE_GRALLOC1
+	base.perform = gralloc_perform;
+#else
 	base.perform = NULL;
+#endif
 	INIT_ZERO(base.reserved_proc);
 
 	framebuffer = NULL;
