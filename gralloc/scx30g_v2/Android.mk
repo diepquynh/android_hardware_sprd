@@ -40,7 +40,11 @@ LOCAL_SHARED_LIBRARIES := \
 	liblog \
 	libcutils \
 	libGLESv1_CM \
+	libui \
+	libsync \
 	$(SHARED_MEM_LIBS) \
+
+LOCAL_STATIC_LIBRARIES := libgralloc1-adapter
 
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
@@ -56,6 +60,10 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
 
 LOCAL_CFLAGS := \
 	-DLOG_TAG=\"gralloc.$(TARGET_BOARD_PLATFORM)\" \
+
+ifeq ($(TARGET_USES_GRALLOC1), true)
+LOCAL_CFLAGS += -DADVERTISE_GRALLOC1
+endif
 
 ifeq ($(strip $(USE_UI_OVERLAY)),true)
 LOCAL_CFLAGS += -DUSE_UI_OVERLAY

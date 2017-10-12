@@ -97,9 +97,17 @@ static int __ump_alloc_should_fail()
 }
 #endif
 
+static uint64_t next_backing_store_id()
+{
+    static std::atomic<uint64_t> next_id(1);
+    return next_id++;
+}
 
 static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buffer_handle_t *pHandle)
 {
+
+    ALOGV("%s: size:%d usage:%d", __func__, size, usage);
+
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	{
 		private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
@@ -536,6 +544,7 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 		{
 			const native_handle_t *p_nativeh  = *pHandle;
 			private_handle_t *hnd = (private_handle_t*)p_nativeh;
+			hnd->backing_store = next_backing_store_id();
 			hnd->format = format;
 			hnd->width = stride;
 			hnd->height = h;
@@ -583,6 +592,7 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 
 	hnd->width = w;
 	hnd->height = h;
+	hnd->backing_store = next_backing_store_id();
 	hnd->format = format;
 	hnd->stride = stride;
 
