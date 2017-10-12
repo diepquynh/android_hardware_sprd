@@ -208,6 +208,9 @@ struct private_handle_t
 #define GRALLOC_ARM_NUM_FDS 0
 #endif
 
+    uint64_t backing_store;
+    uint64_t producer_usage;
+    uint64_t consumer_usage;
 
 #ifdef __cplusplus
 	static const int sNumFds = GRALLOC_ARM_NUM_FDS;
