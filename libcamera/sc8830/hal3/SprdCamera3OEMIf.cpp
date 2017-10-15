@@ -90,7 +90,6 @@ namespace sprdcamera {
 #define HIGH_FREQ_STR        "500000"
 #endif
 
-#define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
 #define HAS_CAMERA_HINTS 1
 //#define CONFIG_NEED_UNMAP
 
@@ -4371,7 +4370,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 
 	HAL_LOGV("set camera para, tag is %ld", cameraParaTag);
 	mSetting->getCONTROLTag(&controlInfo);
-	switch (cameraParaTag) {
+	switch ((int)cameraParaTag) {
 	case ANDROID_CONTROL_SCENE_MODE:
 		{
 			int8_t drvSceneMode = 0;

@@ -67,7 +67,7 @@ void Al_AF_GetFv(alc_af_handle_t handle,unsigned long dwValue[150])
 //ALC_AF_LOGI("ALC_posdw %d %d %d %d %d %d %d %d %d %d",dwValue[20],dwValue[21],dwValue[22],dwValue[23],dwValue[24],dwValue[25],dwValue[26],dwValue[27],dwValue[28],dwValue[29]);
 
 
-	return 0;
+	return;
 }
 
 

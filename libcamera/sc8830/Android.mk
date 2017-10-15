@@ -20,6 +20,7 @@ LOCAL_C_INCLUDES := \
 	external/jhead \
 	external/sqlite/dist \
 	system/media/camera/include \
+	$(LOCAL_PATH)/include \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
 	$(LOCAL_PATH)/../../libmemoryheapion \
 	$(LOCAL_PATH)/arithmetic/omron/inc \
@@ -447,6 +448,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 endif
 
 LOCAL_CFLAGS += \
+	-Wno-missing-braces \
 	-fno-stack-protector \
 	-fno-strict-aliasing \
 	-Wno-unused-parameter \

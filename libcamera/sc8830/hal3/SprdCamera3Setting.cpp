@@ -1352,7 +1352,7 @@ const uint8_t kavailable_noise_reduction_modes[] = {
 };
 /**********************Static Members**********************/
 
-const CameraInfo kCameraInfo[] = {
+const oldCameraInfo kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -1906,7 +1906,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	memcpy(s_setting[cameraId].statis_InfoInfo.available_face_detect_modes,camera3_default_info.common.availableFaceDetectModes,sizeof(camera3_default_info.common.availableFaceDetectModes));
 	s_setting[cameraId].sprddefInfo.flash_mode_support = 1;
 	s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
-	s_setting[cameraId].sprddefInfo.rec_snap_support = ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
+	s_setting[cameraId].sprddefInfo.rec_snap_support = ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT;
 	#ifdef CONFIG_CAMERA_BIG_PREVIEW_RECORD_SIZE
 	s_setting[cameraId].sprddefInfo.big_pre_rec_size_support = 1;
 	#else
