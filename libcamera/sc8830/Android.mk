@@ -20,6 +20,7 @@ LOCAL_C_INCLUDES := \
 	external/jhead \
 	external/sqlite/dist \
 	system/media/camera/include \
+	$(TOP)/frameworks/native/include/media/openmax \
 	$(LOCAL_PATH)/include \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
 	$(LOCAL_PATH)/../../libmemoryheapion \
@@ -456,6 +457,11 @@ LOCAL_CFLAGS += \
 	-DJPEG_ENC \
 	-D_VSP_LINUX_ \
 	-D_VSP_
+
+# use media extension
+ifeq ($(TARGET_USES_MEDIA_EXTENSIONS), true)
+LOCAL_CFLAGS += -DUSE_MEDIA_EXTENSIONS
+endif
 
 ifeq ($(strip $(ISP_HW_VER)),2.0)
 LOCAL_CFLAGS += \

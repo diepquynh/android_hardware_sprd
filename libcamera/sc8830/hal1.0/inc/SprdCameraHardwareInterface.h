@@ -437,6 +437,9 @@ private:
 	void                              prepareForPostProcess(void);
 	void                              exitFromPostProcess(void);
 
+	void                            deallocateMeta();
+	int                             allocateMeta(uint8_t buf_cnt, int numFDs, int numInts);
+
 	/* These constants reflect the number of buffers that libqcamera requires
 	for preview and raw, and need to be updated when libqcamera
 	changes.
@@ -495,7 +498,7 @@ private:
 	uint32_t                        mVideoHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
-	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	//uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
 #if(MINICAMERA != 1)
 	buffer_handle_t                 *mPreviewBufferHandle[kPreviewBufferCount];
 	buffer_handle_t                 *mPreviewCancelBufHandle[kPreviewBufferCount];
@@ -522,7 +525,13 @@ private:
 	uint32_t                        mPathRawHeapSize;
 
 	uint32_t                        mFDAddr;
-	camera_memory_t                 *mMetadataHeap;
+
+	camera_memory_t                 *mMetadataHeap[kPreviewBufferCount];
+	uint8_t                         mMetaBufCount;
+#ifdef USE_MEDIA_EXTENSIONS
+	native_handle_t                 *mNativeHandleHeap[kPreviewBufferCount];
+#endif
+
 	sprd_camera_memory_t            *mReDisplayHeap;
 	//TODO: put the picture dimensions in the CameraParameters object;
 	SprdCameraParameters            mParameters;
