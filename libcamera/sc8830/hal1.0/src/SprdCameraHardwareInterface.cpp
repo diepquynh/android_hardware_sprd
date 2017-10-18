@@ -1157,6 +1157,8 @@ void SprdCameraHardware::releaseRecordingFrame(const void *opaque)
 #ifdef USE_MEDIA_EXTENSIONS
 			VideoNativeHandleMetadata *packet = (VideoNativeHandleMetadata *)mMetadataHeap[i]->data;
 			native_handle_close(packet->pHandle);
+			native_handle_delete(packet->pHandle);
+			packet->pHandle = NULL;
 #endif
 			index = i;
 			break;
