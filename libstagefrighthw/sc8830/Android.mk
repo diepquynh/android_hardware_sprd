@@ -41,6 +41,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libmemoryheapion \
 	libutils \
 	libcutils \
+	liblog \
 	libui \
 	libdl \
 	libstagefright_foundation \

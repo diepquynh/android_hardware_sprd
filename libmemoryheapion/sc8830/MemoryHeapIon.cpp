@@ -28,6 +28,7 @@
 #include <sys/mman.h>
 
 #include <cutils/log.h>
+#include <cutils/atomic.h>
 
 #include <linux/ion.h>
 #include <video/ion_sprd.h>

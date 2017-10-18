@@ -21,13 +21,14 @@
 #include "SPRDMPEG4Decoder.h"
 
 #include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/MediaDefs.h>
+#include <media/MediaDefs.h>
 #include <media/stagefright/MediaErrors.h>
 #include <media/IOMX.h>
 #include <media/hardware/HardwareAPI.h>
 #include <ui/GraphicBufferMapper.h>
 #include <colorformat_switcher.h>
 
+#include <ui/Rect.h>
 #include "gralloc_priv.h"
 #include "m4v_h263_dec_api.h"
 #include <dlfcn.h>

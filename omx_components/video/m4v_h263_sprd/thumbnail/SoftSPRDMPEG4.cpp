@@ -21,7 +21,7 @@
 #include "SoftSPRDMPEG4.h"
 
 #include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/MediaDefs.h>
+#include <media/MediaDefs.h>
 #include <media/stagefright/MediaErrors.h>
 #include <media/IOMX.h>
 

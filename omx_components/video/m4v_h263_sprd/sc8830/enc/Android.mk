@@ -28,6 +28,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libstagefrighthw \
 	libmemoryheapion \
 	libutils \
+	liblog \
 	libui \
 	libdl \
 	liblog
