@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <linux/fb.h>
-#include <linux/sync.h>
 #include <cutils/log.h>
 #include <cutils/atomic.h>
 #include <cutils/properties.h>
