@@ -195,6 +195,7 @@ int SprdCameraHardware::allocateMeta(uint8_t buf_cnt, int numFDs, int numInts)
 			for (int j = (i - 1); j >= 0; j--) {
 #ifdef USE_MEDIA_EXTENSIONS
 				if (NULL != mNativeHandleHeap[j]) {
+					native_handle_close(mNativeHandleHeap[j]);
 					native_handle_delete(mNativeHandleHeap[j]);
 				}
 #endif
@@ -209,6 +210,7 @@ int SprdCameraHardware::allocateMeta(uint8_t buf_cnt, int numFDs, int numInts)
 			for (int j = (i - 1); j >= 0; j--) {
 				mMetadataHeap[i]->release(mMetadataHeap[i]);
 				if (NULL != mNativeHandleHeap[j]) {
+					native_handle_close(mNativeHandleHeap[j]);
 					native_handle_delete(mNativeHandleHeap[j]);
 				}
 				mMetadataHeap[j]->release(mMetadataHeap[j]);
@@ -227,6 +229,7 @@ void SprdCameraHardware::deallocateMeta()
 #ifdef USE_MEDIA_EXTENSIONS
 		native_handle_t *nh = mNativeHandleHeap[i];
 		if (NULL != nh) {
+			native_handle_close(nh);
 			if (native_handle_delete(nh)) {
 				LOGE("Unable to delete native handle");
 			}
@@ -1151,6 +1154,10 @@ void SprdCameraHardware::releaseRecordingFrame(const void *opaque)
 
 	for (int i = 0; i < mMetaBufCount; i++) {
 		if (mMetadataHeap[i]->data == opaque) {
+#ifdef USE_MEDIA_EXTENSIONS
+			VideoNativeHandleMetadata *packet = (VideoNativeHandleMetadata *)mMetadataHeap[i]->data;
+			native_handle_close(packet->pHandle);
+#endif
 			index = i;
 			break;
 		}
@@ -1169,7 +1176,7 @@ void SprdCameraHardware::releaseRecordingFrame(const void *opaque)
 
 		if (mIsStoreMetaData) {
 #ifdef USE_MEDIA_EXTENSIONS
-			VideoNativeHandleMetadata *packet = (VideoNativeHandleMetadata *)(*(uint32_t *)addr);
+			VideoNativeHandleMetadata *packet = (VideoNativeHandleMetadata *)*((uint32_t *)addr);
 			paddr = (uint32_t *) packet->pHandle->data[1];
 			vaddr = (uint32_t *) packet->pHandle->data[2];
 #else
@@ -6607,11 +6614,6 @@ void SprdCameraHardware::sendPreviewFrameToVideo(struct camera_frame_type *frame
 	if (mIsStoreMetaData) {
 		uint32_t tmpIndex = frame->order_buf_id;
 
-		if (!mPreviewHeapArray) {
-			LOGE("Error in getting preview heap array");
-			return;
-		}
-
 #ifdef USE_MEDIA_EXTENSIONS
 		struct private_handle_t *private_h = NULL;
 
@@ -6657,9 +6659,11 @@ void SprdCameraHardware::sendPreviewFrameToVideo(struct camera_frame_type *frame
 				tmpIndex = mPreviewDcamAllocBufferCnt - 1;
 			}
 			
-			mPreviewHeapArray[tmpIndex]->busy_flag = true;
-			mData_cb_timestamp(timestamp, CAMERA_MSG_VIDEO_FRAME, mMetadataHeap[offset], 0, mUser);
-			mPreviewHeapArray[tmpIndex]->busy_flag = false;
+			if (mPreviewHeapArray) {
+				mPreviewHeapArray[tmpIndex]->busy_flag = true;
+				mData_cb_timestamp(timestamp, CAMERA_MSG_VIDEO_FRAME, mMetadataHeap[offset], 0, mUser);
+				mPreviewHeapArray[tmpIndex]->busy_flag = false;
+			}
 		}
 	} else {
 		uint32_t tmpIndex = frame->order_buf_id;
