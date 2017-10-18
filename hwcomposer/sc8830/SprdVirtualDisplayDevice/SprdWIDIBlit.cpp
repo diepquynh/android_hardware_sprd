@@ -777,7 +777,7 @@ sp<GraphicBuffer> SprdWIDIBlit:: wrapGraphicsBuffer(private_handle_t *handle)
         return NULL;
     }
 
-    GFXBuffer = new GraphicBuffer(handle->width, handle->height, handle->format,
+    GFXBuffer = new GraphicBuffer(handle->width, handle->height, handle->format, 1,
                                GraphicBuffer::USAGE_HW_TEXTURE, handle->stride,
                                (native_handle_t *)handle, false);
     if (GFXBuffer->initCheck() != NO_ERROR)

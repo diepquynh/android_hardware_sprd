@@ -21,7 +21,7 @@
 #include "avc_enc_api.h"
 
 #include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/MediaDefs.h>
+#include <media/MediaDefs.h>
 #include <media/stagefright/MediaErrors.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/Utils.h>

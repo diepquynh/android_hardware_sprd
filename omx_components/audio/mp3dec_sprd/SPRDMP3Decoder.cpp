@@ -27,7 +27,7 @@
 
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/MediaDefs.h>
+#include <media/MediaDefs.h>
 #include <media/stagefright/MediaErrors.h>
 
 namespace android {
