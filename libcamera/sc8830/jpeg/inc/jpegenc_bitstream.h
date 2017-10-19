@@ -29,7 +29,7 @@
 
 #if _CMODEL_
 #else
-__inline void JPEGFW_PutBits(uint32 val, uint32 nbits);
+void JPEGFW_PutBits(uint32 val, uint32 nbits);
 /*{
 	READ_REG_POLL(VSP_BSM_REG_BASE+BSM_READY_OFF, 1, 1, TIME_OUT_CLK, "BSM_READY: polling bsm rfifo ready");
 
