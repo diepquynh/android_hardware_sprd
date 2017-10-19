@@ -41,7 +41,7 @@ LOCAL void JPEGFW_PutBits(uint32 val, uint32 nbits)
 	JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_WDATA_OFFSET, val, "BSM_WDATA: write val(n bits) to bitstream, auto-stuffing");
 }
 #else
-__inline void JPEGFW_PutBits(uint32 val, uint32 nbits)
+void JPEGFW_PutBits(uint32 val, uint32 nbits)
 {
 	//VSP_READ_REG_POLL(VSP_BSM_REG_BASE+BSM_DEBUG_OFF, V_BIT_3, 0, TIME_OUT_CLK, "BSM_READY: polling bsm rfifo ready");
     JPG_READ_REG_POLL(JPG_BSM_REG_BASE+BSM_RDY_OFFSET, 1, 1, TIME_OUT_CLK, "BSM_READY: polling bsm rfifo ready");
