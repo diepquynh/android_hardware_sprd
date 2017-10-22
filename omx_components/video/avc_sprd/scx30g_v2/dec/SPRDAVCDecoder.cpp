@@ -1650,7 +1650,7 @@ void SPRDAVCDecoder::updatePortDefinitions(bool updateCrop, bool updateInputSize
 
     // when output format changes, input buffer size does not actually change
     if (updateInputSize) {
-        inDef->nBufferSize = max(
+        inDef->nBufferSize = std::max(
                                  outDef->nBufferSize / mMinCompressionRatio,
                                  inDef->nBufferSize);
     }
