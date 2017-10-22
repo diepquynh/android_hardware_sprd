@@ -226,7 +226,7 @@ bool SprdUtil::transformLayer(SprdHWLayer *l1, SprdHWLayer *l2,
 #else
 	    int size;
 #endif
-            GraphicBufferAllocator::get().allocate(mFBInfo->fb_width, mFBInfo->fb_height, format, 1, GRALLOC_USAGE_OVERLAY_BUFFER, GRALLOC_USAGE_OVERLAY_BUFFER,
+            GraphicBufferAllocator::get().allocate(mFBInfo->fb_width, mFBInfo->fb_height, format, 1, GRALLOC_USAGE_OVERLAY_BUFFER,
 						(buffer_handle_t*)&tmpDCAMBuffer, &stride, getUniqueId(), std::move("HWC"));
 
             MemoryHeapIon::Get_phy_addr_from_ion(tmpDCAMBuffer->share_fd, &(tmpDCAMBuffer->phyaddr), &size);
