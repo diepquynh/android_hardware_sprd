@@ -10,7 +10,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/native/include/media/openmax \
 	frameworks/native/include/media/hardware \
 	frameworks/native/include \
-	$(LOCAL_PATH)/../../../../../gralloc/scx30g_v2 \
+	$(LOCAL_PATH)/../../../../../gralloc/scx30g2 \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \

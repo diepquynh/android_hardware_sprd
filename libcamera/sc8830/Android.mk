@@ -31,7 +31,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc
 
 ifeq ($(SOC_SCX30G_V2),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/scx30g_v2
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/scx30g2
 else
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/sc8830
 endif
