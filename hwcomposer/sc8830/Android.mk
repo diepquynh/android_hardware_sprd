@@ -66,7 +66,7 @@ LOCAL_C_INCLUDES := \
 
 ifeq ($(SOC_SCX30G_V2),true)
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../gralloc/scx30g_v2
+	$(LOCAL_PATH)/../../gralloc/scx30g2
 LOCAL_CFLAGS += \
 	-DSCX30G_V2
 else
