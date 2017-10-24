@@ -602,6 +602,7 @@ int MemoryHeapIon::Free_iova(int master_id, int buffer_fd,
     return 0;
 }
 
+#ifdef UPDATED_MALI
 int MemoryHeapIon::get_kaddr(uint64_t *kaddr, size_t *size) {
     if (mIonDeviceFd < 0) {
         ALOGE("%s:open dev ion error!",__func__);
@@ -700,6 +701,7 @@ int MemoryHeapIon::Free_kaddr(int buffer_fd) {
 
     return 0;
 }
+#endif
 
 bool MemoryHeapIon::IOMMU_is_enabled(int master_id)
 {
