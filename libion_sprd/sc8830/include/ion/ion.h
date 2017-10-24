@@ -35,7 +35,11 @@ int ion_alloc(int fd, size_t len, size_t align, unsigned int heap_mask,
 int ion_alloc_fd(int fd, size_t len, size_t align, unsigned int heap_mask,
               unsigned int flags, int *handle_fd);
 int ion_sync_fd(int fd, int handle_fd);
+
+#ifndef UPDATED_MALI
 int ion_invalidate_fd(int fd, int handle_fd);
+#endif
+
 int ion_free(int fd, ion_user_handle_t handle);
 int ion_map(int fd, ion_user_handle_t handle, size_t length, int prot,
             int flags, off_t offset, unsigned char **ptr, int *map_fd);

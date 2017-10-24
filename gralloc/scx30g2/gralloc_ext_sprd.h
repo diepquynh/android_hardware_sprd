@@ -28,6 +28,8 @@ enum
 	GRALLOC_USAGE_CAMERA_BUFFER 		=  0x05000000,
     GRALLOC_USAGE_HW_TILE_ALIGN         =  0x08000000,
 };
+
+#ifdef UPDATED_MALI
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,4 +46,6 @@ static inline int ion_invalidate_fd(int fd, int handle_fd)
 #ifdef __cplusplus
 }
 #endif
+#endif // UPDATED_MALI
+
 #endif // GRALLOC_PRIV_EXT_H_
