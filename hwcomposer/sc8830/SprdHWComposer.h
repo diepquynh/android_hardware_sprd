@@ -122,6 +122,77 @@ public:
     int getDisplayAttributes(int disp, uint32_t config, const uint32_t* attributes, int32_t* value);
 
     /*
+     *  returns the index of the configuration that is currently active
+     *  on the connected display.  The index is relative to the list of
+     *  configuration handles returned by getDisplayConfigs.
+     *  If there is no active configuration, -1 shall be returned.
+     * */
+    int getActiveConfig(int disp);
+
+    /*
+     *  instructs the hardware composer to switch to the display
+     *  configuration at the given index in the list of configuration
+     *  handles returned by getDisplayConfigs.
+     * */
+    int setActiveConfig(int disp, int index);
+
+    /*
+     *  For HWC 1.4 and above, setPowerMode() will be used in place of
+     *  blank().
+     *  setPowerMode(..., mode)
+     *  Sets the display screen's power state.
+     *
+     *  The expected functionality for the various modes is as follows:
+     *  HWC_POWER_MODE_OFF    : Turn the display off.
+     *  HWC_POWER_MODE_DOZE   : Turn on the display (if it was previously
+     *                          off) and put the display in a low power mode.
+     *  HWC_POWER_MODE_NORMAL : Turn on the display (if it was previously
+     *                          off), and take it out of low power mode.
+     *
+     *  The functionality is similar to the blank() command in previous
+     *  versions of HWC, but with support for more power states.
+     *  The display driver is expected to retain and restore the low power
+     *  state of the display while entering and exiting from suspend.
+     *
+     *  Multiple sequential calls with the same mode value must be supported.
+     *
+     *  The screen state transition must be be complete when the function
+     *  returns.
+     *
+     *  returns 0 on success, negative on error.
+     * */
+    int setPowerMode(int disp, int mode);
+
+    /*
+     *  Asynchronously update the location of the cursor layer.
+     *  Within the standard prepare()/set() composition loop, the client
+     *  (surfaceflinger) can request that a given layer uses dedicated cursor
+     *  composition hardware by specifiying the HWC_IS_CURSOR_LAYER flag. Only
+     *  one layer per display can have this flag set. If the layer is suitable
+     *  for the platform's cursor hardware, hwcomposer will return from
+     *  prepare() a composition type of HWC_CURSOR_OVERLAY for that layer.
+     *  This indicates not only that the client is not responsible for
+     *  compositing that layer.
+     *  but also that the client can continue to update the position of
+     *  that layer after a call to set(). This can reduce the visible latency
+     *  of mouse movement to visible, on-screen cursor updates. Calls to
+     *  setCursorPositionAsync() may be made from a different thread doing the
+     *  prepare()/set() composition loop, but care must be taken to not
+     *  interleave calls of setCursorPositionAsync() between calls of
+     *  set()/prepare().
+     *
+     *   Notes:
+     *   - Only one layer per display can be specified as a cursor layer with
+     *    HWC_IS_CURSOR_LAYER.
+     *   - hwcomposer will only return one layer per display as
+     *    HWC_CURSOR_OVERLAY
+     *    - This returns 0 on success or -errno on error.
+     *    - This field is optional for HWC_DEVICE_API_VERSION_1_4 and later.
+     *      It should be null for previous versions.
+     * */
+    int setCursorPositionAsync(int disp, int x_pos, int y_pos);
+
+    /*
      *  Registor a callback from Android Framework.
      * */
     void registerProcs(hwc_procs_t const* procs);
@@ -130,6 +201,11 @@ public:
      *  Control vsync event, enable or disable.
      * */
     bool eventControl(int disp, int enabled);
+
+    /*
+     *  pass the number of builtin display vendor support to SurfaceFlinger.
+     * */
+    int getBuiltInDisplayNum(uint32_t *number);
 
 
 private:

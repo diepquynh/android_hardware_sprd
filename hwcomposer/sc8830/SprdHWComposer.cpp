@@ -46,12 +46,18 @@ void SprdHWComposer:: resetDisplayAttributes()
     for (int i = 0; i < MAX_DISPLAYS; i ++)
     {
         DisplayAttributes *dpyAttr = &(mDisplayAttributes[i]);
-        dpyAttr->vsync_period = 0;
-        dpyAttr->xres = 0;
-        dpyAttr->yres = 0;
-        dpyAttr->stride = 0;
-        dpyAttr->xdpi = 0;
-        dpyAttr->ydpi = 0;
+#if 0
+        for (int j = 0; j < MAX_NUM_CONFIGS; j++)
+        {
+            dpyAttr->sets[j].vsync_period = 0;
+            dpyAttr->sets[j].xres = 0;
+            dpyAttr->sets[j].yres = 0;
+            dpyAttr->sets[j].stride = 0;
+            dpyAttr->sets[j].xdpi = 0;
+            dpyAttr->sets[j].ydpi = 0;
+        }
+#endif
+        dpyAttr->configsIndex = 0;
         dpyAttr->connected = false;
         dpyAttr->AcceleratorMode = ACCELERATOR_NON;
     }
@@ -296,6 +302,7 @@ int SprdHWComposer:: getDisplayConfigs(int disp, uint32_t* configs, size_t* numC
             if (*numConfigs > 0)
             {
                 configs[0] = 0;
+                mDisplayAttributes[DISPLAY_PRIMARY].configsIndex = 0;
                 *numConfigs = 1;
             }
             ret = 0;
@@ -307,6 +314,7 @@ int SprdHWComposer:: getDisplayConfigs(int disp, uint32_t* configs, size_t* numC
                 if (*numConfigs > 0)
                 {
                     configs[0] = 0;
+                    mDisplayAttributes[DISPLAY_EXTERNAL].configsIndex = 0;
                     *numConfigs = 1;
                 }
             }
@@ -323,7 +331,7 @@ int SprdHWComposer:: getDisplayAttributes(int disp, uint32_t config, const uint3
 {
     if (DISPLAY_EXTERNAL == disp && !(mDisplayAttributes[disp].connected))
     {
-        ALOGD("External Display Device is not connected");
+        //ALOGD("External Display Device is not connected");
         return -1;
     }
 
@@ -344,7 +352,7 @@ int SprdHWComposer:: getDisplayAttributes(int disp, uint32_t config, const uint3
 
     const int NUM_DISPLAY_ATTRIBUTES = sizeof(DISPLAY_ATTRIBUTES) / (sizeof(DISPLAY_ATTRIBUTES[0]));
 
-    DisplayAttributes *dpyAttr = &(mDisplayAttributes[disp]);
+    AttributesSet *dpyAttr = &(mDisplayAttributes[disp].sets[config]);
 
     for (int i = 0; i < NUM_DISPLAY_ATTRIBUTES -1; i++)
     {
@@ -379,9 +387,122 @@ int SprdHWComposer:: getDisplayAttributes(int disp, uint32_t config, const uint3
     return 0;
 }
 
+int SprdHWComposer:: getActiveConfig(int disp)
+{
+    int ret = -1;
+
+    switch(disp)
+    {
+        case DISPLAY_PRIMARY:
+            ret = mDisplayAttributes[DISPLAY_PRIMARY].configsIndex;
+            break;
+        case DISPLAY_EXTERNAL:
+            if (mDisplayAttributes[DISPLAY_EXTERNAL].connected)
+            {
+                ret = mDisplayAttributes[DISPLAY_EXTERNAL].configsIndex;
+            }
+            break;
+        default:
+            return ret;
+    }
+
+    return ret;
+}
+
+int SprdHWComposer:: setActiveConfig(int disp, int index)
+{
+    int ret = -1;
+
+    if (index < 0)
+    {
+        ALOGE("setActiveConfig input index is invalid");
+        return -1;
+    }
+
+    switch(disp)
+    {
+        case DISPLAY_PRIMARY:
+            mDisplayAttributes[DISPLAY_PRIMARY].configsIndex = index;
+            ret = mPrimaryDisplay->ActiveConfig(&(mDisplayAttributes[DISPLAY_PRIMARY]));
+            break;
+        case DISPLAY_EXTERNAL:
+            if (mDisplayAttributes[DISPLAY_EXTERNAL].connected)
+            {
+                mDisplayAttributes[DISPLAY_EXTERNAL].configsIndex = index;
+                ret = mExternalDisplay->ActiveConfig(&(mDisplayAttributes[DISPLAY_EXTERNAL]));
+            }
+            break;
+        default:
+            return ret;
+    }
+
+    if (ret < 0)
+    {
+        ALOGE("setActiveConfig display: %d ActiveConfig failed", disp);
+    }
+
+    return ret;
+}
+
+int SprdHWComposer:: setPowerMode(int disp, int mode)
+{
+    int ret = -1;
+
+    switch(disp)
+    {
+        case DISPLAY_PRIMARY:
+            ret = mPrimaryDisplay->setPowerMode(mode);
+            break;
+        case DISPLAY_EXTERNAL:
+            ret = mExternalDisplay->setPowerMode(mode);
+            break;
+        default:
+            return ret;
+    }
+
+    if (ret < 0)
+    {
+        ALOGE("SprdHWComposer:: setPowerMode display: %d, failed", disp);
+    }
+
+    return ret;
+}
+
+int SprdHWComposer:: setCursorPositionAsync(int disp, int x_pos, int y_pos)
+{
+    int ret = -1;
+
+    switch(disp)
+    {
+        case DISPLAY_PRIMARY:
+            ret = mPrimaryDisplay->setCursorPositionAsync(x_pos, y_pos);
+            break;
+        case DISPLAY_VIRTUAL:
+            ret = mVirtualDisplay->setCursorPositionAsync(x_pos, y_pos);
+        case DISPLAY_EXTERNAL:
+            if (mDisplayAttributes[DISPLAY_EXTERNAL].connected)
+            {
+                ret = mExternalDisplay->setCursorPositionAsync(x_pos, y_pos);
+            }
+            break;
+        default:
+            return ret;
+    }
+
+    return ret;
+}
+
+int SprdHWComposer:: getBuiltInDisplayNum(uint32_t *number)
+{
+    int ret = -1;
+
+    ret = mPrimaryDisplay->getBuiltInDisplayNum(number);
+
+    return ret;
+}
+
 void SprdHWComposer:: registerProcs(hwc_procs_t const* procs)
 {
-
     /*
      *  At present, the Android callback procs is just
      *  used by Primary Display Device.
@@ -519,6 +640,86 @@ static int hwc_getDisplayAttributes(hwc_composer_device_1 *dev, int disp, uint32
     return status;
 }
 
+static int hwc_getActiveConfig(hwc_composer_device_1* dev, int disp)
+{
+    int status = -EINVAL;
+
+    SprdHWComposer *HWC = static_cast<SprdHWComposer*>(dev);
+    if (HWC == NULL)
+    {
+        ALOGE("Can NOT get SprdHWComposer reference");
+        return status;
+    }
+
+    status = HWC->getActiveConfig(disp);
+
+    return status;
+}
+
+static int hwc_setActiveConfig(hwc_composer_device_1* dev, int disp, int index)
+{
+    int status = -EINVAL;
+
+    SprdHWComposer *HWC = static_cast<SprdHWComposer*>(dev);
+    if (HWC == NULL)
+    {
+        ALOGE("Can NOT get SprdHWComposer reference");
+        return status;
+    }
+
+    status = HWC->setActiveConfig(disp, index);
+
+    return status;
+}
+
+static int hwc_setPowerMode(hwc_composer_device_1* dev, int disp, int mode)
+{
+    int status = -EINVAL;
+
+    SprdHWComposer *HWC = static_cast<SprdHWComposer*>(dev);
+    if (HWC == NULL)
+    {
+        ALOGE("Can NOT get SprdHWComposer reference");
+        return status;
+    }
+
+    status = HWC->setPowerMode(disp, mode);
+
+    return status;
+}
+
+static int hwc_setCursorPositionAsync(hwc_composer_device_1* dev, int disp, int x_pos, int y_pos)
+{
+    int status = -EINVAL;
+
+    SprdHWComposer *HWC = static_cast<SprdHWComposer*>(dev);
+    if (HWC == NULL)
+    {
+        ALOGE("Can NOT get SprdHWComposer reference");
+        return status;
+    }
+
+    status = HWC->setCursorPositionAsync(disp, x_pos, y_pos);
+
+    return status;
+}
+
+static int hwc_getBuiltInDisplayNum(hwc_composer_device_1* dev, uint32_t *number)
+{
+    int status = -EINVAL;
+
+    SprdHWComposer *HWC = static_cast<SprdHWComposer*>(dev);
+    if (HWC == NULL)
+    {
+        ALOGE("Can NOT get SprdHWComposer reference");
+        return status;
+    }
+
+    status = HWC->getBuiltInDisplayNum(number);
+
+    return status;
+}
+
 static int hwc_prepareDisplays(hwc_composer_device_1 *dev, size_t numDisplays, hwc_display_contents_1_t **displays)
 {
     int status = -EINVAL;
@@ -603,7 +804,7 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name, s
     }
 
     HWC->hwc_composer_device_1_t::common.tag = HARDWARE_DEVICE_TAG;
-    HWC->hwc_composer_device_1_t::common.version = HWC_DEVICE_API_VERSION_1_3;
+    HWC->hwc_composer_device_1_t::common.version = HWC_DEVICE_API_VERSION_1_4;
     HWC->hwc_composer_device_1_t::common.module = const_cast<hw_module_t*>(module);
     HWC->hwc_composer_device_1_t::common.close = hwc_device_close;
 
@@ -616,7 +817,15 @@ static int hwc_device_open(const struct hw_module_t* module, const char* name, s
     HWC->hwc_composer_device_1_t::dump = hwc_dump;
     HWC->hwc_composer_device_1_t::getDisplayConfigs = hwc_getDisplayConfigs;
     HWC->hwc_composer_device_1_t::getDisplayAttributes = hwc_getDisplayAttributes;
-
+    HWC->hwc_composer_device_1_t::getActiveConfig = hwc_getActiveConfig;
+    HWC->hwc_composer_device_1_t::setActiveConfig = hwc_setActiveConfig;
+    HWC->hwc_composer_device_1_t::setPowerMode = hwc_setPowerMode;
+#ifdef __LP64__
+    HWC->hwc_composer_device_1_t::setCursorPositionAsync = hwc_setCursorPositionAsync;
+#endif
+#if 0
+    HWC->hwc_composer_device_1_t::getBuiltInDisplayNum = hwc_getBuiltInDisplayNum;
+#endif
     *device = &HWC->hwc_composer_device_1_t::common;
 
     status = 0;
@@ -631,11 +840,11 @@ static struct hw_module_methods_t hwc_module_methods = {
 hwc_module_t HAL_MODULE_INFO_SYM = {
     common: {
         tag: HARDWARE_MODULE_TAG,
-        version_major: 2,
+        version_major: 3,
         version_minor: 0,
         id: HWC_HARDWARE_MODULE_ID,
         name: "SPRD HWComposer Module",
-        author: "The Android Open Source Project",
+        author: "The AndroidL Open Source Project",
         methods: &hwc_module_methods,
         dso: 0,
         reserved: {0},

@@ -99,8 +99,6 @@ private_handle_t* SprdPrimaryPlane::dequeueBuffer()
 
     mFreePlaneCount = 1;
 
-    mBufferIndex = SprdDisplayPlane:: getPlaneBufferIndex();
-
     enable();
 
     if (mDisplayFBTargetLayerFlag)
@@ -122,6 +120,8 @@ private_handle_t* SprdPrimaryPlane::dequeueBuffer()
         }
         mPlaneBufferPhyAddr = (unsigned char *)(mBuffer->phyaddr);
     }
+
+	mBufferIndex = SprdDisplayPlane:: getPlaneBufferIndex();
 
     ALOGI_IF(mDebugFlag, "SprdPrimaryPlane::dequeueBuffer phy addr:%p, index: %d", (void *)mPlaneBufferPhyAddr, mBufferIndex);
 

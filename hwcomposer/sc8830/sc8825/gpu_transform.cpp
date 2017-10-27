@@ -255,15 +255,16 @@ void get_size_stride(uint32_t width, uint32_t height, uint32_t format, uint32_t 
     case HAL_PIXEL_FORMAT_YCbCr_420_P:
         stride = width;
         // mali GPU hardware requires u/v-plane 64byte-alignment
-        size = GRALLOC_ALIGN(height * stride, 64) + GRALLOC_ALIGN(height/2 * GRALLOC_ALIGN(stride/2,16), 64) + height/2 * GRALLOC_ALIGN(stride/2,16);
+        size = GRALLOC_ALIGN(height * stride, 64) + GRALLOC_ALIGN(height/2 * GRALLOC_ALIGN(stride/2,16), 64) + height/2 * GRALLOC_AL
         size = ALIGN(size, 4096);
         break;
-    case HAL_PIXEL_FORMAT_YV12:
+     case HAL_PIXEL_FORMAT_YV12:
         stride = GRALLOC_ALIGN(width, 16);
         // mali GPU hardware requires u/v-plane 64byte-alignment
-        size = GRALLOC_ALIGN(height * stride, 64) + GRALLOC_ALIGN(height/2 * GRALLOC_ALIGN(stride/2,16), 64) + height/2 * GRALLOC_ALIGN(stride/2,16);
+        size = GRALLOC_ALIGN(height * stride, 64) + GRALLOC_ALIGN(height/2 * GRALLOC_ALIGN(stride/2,16), 64) + height/2 * GRALLOC_AL
         size = ALIGN(size, 4096);
         break;
+
     default:
         {
             int bpp = 0;

@@ -101,6 +101,12 @@ int SprdVirtualDisplayDevice:: getDisplayAttributes(DisplayAttributes *dpyAttrib
     return 0;
 }
 
+int SprdVirtualDisplayDevice:: setCursorPositionAsync(int x_pos, int y_pos)
+{
+
+    return 0;
+}
+
 int SprdVirtualDisplayDevice:: prepare(hwc_display_contents_1_t *list, unsigned int accelerator)
 {
     queryDebugFlag(&mDebugFlag);
