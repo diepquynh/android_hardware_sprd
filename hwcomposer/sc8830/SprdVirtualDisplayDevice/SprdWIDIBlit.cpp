@@ -35,7 +35,7 @@
  ** Author:         zhongjun.chen@spreadtrum.com                              *
  *****************************************************************************/
 
-#include <MemoryHeapIon.h>
+#include "MemoryHeapIon.h"
 #include "SprdWIDIBlit.h"
 #include "../SprdHWLayer.h"
 #include "../SprdPrimaryDisplayDevice/SprdFrameBufferHAL.h"
@@ -155,6 +155,7 @@ bool SprdWIDIBlit:: threadLoop()
     int size = -1;
     int size2 = -1;
 #endif
+
 
     HWC_TRACE_BEGIN_WIDIBLIT;
 
@@ -279,6 +280,7 @@ bool SprdWIDIBlit:: threadLoop()
     if (ret != 0)
     {
         ALOGE("SprdWIDIBlit:: threadLoop Accelerator composerLayers failed");
+        //return true;
     }
 
     mDisplayPlane->queueBuffer();
@@ -803,6 +805,10 @@ int SprdWIDIBlit:: setupGraphics()
     EGLint s_configAttribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_NONE, 0,
         EGL_NONE
     };
     EGLint majorVersion;

@@ -58,7 +58,8 @@ SprdPrimaryDisplayDevice:: SprdPrimaryDisplayDevice()
      mGXPCap(NULL),
 #endif
      mDebugFlag(0),
-     mDumpFlag(0)
+     mDumpFlag(0),
+     mGspSupport(true)
     {
 
     }
@@ -355,6 +356,7 @@ void SprdPrimaryDisplayDevice:: dumpCameraShakeTest(hwc_display_contents_1_t* li
 
 int SprdPrimaryDisplayDevice:: getDisplayAttributes(DisplayAttributes *dpyAttributes)
 {
+    int index = 0;
     float refreshRate = 60.0;
     framebuffer_device_t *fbDev = mFBInfo->fbDev;
 
@@ -369,13 +371,130 @@ int SprdPrimaryDisplayDevice:: getDisplayAttributes(DisplayAttributes *dpyAttrib
         refreshRate = fbDev->fps;
     }
 
-    dpyAttributes->vsync_period = 1000000000l / refreshRate;
-    dpyAttributes->xres = mFBInfo->fb_width;
-    dpyAttributes->yres = mFBInfo->fb_height;
-    dpyAttributes->stride = mFBInfo->stride;
-    dpyAttributes->xdpi = mFBInfo->xdpi * 1000.0;
-    dpyAttributes->ydpi = mFBInfo->ydpi * 1000.0;
+    index = dpyAttributes->configsIndex;
+    if (index < 0)
+    {
+        ALOGE("SprdPrimaryDisplayDevice:: getDisplayAttributes invalid index");
+        return -1;
+    }
+
+    dpyAttributes->sets[index].vsync_period = 1000000000l / refreshRate;
+    dpyAttributes->sets[index].xres = mFBInfo->fb_width;
+    dpyAttributes->sets[index].yres = mFBInfo->fb_height;
+    dpyAttributes->sets[index].stride = mFBInfo->stride;
+    dpyAttributes->sets[index].xdpi = mFBInfo->xdpi * 1000.0;
+    dpyAttributes->sets[index].ydpi = mFBInfo->ydpi * 1000.0;
     dpyAttributes->connected = true;
+
+    return 0;
+}
+
+int SprdPrimaryDisplayDevice:: ActiveConfig(DisplayAttributes *dpyAttributes)
+{
+
+    return 0;
+}
+
+int SprdPrimaryDisplayDevice:: setPowerMode(int mode)
+{
+    int ret = -1;
+    int sprdMode = -1;
+
+    switch(mode)
+    {
+        case POWER_MODE_NORMAL:
+        {
+
+            /*
+             *  Turn on the display (if it was previously off),
+             *  and take it out of low power mode.
+             * */
+            sprdMode = SPRD_FB_POWER_NORMAL;
+            if (ioctl(mFBInfo->fbfd, SPRD_FB_SET_POWER_MODE, &sprdMode) < 0)
+            {
+                ALOGE("SprdPrimaryDisplayDevice:: setPowerMode: %d err", mode);
+                ret = -1;
+            }
+            else
+            {
+                ret = 0;
+            }
+            break;
+        }
+        case POWER_MODE_DOZE:
+        {
+            /*
+             *  Turn on the display (if it was previously off),
+             *  and put the display in a low power mode.
+             * */
+            sprdMode = SPRD_FB_POWER_DOZE;
+            if (ioctl(mFBInfo->fbfd, SPRD_FB_SET_POWER_MODE, &sprdMode) < 0)
+            {
+                ALOGE("SprdPrimaryDisplayDevice:: setPowerMode: %d err", mode);
+                ret = -1;
+            }
+            else
+            {
+                ret = 0;
+            }
+            break;
+        }
+        case POWER_MODE_OFF:
+        {
+            /*
+             *  Turn the display off.
+             * */
+            sprdMode = SPRD_FB_POWER_OFF;
+            if (ioctl(mFBInfo->fbfd, SPRD_FB_SET_POWER_MODE, &sprdMode) < 0)
+            {
+                ALOGE("SprdPrimaryDisplayDevice:: setPowerMode: %d err", mode);
+                ret = -1;
+            }
+            else
+            {
+                ret = 0;
+            }
+            break;
+        }
+#ifdef __LP64__
+        case POWER_MODE_DOZE_SUSPEND:
+        {
+            /*
+             *  Turn the display off.
+             * */
+            sprdMode = SPRD_FB_POWER_SUSPEND;
+            if (ioctl(mFBInfo->fbfd, SPRD_FB_SET_POWER_MODE, &sprdMode) < 0)
+            {
+                ALOGE("SprdPrimaryDisplayDevice:: setPowerMode: %d err", mode);
+                ret = -1;
+            }
+            else
+            {
+                ret = 0;
+            }
+            break;
+        }
+#endif
+        default:
+            return 0;
+    }
+
+    return ret;
+}
+
+int SprdPrimaryDisplayDevice:: setCursorPositionAsync(int x_pos, int y_pos)
+{
+
+    return 0;
+}
+
+int SprdPrimaryDisplayDevice:: getBuiltInDisplayNum(uint32_t *number)
+{
+    /*
+     * At present, Sprd just support one built-in physical screen.
+     * If support two later, should change here.
+     * */
+    *number = 1;
 
     return 0;
 }
@@ -552,7 +671,7 @@ int SprdPrimaryDisplayDevice:: prepare(hwc_display_contents_1_t *list, unsigned 
         return -1;
     }
 
-    ret = mLayerList->revisitGeometry(&displayFlag, this);
+    ret = mLayerList->revisitGeometry(mGspSupport, &displayFlag, this);
     if (ret !=0)
     {
         ALOGE("(FILE:%s, line:%d, func:%s) revisitGeometry failed",
@@ -585,6 +704,7 @@ int SprdPrimaryDisplayDevice:: commit(hwc_display_contents_1_t* list)
     private_handle_t* buffer2 = NULL;
 
     hwc_layer_1_t *FBTargetLayer = NULL;
+    int mGspReturn = 0;
 
 
     int OSDLayerCount = mLayerList->getOSDLayerCount();
@@ -801,8 +921,11 @@ int SprdPrimaryDisplayDevice:: commit(hwc_display_contents_1_t* list)
         }
 
         //if(mUtil->composerLayers(OverlayLayer, PrimaryLayer, buffer1, buffer2))
-        if(mUtil->composerLayerList(VideoLayerList, VideoLayerCount, OSDLayerList, OSDLayerCount, buffer1, buffer2))
+        mGspReturn = mUtil->composerLayerList(VideoLayerList, VideoLayerCount, OSDLayerList, OSDLayerCount, buffer1, buffer2);
+        if(mGspReturn)
         {
+            if(mGspReturn == GSP_KERNEL_WAITDONE_TIMEOUT)
+                mGspSupport = false;
             ALOGE("%s[%d],composerLayers ret err!!",__func__,__LINE__);
         }
         else
@@ -846,6 +969,10 @@ int SprdPrimaryDisplayDevice:: commit(hwc_display_contents_1_t* list)
            return -1;
        }
    }
+
+#ifdef OVERLAY_COMPOSER_GPU
+    mWindow->notifyDirtyTarget(true);
+#endif
 
    if (DisplayOverlayPlane || DisplayPrimaryPlane || DisplayFBTarget)
    {

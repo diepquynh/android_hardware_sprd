@@ -21,9 +21,9 @@
 #define MAX_DUMP_FILENAME_LENGTH 100
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef unsigned short WORD, *PWORD, *LPWORD;
-typedef unsigned long DWORD, *PDWORD, *LPDWORD;
+typedef int32_t DWORD, *PDWORD, *LPDWORD;
 
-typedef long LONG, *PLONG, *LPLONG;
+typedef int32_t LONG, *PLONG, *LPLONG;
 
 typedef BYTE  U8;
 typedef WORD  U16;

@@ -387,14 +387,10 @@ bool Layer::prepareDrawData()
 {
     sp<GraphicBuffer>& buf(mGFXBuffer);
 
-    /*Overlay play video is consistent  wtih GSP play video.
-     * Please refer to the SprdUtil.cpp
-     */
-    GLfloat left = GLfloat(mRect->left & 0xFFFFFFFE) / GLfloat(mPrivH->width);
-    GLfloat top = GLfloat(mRect->top & 0xFFFFFFFE) / GLfloat(mPrivH->height);
-    GLfloat right = GLfloat(mRect->right & 0xFFFFFFFE) / GLfloat(mPrivH->width);
-    /*Overlay play video maybe loss some accuracy,Bug313521*/
-    GLfloat bottom = GLfloat((mRect->bottom-1) & 0xFFFFFFFE) / GLfloat(mPrivH->height);
+    GLfloat left = GLfloat(mRect->left) / GLfloat(mPrivH->width);
+    GLfloat top = GLfloat(mRect->top) / GLfloat(mPrivH->height);
+    GLfloat right = GLfloat(mRect->right) / GLfloat(mPrivH->width);
+    GLfloat bottom = GLfloat(mRect->bottom) / GLfloat(mPrivH->height);
 
     texCoord[0].u = texCoord[1].u = left;
     texCoord[0].v = texCoord[3].v = top;
@@ -407,14 +403,10 @@ bool Layer::prepareDrawData()
     /*Overlay play video is consistent  wtih GSP play video.
      * Please refer to the SprdUtil.cpp
      */
-    left   = (GLfloat)(mRV->left & 0xFFFFFFFE);
-    if (mRV->top & 0x1) {
-        top = (GLfloat)(mRV->top + 1);
-    } else {
-        top = (GLfloat)(mRV->top);
-    }
-    right  = (GLfloat)(mRV->right & 0xFFFFFFFE);
-    bottom = (GLfloat)((mRV->bottom)& 0xFFFFFFFE);
+    left   = (GLfloat)(mRV->left);
+    top = (GLfloat)(mRV->top);
+    right  = (GLfloat)(mRV->right);
+    bottom = (GLfloat)(mRV->bottom);
 
     if (mTransform & NATIVE_WINDOW_TRANSFORM_FLIP_H) {
         GLfloat temp = left;
