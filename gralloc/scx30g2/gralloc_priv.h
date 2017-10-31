@@ -208,9 +208,6 @@ struct private_handle_t
 #define GRALLOC_ARM_NUM_FDS 0
 #endif
 
-    uint64_t backing_store;
-    uint64_t producer_usage;
-    uint64_t consumer_usage;
 
 #ifdef __cplusplus
 	static const int sNumFds = GRALLOC_ARM_NUM_FDS;
@@ -221,11 +218,23 @@ struct private_handle_t
 #if GRALLOC_ARM_DMA_BUF_MODULE
 		share_fd(-1),
 #endif
-		magic(sMagic), flags(flags), usage(usage), size(size),
-		width(0), height(0), format(0), stride(0), base(base),
-		lockState(lock_state), writeOwner(0), pid(getpid()),
-		yuv_info(MALI_YUV_NO_INFO), ump_id((int)secure_id),
-		ump_mem_handle((int)handle), fd(0), offset(0)
+		magic(sMagic),
+		flags(flags),
+		usage(usage),
+		size(size),
+		width(0),
+		height(0),
+		format(0),
+		stride(0),
+		base(base),
+		lockState(lock_state),
+		writeOwner(0),
+		pid(getpid()),
+		yuv_info(MALI_YUV_NO_INFO),
+		ump_id((int)secure_id),
+		ump_mem_handle((int)handle),
+		fd(0),
+		offset(0)
 #if GRALLOC_ARM_DMA_BUF_MODULE
 		,
 		ion_hnd(ION_INVALID_HANDLE)
@@ -240,16 +249,27 @@ struct private_handle_t
 
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	private_handle_t(int flags, int usage, int size, void *base, int lock_state):
-		share_fd(-1), magic(sMagic), flags(flags), usage(usage),
-		size(size), width(0), height(0), format(0), stride(0),
-		base(base), lockState(lock_state), writeOwner(0), pid(getpid()),
+		share_fd(-1),
+		magic(sMagic),
+		flags(flags),
+		usage(usage),
+		size(size),
+		width(0),
+		height(0),
+		format(0),
+		stride(0),
+		base(base),
+		lockState(lock_state),
+		writeOwner(0),
+		pid(getpid()),
 		yuv_info(MALI_YUV_NO_INFO),
 #if GRALLOC_ARM_UMP_MODULE
 		ump_id((int)UMP_INVALID_SECURE_ID),
 		ump_mem_handle((int)UMP_INVALID_MEMORY_HANDLE),
 #endif
-		fd(0), offset(0), ion_hnd(ION_INVALID_HANDLE),
-		producer_usage(0), consumer_usage(0), backing_store(0)
+		fd(0),
+		offset(0),
+		ion_hnd(ION_INVALID_HANDLE)
 
 	{
 		version = sizeof(native_handle);
@@ -263,16 +283,25 @@ struct private_handle_t
 #if GRALLOC_ARM_DMA_BUF_MODULE
 		share_fd(-1),
 #endif
-		magic(sMagic), flags(flags), usage(usage), size(size),
-		width(0), height(0), format(0), stride(0), base(base),
-		lockState(lock_state), writeOwner(0), pid(getpid()),
+		magic(sMagic),
+		flags(flags),
+		usage(usage),
+		size(size),
+		width(0),
+		height(0),
+		format(0),
+		stride(0),
+		base(base),
+		lockState(lock_state),
+		writeOwner(0),
+		pid(getpid()),
 		yuv_info(MALI_YUV_NO_INFO),
 #if GRALLOC_ARM_UMP_MODULE
 		ump_id((int)UMP_INVALID_SECURE_ID),
 		ump_mem_handle((int)UMP_INVALID_MEMORY_HANDLE),
 #endif
-		fd(fb_file), offset(fb_offset),
-		producer_usage(0), consumer_usage(0), backing_store(0)
+		fd(fb_file),
+		offset(fb_offset)
 #if GRALLOC_ARM_DMA_BUF_MODULE
 		,
 		ion_hnd(ION_INVALID_HANDLE)
