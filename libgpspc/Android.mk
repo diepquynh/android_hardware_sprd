@@ -21,6 +21,7 @@ LOCAL_SHARED_LIBRARIES := \
 	liblog \
 	libdl
 
+LOCAL_PROPRIETARY_MODULE := true
 
 LOCAL_PRELINK_MODULE := false
 ifeq ($(strip $(PLATFORM_VERSION)),7.0)

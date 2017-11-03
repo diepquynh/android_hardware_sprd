@@ -21,6 +21,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libmemoryheapion
 
+LOCAL_PROPRIETARY_MODULE := true
+
 LOCAL_SRC_FILES := \
 	MemoryHeapIon.cpp
 

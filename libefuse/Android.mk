@@ -16,6 +16,8 @@ endif
 
 LOCAL_MODULE:= libefuse
 
+LOCAL_PROPRIETARY_MODULE := true
+
 LOCAL_SHARED_LIBRARIES:= liblog libc libcutils
 
 LOCAL_C_INCLUDES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
@@ -37,6 +39,8 @@ endif
 
 
 LOCAL_MODULE:= libefuse
+
+LOCAL_PROPRIETARY_MODULE := true
 
 LOCAL_SHARED_LIBRARIES:= liblog libc libcutils
 

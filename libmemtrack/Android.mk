@@ -20,6 +20,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_RELATIVE_PATH := hw
 
+LOCAL_PROPRIETARY_MODULE := true
+
 LOCAL_C_INCLUDES := \
 	hardware/libhardware/include \
 
