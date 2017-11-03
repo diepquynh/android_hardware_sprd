@@ -33,6 +33,10 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
 
+ifeq ($(TARGET_UPDATED_MALI),true)
+LOCAL_CFLAGS += -DUPDATED_MALI
+endif
+
 LOCAL_SRC_FILES := colorformat_switcher.cpp
 
 include $(BUILD_SHARED_LIBRARY)
