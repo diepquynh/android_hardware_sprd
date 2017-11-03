@@ -1409,7 +1409,8 @@ void SPRDAVCEncoder::onMessageReceived(const sp<AMessage> &msg) {
                 CHECK(inputData != NULL);
                 unsigned int type = *(unsigned int *) inputData;
 
-                if(mStoreMetaData &&(type == kMetadataBufferTypeGrallocSource))
+                if(mStoreMetaData &&(type == kMetadataBufferTypeGrallocSource ||
+									 type == kMetadataBufferTypeNativeHandleSource))
                 {
                     Mutex::Autolock autoLock(mLock_receive);
                     //ALOGE("wfd: kWhatConvertThisBuffer,incoming buffer number:%llu",mIncomingBufNum);
@@ -1627,14 +1628,16 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
 
             if (mStoreMetaData) {
                 unsigned int type = *(unsigned int *) inputData;
-                if (type == kMetadataBufferTypeCameraSource) {
+                if (type == kMetadataBufferTypeCameraSource ||
+					type == kMetadataBufferTypeNativeHandleSource) {
                     py = (uint8_t*)(*((int *) inputData + 2));
                     py_phy = (uint8_t*)(*((int *) inputData + 1));
                     width = (uint32_t)(*((int *) inputData + 3));
                     height = (uint32_t)(*((int *) inputData + 4));
                     x = (uint32_t)(*((int *) inputData + 5));
                     y = (uint32_t)(*((int *) inputData + 6));
-                } else if (type == kMetadataBufferTypeGrallocSource) {
+                } else if (type == kMetadataBufferTypeGrallocSource ||
+						   type == kMetadataBufferTypeNativeHandleSource) {
 #ifdef CONVERT_THREAD
                 while(mConvertOutBufQueue.empty())
                 {

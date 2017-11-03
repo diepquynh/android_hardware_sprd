@@ -1156,7 +1156,8 @@ void SPRDMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
             if (mStoreMetaData) {
                 unsigned int *mataData = (unsigned int *)inputData;
                 unsigned int type = *mataData++;
-                if (type == kMetadataBufferTypeCameraSource) {
+                if (type == kMetadataBufferTypeCameraSource ||
+					type == kMetadataBufferTypeNativeHandleSource) {
                     py_phy = (uint8_t*)(*(unsigned long *)mataData);
                     mataData += sizeof(unsigned long)/sizeof(unsigned int);
                     py = (uint8_t*)(*(unsigned long *)mataData);
@@ -1165,7 +1166,8 @@ void SPRDMPEG4Encoder::onQueueFilled(OMX_U32 portIndex) {
                     height = (uint32_t)(*((uint32_t *) mataData++));
                     x = (uint32_t)(*((uint32_t *) mataData++));
                     y = (uint32_t)(*((uint32_t *) mataData));
-                } else if (type == kMetadataBufferTypeGrallocSource) {
+                } else if (type == kMetadataBufferTypeGrallocSource ||
+						   type == kMetadataBufferTypeNativeHandleSource) {
                     buffer_handle_t buf = *((buffer_handle_t *)(inputData + 4));
                     struct private_handle_t *private_h = (struct private_handle_t*)buf;
 
