@@ -91,7 +91,6 @@ struct private_module_t
 	gralloc_module_t base;
 
 	private_handle_t *framebuffer;
-	void *psCtx;// SPRD_ADF_context_t *psCtx;
 	uint32_t flags;
 	uint32_t numBuffers;
 	uint32_t bufferMask;

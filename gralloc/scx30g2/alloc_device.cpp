@@ -70,18 +70,7 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 		}
 		else
 		{
-#ifdef TARGET_SUPPORT_ADF_DISPLAY
-			if (usage & GRALLOC_USAGE_HW_FB)
-			{
-				ion_heap_mask = ION_HEAP_ID_MASK_FB;
-			}
-			else
-			{
-				ion_heap_mask = ION_HEAP_ID_MASK_SYSTEM;
-			}
-#else
 			ion_heap_mask = ION_HEAP_ID_MASK_SYSTEM;
-#endif
 		}
 		if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK))
 		{
@@ -165,7 +154,6 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 
 }
 
-#ifndef TARGET_SUPPORT_ADF_DISPLAY
 static int gralloc_alloc_framebuffer_locked(alloc_device_t *dev, size_t size, int usage, buffer_handle_t *pHandle)
 {
 	private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
@@ -248,8 +236,6 @@ static int gralloc_alloc_framebuffer(alloc_device_t *dev, size_t size, int usage
 	pthread_mutex_unlock(&m->lock);
 	return err;
 }
-
-#endif
 
 static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int usage, buffer_handle_t *pHandle, int *pStride)
 {
@@ -370,16 +356,11 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 	}
 
 	int err;
-#ifndef TARGET_SUPPORT_ADF_DISPLAY
-#ifndef MALI_600
-
 	if ((usage & GRALLOC_USAGE_HW_FB) && (w != 1 && h != 1))
 	{
 		err = gralloc_alloc_framebuffer(dev, size, usage, pHandle);
 	}
 	else
-#endif
-#endif
 	{
 		err = gralloc_alloc_buffer(dev, size, usage, pHandle);
 		if(err>=0)

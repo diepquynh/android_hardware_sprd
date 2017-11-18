@@ -383,7 +383,6 @@ private_module_t::private_module_t()
 	INIT_ZERO(base.reserved_proc);
 
 	framebuffer = NULL;
-	psCtx = NULL;
 	flags = 0;
 	numBuffers = 0;
 	bufferMask = 0;
