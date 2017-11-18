@@ -891,17 +891,6 @@ int init_frame_buffer_locked(struct private_module_t *module)
 #if 0
 	init_hwui_cache_param(fbSize / module->numBuffers);
 #endif
-#if GRALLOC_ARM_UMP_MODULE
-#ifdef IOCTL_GET_FB_UMP_SECURE_ID
-	ioctl(fd, IOCTL_GET_FB_UMP_SECURE_ID, &module->framebuffer->ump_id);
-#endif
-
-	if ((int)UMP_INVALID_SECURE_ID != module->framebuffer->ump_id)
-	{
-		AINF("framebuffer accessed with UMP secure ID %i\n", module->framebuffer->ump_id);
-	}
-
-#endif
 
 	return 0;
 }
@@ -1428,9 +1417,6 @@ static int fb_close(struct hw_device_t *device)
 #endif
 
     if (dev) {
-#if GRALLOC_ARM_UMP_MODULE
-		ump_close();
-#endif
 		free(dev);
 	}
 
