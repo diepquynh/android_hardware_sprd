@@ -686,6 +686,7 @@ RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responsel
         assert(rwlockRet == 0);
 
         if (pRI->pCI->responseFunction) {
+            RLOGE ("%s: ====> token %d response: (%p) responselen: %d", __func__, pRI->token, response, responselen);
             ret = pRI->pCI->responseFunction((int) socket_id,
                     responseType, pRI->token, e, response, responselen);
         } else {

@@ -30,7 +30,7 @@
 #define INVALID_HEX_CHAR 16
 
 // Enable verbose logging
-#define VDBG 0
+#define VDBG 1
 
 using namespace android::hardware::radio::V1_0;
 using namespace android::hardware::radio::deprecated::V1_0;
