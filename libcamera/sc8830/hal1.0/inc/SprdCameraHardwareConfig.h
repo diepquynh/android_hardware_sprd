@@ -415,7 +415,7 @@ struct config_element sprd_front_camera_hardware_config[] = {
 	{"whitebalance-values", "auto,incandescent,fluorescent,daylight,cloudy-daylight"},
 	{"whitebalance", "auto"},
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
-	{"picture-size-values", "2576x1932,2048x1536,1600x1200,1280x960,640x480"},
+	{"picture-size-values", "2576x1932,2560x1440,2048x1536,1600x1200,1280x960,640x480"},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
 	{"picture-size-values", "2048x1536,1600x1200,1280x960,640x480"},
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_2M)
@@ -427,7 +427,7 @@ struct config_element sprd_front_camera_hardware_config[] = {
 	{"preview-size-values",	"720x480,640x480,352x288,320x240,176x144"},
 	{"preview-size", "720x480"},
 	{"video-size-values",  ""},
-	{"video-size", "720x480"},
+	{"video-size", "1280x720"},
 	{"video-picture-size-values", "1280x960,1280x960,1280x960"},
 	{"preferred-preview-size-for-video", ""},
 	{"video-frame-format-values", "yuv420sp,yuv420p"},
