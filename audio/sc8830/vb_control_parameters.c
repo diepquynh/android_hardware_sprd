@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "eng_audio.h"
-#include <tinyalsa/../../pcm.c>
+#include <alsa_pcm_util.h>
 
 //#ifdef __cplusplus
 //extern "c"
@@ -134,55 +134,6 @@ static vbc_ctrl_pipe_para_t s_default_vbc_ctrl_pipe_info =
 {
     "/dev/vbpipe6",0,CP_TG
 };
-
-int pcm_set_samplerate(struct pcm *pcm, unsigned int flags, struct pcm_config *config, unsigned short samplerate)
-{
-    struct snd_pcm_hw_params params;
-
-    if(pcm->fd < 0){
-        fprintf(stderr, "%s, error pcm_fd (%d) ",__func__,pcm->fd);
-        return -1;
-    }
-    if(config == NULL){
-        fprintf(stderr, "%s, error pcm config ",__func__);
-        return -1;
-    }
-
-    param_init(&params);
-    param_set_mask(&params, SNDRV_PCM_HW_PARAM_FORMAT,
-                   pcm_format_to_alsa(config->format));
-    param_set_mask(&params, SNDRV_PCM_HW_PARAM_SUBFORMAT,
-                   SNDRV_PCM_SUBFORMAT_STD);
-    param_set_min(&params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, config->period_size);
-    param_set_int(&params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS,
-                  pcm_format_to_bits(config->format));
-    param_set_int(&params, SNDRV_PCM_HW_PARAM_FRAME_BITS,
-                  pcm_format_to_bits(config->format) * config->channels);
-    param_set_int(&params, SNDRV_PCM_HW_PARAM_CHANNELS,
-                  config->channels);
-    param_set_int(&params, SNDRV_PCM_HW_PARAM_PERIODS, config->period_count);
-    param_set_int(&params, SNDRV_PCM_HW_PARAM_RATE, samplerate);
-
-    if (flags & PCM_NOIRQ) {
-        if (!(flags & PCM_MMAP)) {
-            fprintf(stderr, "%s, noirq only currently supported with mmap(). ", __func__);
-            return -1;
-        }
-        params.flags |= SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP;
-    }
-    if (flags & PCM_MMAP)
-        param_set_mask(&params, SNDRV_PCM_HW_PARAM_ACCESS,
-                   SNDRV_PCM_ACCESS_MMAP_INTERLEAVED);
-    else
-        param_set_mask(&params, SNDRV_PCM_HW_PARAM_ACCESS,
-                   SNDRV_PCM_ACCESS_RW_INTERLEAVED);
-
-    if (ioctl(pcm->fd, SNDRV_PCM_IOCTL_HW_PARAMS, &params)) {
-        fprintf(stderr, "%s, SNDRV_PCM_IOCTL_HW_PARAMS failed (%s) ", __func__,strerror(errno));
-        return -1;
-    }
-    return 0;
-}
 
 /* Transfer packet by vbpipe, packet format as follows.*/
 /************************************************

@@ -19,7 +19,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libtinyalsautils
 
 LOCAL_SRC_FILES := \
-	tinyalsautils.c
+	tinyalsautils.c \
+	alsa_pcm_util.c
 
 LOCAL_CFLAGS := \
 	-std=c11
@@ -27,8 +28,11 @@ LOCAL_CFLAGS := \
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
 	$(LOCAL_PATH)
 
+LOCAL_C_INCLUDES += external/tinyalsa/include
+
 LOCAL_SHARED_LIBRARIES := \
-	liblog
+	liblog \
+	libtinyalsa
 
 LOCAL_MODULE_TAGS := optional
 
