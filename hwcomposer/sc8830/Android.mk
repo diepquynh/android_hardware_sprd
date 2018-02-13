@@ -62,6 +62,7 @@ LOCAL_SRC_FILES := \
 	dump.cpp \
 
 LOCAL_C_INCLUDES := \
+	$(TOP)/frameworks/native/libs/nativewindow/include/ \
 	$(LOCAL_PATH)/../../libmemoryheapion/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/
