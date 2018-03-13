@@ -6,6 +6,12 @@ static const RIL_RadioFunctions *origRilFunctions;
 /* A copy of the ril environment passed to RIL_Init. */
 static const struct RIL_Env *rilEnv;
 
+/* Response data for RIL_REQUEST_VOICE_REGISTRATION_STATE */
+static char *voiceRegState[15];
+
+/* Response data for RIL_REQUEST_DATA_REGISTRATION_STATE */
+static char *dataRegState[6];
+
 static void onRequestDial(int request, void *data, RIL_Token t) {
 	RIL_Dial dial;
 	RIL_UUS_Info uusInfo;
@@ -44,9 +50,45 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 	return true;
 }
 
+static void onRequestVoiceRegistrationState(int request, void *data, size_t datalen, RIL_Token t) {
+	int newdatalen = (int)sizeof(*voiceRegState);
+	char **orgdata = (char **)data;
+	RLOGI("%s: datalen=%d and must be %d", __FUNCTION__, datalen, newdatalen);
+
+        for (int index = 0; index < newdatalen; index++) {
+		if (index >= (int)datalen)
+			voiceRegState[index] = 0;
+		else
+			voiceRegState[index] = orgdata[index];
+	}
+	origRilFunctions->onRequest(request, voiceRegState, newdatalen, t);
+}
+
+static void onRequestDataRegistrationState(int request, void *data, size_t datalen, RIL_Token t) {
+	int newdatalen = (int)sizeof(*dataRegState);
+	char **orgdata = (char **)data;
+	RLOGI("%s: datalen=%d and must be %d", __FUNCTION__, datalen, newdatalen);
+
+        for (int index = 0; index < newdatalen; index++) {
+		if (index >= (int)datalen)
+			dataRegState[index] = 0;
+		else
+			dataRegState[index] = orgdata[index];
+	}
+	origRilFunctions->onRequest(request, dataRegState, newdatalen, t);
+}
+
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
+                case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+			onRequestVoiceRegistrationState(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
+                case RIL_REQUEST_DATA_REGISTRATION_STATE:
+			onRequestDataRegistrationState(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
 		/* The Samsung RIL crashes if uusInfo is NULL... */
 		case RIL_REQUEST_DIAL:
 			if (datalen == sizeof(RIL_Dial) && data != NULL) {
