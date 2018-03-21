@@ -2,6 +2,7 @@
 
 #define ATOI_NULL_HANDLED(x) (x ? atoi(x) : 0)
 
+//static int internal_token = 10000;
 /* A copy of the original RIL function table. */
 static const RIL_RadioFunctions *origRilFunctions;
 
@@ -12,6 +13,10 @@ static const struct RIL_Env *rilEnv;
 static const int VOICE_REGSTATE_SIZE = 15 * sizeof(char *);
 static char *voiceRegStateResponse[VOICE_REGSTATE_SIZE];
 
+/* Response data for RIL_REQUEST_DEVICE_IDENTITY */
+static char *imei;
+static char *imeisv;
+static char *deviceIdentityResponse[4];
 static void onRequestDial(int request, void *data, RIL_Token t) {
 	RIL_Dial dial;
 	RIL_UUS_Info uusInfo;
@@ -29,6 +34,13 @@ static void onRequestDial(int request, void *data, RIL_Token t) {
 	}
 
 	origRilFunctions->onRequest(request, &dial, sizeof(dial), t);
+}
+
+static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);			
+	origRilFunctions->onRequest(RIL_REQUEST_DEVICE_IDENTITY, data, datalen, t);
 }
 
 static bool onRequestGetRadioCapability(RIL_Token t)
@@ -53,6 +65,11 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
+		/* RIL_REQUEST_GET_IMEI is depricated */
+		case RIL_REQUEST_DEVICE_IDENTITY:
+			onRequestDeviceIdentity(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			break;
 		/* The Samsung RIL crashes if uusInfo is NULL... */
 		case RIL_REQUEST_DIAL:
 			if (datalen == sizeof(RIL_Dial) && data != NULL) {
@@ -124,6 +141,32 @@ static void onRequestCompleteVoiceRegistrationState(RIL_Token t, RIL_Errno e, vo
 		voiceRegStateResponse[index] = resp[index];
 	}
 	rilEnv->OnRequestComplete(t, e, voiceRegStateResponse, VOICE_REGSTATE_SIZE);
+/*	RLOGW("%s: HACK RIL_REQUEST_GET_IMEI", __FUNCTION__);
+	origRilFunctions->onRequest(RIL_REQUEST_GET_IMEI, NULL, 0, &internal_token);
+*/
+}
+
+static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno /* e*/, void *response, size_t responselen) {
+	RLOGW("%s: data: %s responselen: %d", __FUNCTION__, response, responselen);
+	char id3[6] = "amEsn";
+	char id4[6] = "mMeid";
+
+	deviceIdentityResponse[0] = imei;
+	deviceIdentityResponse[1] = imeisv;
+	deviceIdentityResponse[2] = id3;
+	deviceIdentityResponse[3] = id4;
+	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, deviceIdentityResponse, sizeof(*deviceIdentityResponse));
+}
+
+static void onRequestCompleteGetImei(RIL_Token /* t*/, RIL_Errno /*e*/, void *response, size_t responselen) {
+	RLOGI("%s: data: %s responselen: %d", __FUNCTION__, response, responselen);
+	if (imei != NULL) {
+		free(imei);
+	}
+	imei = (char *)malloc(responselen);
+	memcpy(imei, response, responselen);
+	RLOGI("%s: IMEI: '%s' (%p) ", __FUNCTION__, imei, imei);
+	// We don't call OnRequestComplete because this request is depricated and only used in this shim.
 }
 
 static void fixupDataCallList(void *response, size_t responselen) {
@@ -197,6 +240,18 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 
 	request = pRI->pCI->requestNumber;
 	switch (request) {
+		case RIL_REQUEST_DEVICE_IDENTITY:
+			/* This is depricated but we still call RIL_REQUEST_GET_IMEI 
+                           to for RIL_REQUEST_DEVICE_IDENTITY */
+			RLOGD("%s: got request %s to support %s and shimming response!\n",
+				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
+			onRequestCompleteDeviceIdentity(t, e, response, responselen);
+			break;
+		case RIL_REQUEST_GET_IMEI:
+			RLOGD("%s: got request %s to support %s and shimming response!\n",
+				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
+			onRequestCompleteGetImei(t, e, response, responselen);
+			break;
                 case RIL_REQUEST_VOICE_REGISTRATION_STATE:
                         /* libsecril expects responselen of 60 (bytes) */
                         /* numstrings (15 * sizeof(char *) = 60) */
