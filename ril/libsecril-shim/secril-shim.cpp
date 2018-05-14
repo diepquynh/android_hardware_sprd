@@ -19,6 +19,9 @@ static int voiceRadioTechnology = -1;
 /* Store cdma subscription source */
 static int cdmaSubscriptionSource = -1;
 
+/* Store sim ruim status */
+int simRuimStatus = -1;
+
 /* Response data for RIL_REQUEST_DEVICE_IDENTITY */
 static char *imei;
 static char *imeisv;
@@ -113,6 +116,76 @@ static void onRequestCdmaGetSubscriptionSource(int request, void *data, size_t d
 	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
 }
 
+static bool is3gpp2(int radioTech) {
+    switch (radioTech) {
+        case RADIO_TECH_IS95A:
+        case RADIO_TECH_IS95B:
+        case RADIO_TECH_1xRTT:
+        case RADIO_TECH_EVDO_0:
+        case RADIO_TECH_EVDO_A:
+        case RADIO_TECH_EVDO_B:
+        case RADIO_TECH_EHRPD:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static int
+decodeSimStatus (RIL_RadioState radioState) {
+   switch (radioState) {
+       case RADIO_STATE_SIM_NOT_READY:
+       case RADIO_STATE_RUIM_NOT_READY:
+       case RADIO_STATE_NV_NOT_READY:
+       case RADIO_STATE_NV_READY:
+           return -1;
+       case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
+       case RADIO_STATE_SIM_READY:
+       case RADIO_STATE_RUIM_READY:
+       case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
+           return radioState;
+       default:
+           RLOGD("decodeSimStatus: Invoked with incorrect RadioState");
+           return -1;
+   }
+}
+
+static RIL_RadioState
+processRadioState(RIL_RadioState newRadioState) {
+    if((newRadioState > RADIO_STATE_UNAVAILABLE) && (newRadioState < RADIO_STATE_ON)) {
+        int newVoiceRadioTech;
+        int newCdmaSubscriptionSource;
+        int newSimStatus;
+
+        /* This is old RIL. Decode Subscription source and Voice Radio Technology
+           from Radio State and send change notifications if there has been a change */
+        newVoiceRadioTech = decodeVoiceRadioTechnology(newRadioState);
+        if(newVoiceRadioTech != voiceRadioTechnology) {
+            voiceRadioTechnology = newVoiceRadioTech;
+            rilEnv->OnUnsolicitedResponse(RIL_UNSOL_VOICE_RADIO_TECH_CHANGED,
+                &voiceRadioTechnology, sizeof(voiceRadioTechnology));
+        }
+        if(is3gpp2(newVoiceRadioTech)) {
+            newCdmaSubscriptionSource = decodeCdmaSubscriptionSource(newRadioState);
+            if(newCdmaSubscriptionSource != cdmaSubscriptionSource) {
+                cdmaSubscriptionSource = newCdmaSubscriptionSource;
+                rilEnv->OnUnsolicitedResponse(RIL_UNSOL_CDMA_SUBSCRIPTION_SOURCE_CHANGED,
+                        &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
+            }
+        }
+        newSimStatus = decodeSimStatus(newRadioState);
+        if(newSimStatus != simRuimStatus) {
+            simRuimStatus = newSimStatus;
+            rilEnv->OnUnsolicitedResponse(RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
+        }
+
+        /* Send RADIO_ON to telephony */
+        newRadioState = RADIO_STATE_ON;
+    }
+
+    return newRadioState;
+}
+
 static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
 	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
 		requestToString(request),
@@ -137,6 +210,17 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 	};
 	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, rc, sizeof(rc));
 	return true;
+}
+
+static RIL_RadioState onStateRequestShim() {
+    RIL_RadioState radioState = RADIO_STATE_OFF;
+    RIL_RadioState newRadioState = RADIO_STATE_OFF;
+
+    radioState = origRilFunctions->onStateRequest();
+    newRadioState = processRadioState(radioState);
+
+    RLOGI("%s: RIL legacy radiostate converted from %d to %d\n", __FUNCTION__, radioState, newRadioState);
+    return newRadioState;
 }
 
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
@@ -500,6 +584,7 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 	/* Shim functions as needed. */
 	shimmedFunctions = *origRilFunctions;
 	shimmedFunctions.onRequest = onRequestShim;
+	shimmedFunctions.onStateRequest = onStateRequestShim;
 
 	return &shimmedFunctions;
 
