@@ -13,6 +13,9 @@ static const struct RIL_Env *rilEnv;
 static const int VOICE_REGSTATE_SIZE = 15 * sizeof(char *);
 static char *voiceRegStateResponse[VOICE_REGSTATE_SIZE];
 
+/* Store voice radio technology */
+static int voiceRadioTechnology = -1;
+
 /* Response data for RIL_REQUEST_DEVICE_IDENTITY */
 static char *imei;
 static char *imeisv;
@@ -34,6 +37,42 @@ static void onRequestDial(int request, void *data, RIL_Token t) {
 	}
 
 	origRilFunctions->onRequest(request, &dial, sizeof(dial), t);
+}
+
+
+static int
+decodeVoiceRadioTechnology (RIL_RadioState radioState) {
+    switch (radioState) {
+        case RADIO_STATE_SIM_NOT_READY:
+        case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
+        case RADIO_STATE_SIM_READY:
+            return RADIO_TECH_UMTS;
+
+        case RADIO_STATE_RUIM_NOT_READY:
+        case RADIO_STATE_RUIM_READY:
+        case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
+        case RADIO_STATE_NV_NOT_READY:
+        case RADIO_STATE_NV_READY:
+            return RADIO_TECH_1xRTT;
+
+        default:
+            RLOGD("decodeVoiceRadioTechnology: Invoked with incorrect RadioState");
+            return -1;
+    }
+}
+
+static void onRequestVoiceRadioTech(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);
+        RIL_RadioState radioState = origRilFunctions->onStateRequest();
+
+	voiceRadioTechnology = decodeVoiceRadioTechnology(radioState);
+	if (voiceRadioTechnology < 0) {
+		rilEnv->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+		return;
+	}
+	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &voiceRadioTechnology, sizeof(voiceRadioTechnology));
 }
 
 static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
@@ -65,6 +104,11 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
+                /* Our RIL doesn't support this, so we implement this ourself */
+                case RIL_REQUEST_VOICE_RADIO_TECH:
+			onRequestVoiceRadioTech(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
 		/* RIL_REQUEST_GET_IMEI is depricated */
 		case RIL_REQUEST_DEVICE_IDENTITY:
 			onRequestDeviceIdentity(request, data, datalen, t);
