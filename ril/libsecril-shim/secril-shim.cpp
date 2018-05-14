@@ -16,6 +16,9 @@ static char *voiceRegStateResponse[VOICE_REGSTATE_SIZE];
 /* Store voice radio technology */
 static int voiceRadioTechnology = -1;
 
+/* Store cdma subscription source */
+static int cdmaSubscriptionSource = -1;
+
 /* Response data for RIL_REQUEST_DEVICE_IDENTITY */
 static char *imei;
 static char *imeisv;
@@ -75,6 +78,41 @@ static void onRequestVoiceRadioTech(int request, void *data, size_t datalen, RIL
 	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &voiceRadioTechnology, sizeof(voiceRadioTechnology));
 }
 
+static int
+decodeCdmaSubscriptionSource (RIL_RadioState radioState) {
+    switch (radioState) {
+        case RADIO_STATE_SIM_NOT_READY:
+        case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
+        case RADIO_STATE_SIM_READY:
+        case RADIO_STATE_RUIM_NOT_READY:
+        case RADIO_STATE_RUIM_READY:
+        case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
+            return CDMA_SUBSCRIPTION_SOURCE_RUIM_SIM;
+
+        case RADIO_STATE_NV_NOT_READY:
+        case RADIO_STATE_NV_READY:
+            return CDMA_SUBSCRIPTION_SOURCE_NV;
+
+        default:
+            RLOGD("decodeCdmaSubscriptionSource: Invoked with incorrect RadioState");
+            return -1;
+    }
+}
+
+static void onRequestCdmaGetSubscriptionSource(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);
+        RIL_RadioState radioState = (RIL_RadioState)origRilFunctions->onStateRequest();
+
+	cdmaSubscriptionSource = decodeCdmaSubscriptionSource(radioState);
+	if (cdmaSubscriptionSource < 0) {
+		rilEnv->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+		return;
+	}
+	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
+}
+
 static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
 	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
 		requestToString(request),
@@ -107,6 +145,11 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
                 /* Our RIL doesn't support this, so we implement this ourself */
                 case RIL_REQUEST_VOICE_RADIO_TECH:
 			onRequestVoiceRadioTech(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
+                /* Our RIL doesn't support this, so we implement this ourself */
+                case RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:
+			onRequestCdmaGetSubscriptionSource(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
 		/* RIL_REQUEST_GET_IMEI is depricated */
