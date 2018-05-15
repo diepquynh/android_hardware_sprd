@@ -24,6 +24,11 @@ int simRuimStatus = -1;
 /* Remember pending RIL_REQUEST_DEVICE_IDENITY request */
 static int pendingDeviceIdentityRequest = 0;
 
+/* Response data for RIL_REQUEST_GET_CELL_INFO_LIST */
+static RIL_CellInfo_v12 cellInfoWCDMA;
+static RIL_CellInfo_v12 cellInfoGSM;
+static RIL_CellInfo_v12 cellInfoList[2];
+
 static void onRequestDial(int request, void *data, RIL_Token t) {
 	RIL_Dial dial;
 	RIL_UUS_Info uusInfo;
@@ -63,6 +68,30 @@ decodeVoiceRadioTechnology (RIL_RadioState radioState) {
             RLOGD("decodeVoiceRadioTechnology: Invoked with incorrect RadioState");
             return -1;
     }
+}
+
+static void OnRequestGetCellInfoList(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);
+
+	cellInfoWCDMA.cellInfoType = RIL_CELL_INFO_TYPE_WCDMA;
+	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.mcc = -1;
+	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.mnc = -1;
+	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.psc = -1;
+
+	cellInfoGSM.cellInfoType = RIL_CELL_INFO_TYPE_GSM;
+	cellInfoGSM.CellInfo.gsm.cellIdentityGsm.mcc = -1;
+	cellInfoGSM.CellInfo.gsm.cellIdentityGsm.mnc = -1;
+
+	if (cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac > -1 &&
+	    cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid > -1) {
+		cellInfoList[0] = cellInfoGSM;
+		cellInfoList[1] = cellInfoWCDMA;
+		rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cellInfoList, sizeof(cellInfoList));
+	} else {
+		rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cellInfoWCDMA, sizeof(cellInfoWCDMA));
+	}
 }
 
 static void onRequestVoiceRadioTech(int request, void *data, size_t datalen, RIL_Token t) {
@@ -232,6 +261,11 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
                 /* Our RIL doesn't support this, so we implement this ourself */
+                case RIL_REQUEST_GET_CELL_INFO_LIST:
+			OnRequestGetCellInfoList(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
+                /* Our RIL doesn't support this, so we implement this ourself */
                 case RIL_REQUEST_VOICE_RADIO_TECH:
 			onRequestVoiceRadioTech(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
@@ -316,14 +350,61 @@ static void onRequestCompleteVoiceRegistrationState(RIL_Token t, RIL_Errno e, vo
 	memset(voiceRegStateResponse, 0, VOICE_REGSTATE_SIZE);
 	for (int index = 0; index < (int)responselen; index++) {
 		voiceRegStateResponse[index] = resp[index];
-                // Add RADIO_TECH_UMTS because our RIL doesn't provide this here
-		if (index == 3) {
-			voiceRegStateResponse[index] = &radioTechUmts;
-                }
+		switch (index) {
+			case 1: {
+				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.lac = atoi(voiceRegStateResponse[index]);
+				break;
+			}
+			case 2: {
+				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.cid = atoi(voiceRegStateResponse[index]);
+				break;
+			}
+			case 3:	{
+			        // Add RADIO_TECH_UMTS because our RIL doesn't provide this here
+				voiceRegStateResponse[index] = &radioTechUmts;
+				break;
+		        }
+			default:
+				break;
+		}
 	}
 	rilEnv->OnRequestComplete(t, e, voiceRegStateResponse, VOICE_REGSTATE_SIZE);
-
 }
+
+static void onRequestCompleteDataRegistrationState(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
+	char **resp = (char **) response;
+	int length = (int)responselen/ sizeof(char *);
+
+	if (length >= 4) {
+		/* Gather Cellidentity data for RIL_REQUEST_GET_CELL_INFO_LIST */
+		switch (atoi(resp[3])) {
+			case RIL_CELL_INFO_TYPE_GSM: {
+				RLOGI("%s: RIL_CELL_INFO_TYPE_GSM: lac:%s cid:%s \n",
+					__FUNCTION__,
+					resp[1],
+					resp[2]);
+				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac = atoi(resp[1]);
+				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid = atoi(resp[2]);
+				break;
+			}
+			case RIL_CELL_INFO_TYPE_WCDMA: {
+				RLOGI("%s: RIL_CELL_INFO_TYPE_WCDMA: lac:%s cid:%s \n",
+					__FUNCTION__,
+					resp[1],
+					resp[2]);
+				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac = -1;
+				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid = -1;
+				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.lac = atoi(resp[1]);
+				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.cid = atoi(resp[2]);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	rilEnv->OnRequestComplete(t, e, response, responselen);
+}
+
 
 static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e, char *imei) {
 	char empty[1] = "";
@@ -437,6 +518,10 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				return;
 			}
 			break;
+                case RIL_REQUEST_DATA_REGISTRATION_STATE:
+			RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
+			onRequestCompleteDataRegistrationState(t, e, response, responselen);
+			return;
 		case RIL_REQUEST_GET_SIM_STATUS:
 			/* Remove unused extra elements from RIL_AppStatus */
 			if (response != NULL && responselen == sizeof(RIL_CardStatus_v5_samsung)) {
