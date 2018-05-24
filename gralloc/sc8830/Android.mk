@@ -46,8 +46,11 @@ LOCAL_SHARED_LIBRARIES := \
 	libGLESv1_CM \
 	$(SHARED_MEM_LIBS) \
 
-ifeq ($(TARGET_USES_GRALLOC1), true)
 LOCAL_STATIC_LIBRARIES := \
+	libarect
+
+ifeq ($(TARGET_USES_GRALLOC1), true)
+LOCAL_STATIC_LIBRARIES += \
 	libgralloc1-adapter
 endif
 
