@@ -21,6 +21,18 @@ static int cdmaSubscriptionSource = -1;
 /* Store sim ruim status */
 int simRuimStatus = -1;
 
+/* Variables and methods for RIL_REQUEST_DEVICE_IDENTITY support */
+static char imei[16];
+static char imeisv[17];
+static bool gotIMEI = false;
+static bool gotIMEISV = false;
+static bool inIMEIRequest = false;
+static bool inIMEISVRequest = false;
+
+static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t);
+static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e);
+
+
 /* Response data for RIL_REQUEST_GET_CELL_INFO_LIST */
 static RIL_CellInfo_v12 cellInfoWCDMA;
 static RIL_CellInfo_v12 cellInfoGSM;
@@ -140,6 +152,39 @@ static void onRequestCdmaGetSubscriptionSource(int request, void *data, size_t d
 	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
 }
 
+static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);
+	onRequestCompleteDeviceIdentity(t, (gotIMEI && gotIMEISV) ? RIL_E_SUCCESS : RIL_E_GENERIC_FAILURE);
+}
+
+static void onRequestUnsupportedRequest(int request, void *data, size_t datalen, RIL_Token t) {
+	RequestInfo *pRI = (RequestInfo *)t;
+	if (pRI != NULL && pRI->pCI != NULL) {
+		if (!gotIMEI && !inIMEIRequest) {
+			// Use this unsupported request to extract IMEI
+			inIMEIRequest = true;
+			RLOGI("%s: got request %s: Using this unsupported request to extract IMEI for RIL_REQUEST_DEVICE_IDENTITY\n", __FUNCTION__, requestToString(request));
+			pRI->pCI->requestNumber = RIL_REQUEST_GET_IMEI;
+			origRilFunctions->onRequest(pRI->pCI->requestNumber, NULL, 0, t);
+			return;
+		} else if (!gotIMEISV && !inIMEISVRequest) {
+			// Use this unsupported request to extract IMEISV
+			inIMEISVRequest = true;
+			RLOGI("%s: got request %s: Using this unsupported request to extract IMEISV for RIL_REQUEST_DEVICE_IDENTITY\n", __FUNCTION__, requestToString(request));
+			pRI->pCI->requestNumber = RIL_REQUEST_GET_IMEISV;
+			origRilFunctions->onRequest(pRI->pCI->requestNumber, NULL, 0, t);
+			return;
+		}
+	}
+	RLOGE("%s: got unsupported request %s (data:%p datalen:%d)\n", __FUNCTION__,
+		requestToString(request),
+		data, datalen);
+	rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+}
+
+
 static bool is3gpp2(int radioTech) {
     switch (radioTech) {
         case RADIO_TECH_IS95A:
@@ -258,6 +303,11 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 			onRequestCdmaGetSubscriptionSource(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
+		/* RIL_REQUEST_GET_IMEI is depricated */
+		case RIL_REQUEST_DEVICE_IDENTITY:
+			onRequestDeviceIdentity(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
 		/* The Samsung RIL crashes if uusInfo is NULL... */
 		case RIL_REQUEST_DIAL:
 			if (datalen == sizeof(RIL_Dial) && data != NULL) {
@@ -293,8 +343,7 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 		case RIL_REQUEST_START_LCE:
 		case RIL_REQUEST_STOP_LCE:
 		case RIL_REQUEST_PULL_LCEDATA:
-			RLOGW("%s: got request %s: replied with REQUEST_NOT_SUPPPORTED.\n", __FUNCTION__, requestToString(request));
-			rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+			onRequestUnsupportedRequest(request, data, datalen, t);
 			return;
 	}
 
@@ -383,6 +432,34 @@ static void onRequestCompleteDataRegistrationState(RIL_Token t, RIL_Errno e, voi
 	rilEnv->OnRequestComplete(t, e, response, responselen);
 }
 
+
+static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e) {
+	char empty[1] = "";
+	char *deviceIdentityResponse[4];
+	deviceIdentityResponse[0] = imei;
+	deviceIdentityResponse[1] = imeisv;
+	deviceIdentityResponse[2] = empty;
+	deviceIdentityResponse[3] = empty;
+
+	rilEnv->OnRequestComplete(t, e, deviceIdentityResponse, sizeof(deviceIdentityResponse));
+}
+
+static void onRequestCompleteGetImei(RIL_Token t, RIL_Errno /*e*/, void *response, size_t responselen) {
+	memcpy(&imei, response, responselen);
+	RLOGI("%s: RIL_REQUEST_DEVICE_IDENTITY [1/2]: Got IMEI:%s\n", __FUNCTION__, imei);
+	rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+	inIMEIRequest = false;
+	gotIMEI = true;
+}
+
+static void onRequestCompleteGetImeiSv(RIL_Token t, RIL_Errno /*e*/, void *response, size_t responselen) {
+	memcpy(&imeisv, response, responselen);
+	RLOGI("%s: RIL_REQUEST_DEVICE_IDENTITY [2/2]: Got IMEISV:%s\n", __FUNCTION__, imeisv);
+	rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+	inIMEISVRequest = false;
+	gotIMEISV = true;
+}
+
 static void fixupDataCallList(void *response, size_t responselen) {
 	RIL_Data_Call_Response_v6 *p_cur = (RIL_Data_Call_Response_v6 *) response;
 	int num = responselen / sizeof(RIL_Data_Call_Response_v6);
@@ -454,6 +531,16 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 
 	request = pRI->pCI->requestNumber;
 	switch (request) {
+		case RIL_REQUEST_GET_IMEI:
+			RLOGD("%s: got request %s to support %s and shimming response!\n",
+				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
+			onRequestCompleteGetImei(t, e, response, responselen);
+			return;
+		case RIL_REQUEST_GET_IMEISV:
+			RLOGD("%s: got request %s to support %s and shimming response!\n",
+				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
+			onRequestCompleteGetImeiSv(t, e, response, responselen);
+			return;
                 case RIL_REQUEST_VOICE_REGISTRATION_STATE:
                         /* libsecril expects responselen of 60 (bytes) */
                         /* numstrings (15 * sizeof(char *) = 60) */
