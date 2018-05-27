@@ -21,9 +21,6 @@ static int cdmaSubscriptionSource = -1;
 /* Store sim ruim status */
 int simRuimStatus = -1;
 
-/* Remember pending RIL_REQUEST_DEVICE_IDENITY request */
-static int pendingDeviceIdentityRequest = 0;
-
 /* Response data for RIL_REQUEST_GET_CELL_INFO_LIST */
 static RIL_CellInfo_v12 cellInfoWCDMA;
 static RIL_CellInfo_v12 cellInfoGSM;
@@ -143,20 +140,6 @@ static void onRequestCdmaGetSubscriptionSource(int request, void *data, size_t d
 	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
 }
 
-static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
-	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
-		requestToString(request),
-		data, datalen);
-	RequestInfo *pRI = (RequestInfo *)t;
-	if (pRI != NULL && pRI->pCI != NULL) {
-		// Change RequestInfo to call RIL_REQUEST_GET_IMEI
-		RLOGI("%s: RIL_REQUEST_DEVICE_IDENTITY [1/3]: Requesting RIL_REQUEST_GET_IMEI\n", __FUNCTION__);
-		pRI->pCI->requestNumber = RIL_REQUEST_GET_IMEI;
-	        pendingDeviceIdentityRequest = true;
-		origRilFunctions->onRequest(RIL_REQUEST_GET_IMEI, NULL, 0, t);
-	}
-}
-
 static bool is3gpp2(int radioTech) {
     switch (radioTech) {
         case RADIO_TECH_IS95A:
@@ -273,11 +256,6 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
                 /* Our RIL doesn't support this, so we implement this ourself */
                 case RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:
 			onRequestCdmaGetSubscriptionSource(request, data, datalen, t);
-			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
-			return;
-		/* RIL_REQUEST_GET_IMEI is depricated */
-		case RIL_REQUEST_DEVICE_IDENTITY:
-			onRequestDeviceIdentity(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
 		/* The Samsung RIL crashes if uusInfo is NULL... */
@@ -405,31 +383,6 @@ static void onRequestCompleteDataRegistrationState(RIL_Token t, RIL_Errno e, voi
 	rilEnv->OnRequestComplete(t, e, response, responselen);
 }
 
-
-static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e, char *imei) {
-	char empty[1] = "";
-
-	char *deviceIdentityResponse[4];
-	deviceIdentityResponse[0] = imei;
-	deviceIdentityResponse[1] = empty; // imeisv
-	deviceIdentityResponse[2] = empty;
-	deviceIdentityResponse[3] = empty;
-
-	// Complete the original RIL_REQUEST_DEVICE_IDENTITY request
-	RequestInfo *pRI = (RequestInfo *)t;
-	if (pRI != NULL && pRI->pCI != NULL) {
-		RLOGI("%s: RIL_REQUEST_DEVICE_IDENTITY [3/3]: Completing original request\n", __FUNCTION__);
-		pRI->pCI->requestNumber = RIL_REQUEST_DEVICE_IDENTITY;
-		rilEnv->OnRequestComplete(t, e, deviceIdentityResponse, sizeof(deviceIdentityResponse));
-		pendingDeviceIdentityRequest = false;
-	}
-}
-
-static void onRequestCompleteGetImei(RIL_Token t, RIL_Errno e, void *response, size_t /*responselen*/) {
-	RLOGI("%s: RIL_REQUEST_DEVICE_IDENTITY [2/3]: Extract IMEI: %s\n", __FUNCTION__, response);
-	onRequestCompleteDeviceIdentity(t, e, (char *) response);
-}
-
 static void fixupDataCallList(void *response, size_t responselen) {
 	RIL_Data_Call_Response_v6 *p_cur = (RIL_Data_Call_Response_v6 *) response;
 	int num = responselen / sizeof(RIL_Data_Call_Response_v6);
@@ -501,14 +454,6 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 
 	request = pRI->pCI->requestNumber;
 	switch (request) {
-		case RIL_REQUEST_GET_IMEI:
-			if (pendingDeviceIdentityRequest) {
-				RLOGD("%s: got request %s to support %s and shimming response!\n",
-					__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
-				onRequestCompleteGetImei(t, e, response, responselen);
-				return;
-			}
-			break;
                 case RIL_REQUEST_VOICE_REGISTRATION_STATE:
                         /* libsecril expects responselen of 60 (bytes) */
                         /* numstrings (15 * sizeof(char *) = 60) */
