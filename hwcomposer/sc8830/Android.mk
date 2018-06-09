@@ -38,6 +38,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libui \
 	libsync \
 	libmemoryheapion \
+
+LOCAL_STATIC_LIBRARIES := \
 	libHWCUtils \
 
 LOCAL_SRC_FILES := \

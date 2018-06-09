@@ -25,7 +25,6 @@ LOCAL_CFLAGS := \
 LOCAL_ARM_MODE := arm
 
 LOCAL_SHARED_LIBRARIES := \
-	libcolorformat_switcher \
 	libstagefright \
 	libstagefright_omx \
 	libstagefright_foundation \
@@ -35,6 +34,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libui \
 	libdl \
 	liblog
+
+LOCAL_STATIC_LIBRARIES := \
+	libcolorformat_switcher
 
 LOCAL_MODULE := libstagefright_sprd_vpxdec
 LOCAL_MODULE_TAGS := optional
