@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
 #include <dlfcn.h>
 
-#include <algorithm>
-#include <exception>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #define LOG_NDEBUG 0
@@ -34,12 +32,10 @@
 
 #define PROPERTY_VALUE_MAX 92
 
-static int (*__real_property_set)(const char *, const char *);
-static int (*__real_property_get)(const char *, char *, const char *);
-static void constructor() __attribute__((constructor));
-static void destructor() __attribute__((destructor));
+static int (*real_property_set)(const char *, const char *);
+static int (*real_property_get)(const char *, char *, const char *);
 
-static void *libcutils_handle;
+static void constructor() __attribute__((constructor));
 
 /* { RIL_KEYS, { ANDROID_KEY, ANDROID_VALUE_INDEXES } } */
 static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
@@ -60,21 +56,10 @@ static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
 
 void constructor()
 {
-    bool error = true;
-    if ((libcutils_handle = dlopen("/system/lib/libcutils.so", RTLD_LAZY))) {
-        __real_property_set = (typeof __real_property_set) dlsym(libcutils_handle, "property_set");
-        __real_property_get = (typeof __real_property_get) dlsym(libcutils_handle, "property_get");
-        if (__real_property_set && __real_property_get)
-            error = false;
-    }
-    if (error)
-        throw new std::exception();
-}
-
-void destructor()
-{
-    if (!dlclose(libcutils_handle))
-        throw new std::exception();
+    real_property_set = (typeof real_property_set) dlsym(RTLD_NEXT, "property_set");
+    real_property_get = (typeof real_property_get) dlsym(RTLD_NEXT, "property_get");
+    assert(real_property_set);
+    assert(real_property_get);
 }
 
 static std::vector<std::string> split(const std::string &s, char delim)
@@ -112,7 +97,7 @@ extern "C" int property_get(const char *key, char *value, const char *default_va
     if (search != KEY_MAP.end()) {
         std::string actual_key = (*search).second.first;
         int index = (*search).second.second;
-        if (__real_property_get(actual_key.c_str(), value, default_value) > 0) {
+        if (real_property_get(actual_key.c_str(), value, default_value) > 0) {
             std::vector<std::string> v = split(value, ',');
             if (index < v.size())
                 strcpy(value, v[index].c_str());
@@ -121,7 +106,7 @@ extern "C" int property_get(const char *key, char *value, const char *default_va
         }
         return strlen(value);
     }
-    return __real_property_get(key, value, default_value);
+    return real_property_get(key, value, default_value);
 }
 
 extern "C" int property_set(const char *key, const char *value)
@@ -131,14 +116,14 @@ extern "C" int property_set(const char *key, const char *value)
         std::string actual_key = (*search).second.first;
         int index = (*search).second.second;
         char tmp[PROPERTY_VALUE_MAX];
-        if (__real_property_get(actual_key.c_str(), tmp, "") >= 0) {
+        if (real_property_get(actual_key.c_str(), tmp, "") >= 0) {
             std::vector<std::string> v = split(tmp, ',');
             if (!(index < v.size()))
                 v.resize(index + 1);
             v[index] = value;
             std::string actual_value = concat(v, ',');
-            return __real_property_set(actual_key.c_str(), actual_value.c_str());
+            return real_property_set(actual_key.c_str(), actual_value.c_str());
         }
     }
-    return __real_property_set(key, value);
+    return real_property_set(key, value);
 }
