@@ -22,5 +22,9 @@ supported_boards := \
 	scx15 \
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
-include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM) HWCUtils)
+	ifeq ($(SOC_SCX30G_V2),true)
+		include $(call all-named-subdir-makefiles,scx30g2 HWCUtils)
+	else
+		include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM) HWCUtils)
+	endif
 endif
