@@ -51,7 +51,6 @@ SprdExternalDisplayDevice:: ~SprdExternalDisplayDevice()
 
 int SprdExternalDisplayDevice:: getDisplayAttributes(DisplayAttributes *dpyAttributes)
 {
-    int index = 0;
     float refreshRate = 60.0;
 
     if (dpyAttributes == NULL)
@@ -60,65 +59,13 @@ int SprdExternalDisplayDevice:: getDisplayAttributes(DisplayAttributes *dpyAttri
         return -1;
     }
 
-    index = dpyAttributes->configsIndex;
-    if (index < 0)
-    {
-        ALOGE("SprdExternalDisplayDevice:: getDisplayAttributes invalid index");
-        return -1;
-    }
-
-    dpyAttributes->sets[index].vsync_period = 0;
-    dpyAttributes->sets[index].xres = 0;
-    dpyAttributes->sets[index].yres = 0;
-    dpyAttributes->sets[index].stride = 0;
-    dpyAttributes->sets[index].xdpi = 0;
-    dpyAttributes->sets[index].ydpi = 0;
+    dpyAttributes->vsync_period = 0;
+    dpyAttributes->xres = 0;
+    dpyAttributes->yres = 0;
+    dpyAttributes->stride = 0;
+    dpyAttributes->xdpi = 0;
+    dpyAttributes->ydpi = 0;
     dpyAttributes->connected = false;
-
-    return 0;
-}
-
-int SprdExternalDisplayDevice:: ActiveConfig(DisplayAttributes *dpyAttributes)
-{
-
-    return 0;
-}
-
-int SprdExternalDisplayDevice:: setPowerMode(int mode)
-{
-    int ret = -1;
-
-    switch(mode)
-    {
-        case POWER_MODE_NORMAL:
-            /*
-             *  Turn on the display (if it was previously off),
-             *  and take it out of low power mode.
-             * */
-
-             break;
-        case POWER_MODE_DOZE:
-            /*
-             *  Turn on the display (if it was previously off),
-             *  and put the display in a low power mode.
-             * */
-
-             break;
-        case POWER_MODE_OFF:
-            /*
-             *  Turn the display off.
-             * */
-
-             break;
-        default:
-            return 0;
-    }
-
-    return 0;
-}
-
-int SprdExternalDisplayDevice:: setCursorPositionAsync(int x_pos, int y_pos)
-{
 
     return 0;
 }

@@ -110,24 +110,10 @@ public:
      * */
     int getDisplayAttributes(DisplayAttributes *dpyAttributes);
 
-    int ActiveConfig(DisplayAttributes *dpyAttributes);
-
-    int setPowerMode(int mode);
-
-    /*
-     *  Asynchronously update the location of the cursor layer.
-     * */
-    int setCursorPositionAsync(int x_pos, int y_pos);
-
     /*
      *  Recycle DispalyPlane buffer for saving memory.
      * */
     int reclaimPlaneBuffer(bool condition);
-
-    /*
-     *  pass the number of builtin display vendor support to SurfaceFlinger.
-     * */
-    int getBuiltInDisplayNum(uint32_t *number);
 
 private:
     FrameBufferInfo   *mFBInfo;
@@ -148,7 +134,6 @@ private:
 #endif
     int mDebugFlag;
     int mDumpFlag;
-    bool mGspSupport;
 
     inline SprdHWLayerList *getHWLayerList()
     {

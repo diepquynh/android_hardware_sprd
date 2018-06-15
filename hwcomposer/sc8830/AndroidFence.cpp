@@ -37,6 +37,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <hardware/hardware.h>
+#include <ion/ion.h>
 #include <linux/ion.h>
 #include "ion_sprd.h"
 #include "AndroidFence.h"

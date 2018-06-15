@@ -82,7 +82,6 @@ public:
           mDisableHWCFlag(false),
           mSkipLayerFlag(false),
           mPData(NULL),
-	  mGlobalProtectedFlag(false),
           mDebugFlag(0), mDumpFlag(0)
     {
     }
@@ -99,7 +98,7 @@ public:
      *  mainly judge whether upper layer and bottom layer
      *  is consistent with SprdDisplayPlane Hardware requirements.
      * */
-    int revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPrimaryDisplayDevice *mPrimary);
+    int revisitGeometry(int *DisplayFlag, SprdPrimaryDisplayDevice *mPrimary);
 
     int checkHWLayerList(hwc_display_contents_1_t* list);
 
@@ -173,7 +172,6 @@ private:
     bool mSkipLayerFlag;
     void *mPData;
     uint32_t mPrivateFlag[2];
-    bool mGlobalProtectedFlag;
     int mDebugFlag;
     int mDumpFlag;
 

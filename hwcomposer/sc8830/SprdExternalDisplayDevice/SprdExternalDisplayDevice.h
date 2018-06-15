@@ -66,18 +66,6 @@ public:
     int getDisplayAttributes(DisplayAttributes *dpyAttributes);
 
     /*
-     *  Active the specified config
-     * */
-    int ActiveConfig(DisplayAttributes *dpyAttributes);
-
-    int setPowerMode(int mode);
-
-    /*
-     *  Asynchronously update the location of the cursor layer.
-     * */
-    int setCursorPositionAsync(int x_pos, int y_pos);
-
-    /*
      *  Traversal External Display layer list.
      *  Find which layers comply with Virtual Display standards.
      * */

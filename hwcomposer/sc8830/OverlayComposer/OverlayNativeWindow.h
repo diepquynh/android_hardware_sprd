@@ -84,8 +84,6 @@ public:
 
     int releaseNativeBuffer();
 
-    void notifyDirtyTarget(bool flag);
-
 private:
     SprdPrimaryPlane *mDisplayPlane;
     unsigned int mWidth;
@@ -95,7 +93,6 @@ private:
     int32_t mNumBuffers;
     int32_t mNumFreeBuffers;
     int32_t mBufferHead;
-    int32_t mInvalidateCount;
     sp<NativeBuffer> buffers[NUM_FRAME_BUFFERS];
     sp<NativeBuffer> front;
 
@@ -103,7 +100,6 @@ private:
     Condition mCondition;
     int32_t mCurrentBufferIndex;
     bool mUpdateOnDemand;
-    bool mDirtyTargetFlag;
 
 
     friend class LightRefBase<OverlayNativeWindow>;

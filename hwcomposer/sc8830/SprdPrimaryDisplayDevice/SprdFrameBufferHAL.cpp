@@ -162,13 +162,13 @@ int loadFrameBufferHAL(FrameBufferInfo **fbInfo)
 
     if(vinfo.yoffset == vinfo.yres)
     { //flushing the second buffer.
-        FBInfo->pFrontAddr = (char*)((unsigned long)FBInfo->fb_virt_addr + vinfo.xres * vinfo.yres * bytespp);
+        FBInfo->pFrontAddr = (char*)((unsigned int)FBInfo->fb_virt_addr + vinfo.xres * vinfo.yres * bytespp);
         FBInfo->pBackAddr  = (char *)(FBInfo->fb_virt_addr);
     }
     else if(vinfo.yoffset == 0)
     { //flushing the first buffer.
         FBInfo->pFrontAddr = (char *)(FBInfo->fb_virt_addr);
-        FBInfo->pBackAddr = (char*)((unsigned long)FBInfo->fb_virt_addr + vinfo.xres * vinfo.yres * bytespp);
+        FBInfo->pBackAddr = (char*)((unsigned int)FBInfo->fb_virt_addr + vinfo.xres * vinfo.yres * bytespp);
     }
     else
     {
