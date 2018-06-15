@@ -153,7 +153,7 @@ bool SprdWIDIBlit:: threadLoop()
     size_t size2 = 1;
 #else
     int size = -1;
-    int size2 = -1;
+    int size2 = 1;
 #endif
 
     HWC_TRACE_BEGIN_WIDIBLIT;
