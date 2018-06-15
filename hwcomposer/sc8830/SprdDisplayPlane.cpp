@@ -94,6 +94,7 @@ private_handle_t* SprdDisplayPlane:: createPlaneBuffer(int index)
 {
     private_handle_t* BufHandle = NULL;
     uint32_t stride;
+
 #ifdef SCX30G_V2
     size_t size = 0;
 #else

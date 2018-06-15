@@ -59,18 +59,14 @@ LOCAL_SRC_FILES := \
 	dump.cpp \
 
 LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM) \
 	$(LOCAL_PATH)/../../libmemoryheapion/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/
 
 ifeq ($(SOC_SCX30G_V2),true)
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../gralloc/scx30g2
 LOCAL_CFLAGS += \
 	-DSCX30G_V2
-else
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../gralloc/$(TARGET_BOARD_PLATFORM)
 endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
