@@ -36,13 +36,6 @@
 #ifndef _SPRD_DISPLAY_DEVICE_H_
 #define _SPRD_DISPLAY_DEVICE_H_
 
-#include <hardware/hwcomposer.h>
-
-/*
- *  We follow SurfaceFlinger
- * */
-#define MAX_NUM_CONFIGS 128
-
 enum DisplayType {
     DISPLAY_ID_INVALIDE = -1,
     DISPLAY_PRIMARY = HWC_DISPLAY_PRIMARY,
@@ -51,30 +44,15 @@ enum DisplayType {
     NUM_BUILDIN_DISPLAY_TYPES = HWC_NUM_PHYSICAL_DISPLAY_TYPES,
 };
 
-enum DisplayPowerMode {
-    POWER_MODE_NORMAL = HWC_POWER_MODE_NORMAL,
-    POWER_MODE_DOZE = HWC_POWER_MODE_DOZE,
-    POWER_MODE_OFF = HWC_POWER_MODE_OFF,
-#ifdef __LP64__
-    POWER_MODE_DOZE_SUSPEND = HWC_POWER_MODE_DOZE_SUSPEND,
-#endif
-};
-
 #define MAX_DISPLAYS HWC_NUM_DISPLAY_TYPES
 
-typedef struct _DisplayAttributesSet
-{
+typedef struct _DisplayAttributes {
     uint32_t vsync_period; //nanos
     uint32_t xres;
     uint32_t yres;
     uint32_t stride;
     float xdpi;
     float ydpi;
-} AttributesSet;
-
-typedef struct _DisplayAttributes {
-    AttributesSet sets[MAX_NUM_CONFIGS];
-    uint32_t configsIndex; // config index
     bool connected;
     unsigned int AcceleratorMode;
 } DisplayAttributes;

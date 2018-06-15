@@ -67,11 +67,6 @@ public:
     int getDisplayAttributes(DisplayAttributes *dpyAttributes);
 
     /*
-     *  Asynchronously update the location of the cursor layer.
-     * */
-    int setCursorPositionAsync(int x_pos, int y_pos);
-
-    /*
      *  Traversal Virtual Display layer list.
      *  Find which layers comply with Virtual Display standards.
      * */
