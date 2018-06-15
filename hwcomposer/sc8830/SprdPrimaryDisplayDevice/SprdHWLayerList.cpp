@@ -127,7 +127,6 @@ int SprdHWLayerList:: updateGeometry(hwc_display_contents_1_t *list, int acceler
     mVideoLayerCount = 0;
     mRGBLayerFullScreenFlag = false;
     mSkipLayerFlag = false;
-    mGlobalProtectedFlag = false;
     mAcceleratorMode = ACCELERATOR_NON;
     mAcceleratorMode |= accelerator;
 
@@ -207,7 +206,7 @@ int SprdHWLayerList:: updateGeometry(hwc_display_contents_1_t *list, int acceler
     {
         hwc_layer_1_t *layer = &list->hwLayers[i];
 
-        ALOGI_IF(mDebugFlag,"process LayerList[%d/%d]", i, mLayerCount - 1);
+        ALOGI_IF(mDebugFlag,"process LayerList[%d/%d]",i,mLayerCount);
         dump_layer(layer);
 
         mLayerList[i].setAndroidLayer(layer);
@@ -239,7 +238,7 @@ int SprdHWLayerList:: updateGeometry(hwc_display_contents_1_t *list, int acceler
     return 0;
 }
 
-int SprdHWLayerList:: revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPrimaryDisplayDevice *mPrimary)
+int SprdHWLayerList:: revisitGeometry(int *DisplayFlag, SprdPrimaryDisplayDevice *mPrimary)
 {
     SprdHWLayer *YUVLayer = NULL;
     SprdHWLayer *RGBLayer = NULL;
@@ -286,11 +285,16 @@ int SprdHWLayerList:: revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPr
             continue;
         }
 
-        if (mSkipLayerFlag)
+        /*
+         *  Our Display Controller cannot handle 2 or more than 2 video layers
+         *  at the same time.
+         * */
+        if (VideoLayerCount > GXPMaxComposeVideoLayerCount)
         {
             resetOverlayFlag(mVideoLayerList[i]);
             mFBLayerCount++;
-            ALOGI_IF(mDebugFlag, "revisit video layer list, find Skip layer L: %d", __LINE__);
+            ALOGI_IF(mDebugFlag, "revisit video layer list, VideoLayerCount(%d) > %d",
+                     VideoLayerCount, GXPMaxComposeVideoLayerCount);
             continue;
         }
 
@@ -299,14 +303,11 @@ int SprdHWLayerList:: revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPr
 
         if ((mFBLayerCount > 0)
             || ((GXPSupportVideoAndOSDBlending == false) && (mOSDLayerCount > 0))
-            || (VideoLayerCount + mOSDLayerCount > GXPMaxComposeWithVideoLayerCount)
-            || (VideoLayerCount > GXPMaxComposeVideoLayerCount)
-            || (mGspSupport == false))
+            || (VideoLayerCount + mOSDLayerCount > GXPMaxComposeWithVideoLayerCount))
         {
             accelerateVideoByGSP = false;
             YUVLayer->setLayerAccelerator(ACCELERATOR_OVERLAYCOMPOSER);
-            ALOGI_IF(mDebugFlag, "GXP cannot process video cnt:%d(max:%d), change accelerator to OVC",
-                     VideoLayerCount, GXPMaxComposeVideoLayerCount);
+            ALOGI_IF(mDebugFlag, "GXP cannot handle video layer, change video accelerator type to GPU");
         }
         else
         {
@@ -350,8 +351,7 @@ int SprdHWLayerList:: revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPr
         }
 
         accelerateOSDByOVC = (RGBLayer->getAccelerator() == ACCELERATOR_OVERLAYCOMPOSER) ? true : false;
-        if(!mGspSupport)
-            accelerateOSDByOVC = true;
+
 #ifdef DIRECT_DISPLAY_SINGLE_OSD_LAYER
         /*
          *  if the RGB layer is bottom layer and there is no other layer,
@@ -399,8 +399,7 @@ int SprdHWLayerList:: revisitGeometry(bool mGspSupport, int *DisplayFlag, SprdPr
                                              : (((uint32_t)mOSDLayerCount >
                                                  GXPMaxComposeOSDLayerCount)
                                                 || (mOSDLayerCount > 0 && mFBLayerCount > 0)
-                                                || accelerateOSDByOVC
-                                                || mSkipLayerFlag);
+                                                || accelerateOSDByOVC);
         if (resetOSDLayerCond)
         {
             resetOverlayFlag(mOSDLayerList[i]);
@@ -619,18 +618,6 @@ int SprdHWLayerList:: prepareOSDLayer(SprdHWLayer *l)
 
     mRGBLayerCount++;
 
-    if ((privateH->usage & GRALLOC_USAGE_PROTECTED) == GRALLOC_USAGE_PROTECTED)
-    {
-        ALOGI_IF(mDebugFlag, "prepareOSDLayer do not process RGB DRM Line:%d", __LINE__);
-        return 0;
-    }
-
-    if (privateH->usage & GRALLOC_USAGE_HW_TILE_ALIGN)
-    {
-        ALOGI_IF(mDebugFlag, "prepareOSDLayer do not support Tile align layer Line:%d", __LINE__);
-        return 0;
-    }
-
     l->setLayerFormat(privateH->format);
     l->resetAccelerator();
 
@@ -788,7 +775,6 @@ int SprdHWLayerList:: prepareVideoLayer(SprdHWLayer *l)
     if ((privateH->usage & GRALLOC_USAGE_PROTECTED) == GRALLOC_USAGE_PROTECTED)
     {
         l->setProtectedFlag(true);
-        mGlobalProtectedFlag = true;
         ALOGI_IF(mDebugFlag, "prepareVideoLayer L: %d, find protected video",
                  __LINE__);
     }
@@ -813,12 +799,6 @@ int SprdHWLayerList:: prepareVideoLayer(SprdHWLayer *l)
     mYUVLayerCount++;
 
     l->resetAccelerator();
-
-    if (privateH->usage & GRALLOC_USAGE_HW_TILE_ALIGN)
-    {
-        ALOGI_IF(mDebugFlag, "prepareVideoLayer do not support Tile align layer Line:%d", __LINE__);
-        return 0;
-    }
 
     if (mAcceleratorMode & ACCELERATOR_GSP_IOMMU)
     {
@@ -1005,7 +985,7 @@ int SprdHWLayerList::prepareForGXP(SprdHWLayer *l)
     GSP_CAPABILITY_T *pGXPPara = static_cast<GSP_CAPABILITY_T *>(mPData);
 
     /*
-     *  If yuv_xywh_even == 1, GXP do not support odd source layer.
+     * If yuv_xywh_even == 1, GXP do not support odd source layer.
      * */
 
     if (pGXPPara->yuv_xywh_even == 1)
@@ -1047,38 +1027,24 @@ int SprdHWLayerList::prepareForGXP(SprdHWLayer *l)
         return 1;
     }
 
-    if((destHeight != srcHeight) || (destWidth != srcWidth))
-    {
-        //for scaler input > 4x4
-        if((srcWidth <= 4) || (srcHeight <= 4))
-        {
-            ALOGI_IF(mDebugFlag,"prepareForGXP[%d], GXP do not support scaling input <= 4x4 ! %d",__LINE__);
-            l->setLayerAccelerator(ACCELERATOR_OVERLAYCOMPOSER);
-            return 1;
-        }
-    }
-
-    //for blend require the rect's height >= 32
-    if((destHeight < 32) || (srcHeight < 32))
-    {
-        ALOGI_IF(mDebugFlag,"prepareForGXP[%d], GXP do not support blend with rect height < 32 ! %d",__LINE__);
-        l->setLayerAccelerator(ACCELERATOR_OVERLAYCOMPOSER);
-        return 1;
-    }
 
     if(destHeight<srcHeight)//scaling down
     {
         uint32_t div = 1;
 
-        if(destHeight*4 >= srcHeight)//
+        if(destHeight*2>srcHeight)//
         {
             div = 32;
-        }else if(destHeight*8 >= srcHeight)
+        }else if(destHeight*4>srcHeight)
         {
             div = 64;
-        }else if(destHeight*16 >= srcHeight)
+        }else if(destHeight*8>srcHeight)
         {
             div = 128;
+        }
+        else if(destHeight*16>srcHeight)
+        {
+            div = 256;
         }
 
         if(srcHeight/div*div != srcHeight)
@@ -1164,7 +1130,8 @@ int SprdHWLayerList::prepareOverlayComposerLayer(SprdHWLayer *l)
         layer->displayFrame.left > mFBInfo->fb_width ||
         layer->displayFrame.top > mFBInfo->fb_height ||
         layer->displayFrame.right > mFBInfo->fb_width ||
-        layer->displayFrame.bottom > mFBInfo->fb_height){
+        layer->displayFrame.bottom > mFBInfo->fb_height)
+    {
         mSkipLayerFlag = true;
         return -1;
     }
@@ -1175,8 +1142,8 @@ int SprdHWLayerList::prepareOverlayComposerLayer(SprdHWLayer *l)
         sourceRight < 0 ||
         sourceLeft > mFBInfo->fb_width ||
         sourceTop > mFBInfo->fb_height ||
-        sourceBottom-sourceTop > mFBInfo->fb_height ||
-        sourceRight -sourceLeft > mFBInfo->fb_width)
+        sourceBottom > mFBInfo->fb_height ||
+        sourceRight > mFBInfo->fb_height)
     {
         mSkipLayerFlag = true;
         return -1;
@@ -1194,10 +1161,24 @@ int SprdHWLayerList:: revisitOverlayComposerLayer(SprdHWLayer *YUVLayer, SprdHWL
      *  And OverlayComposer do not handle cropped RGB layer except DRM video.
      *  DRM video must go into Overlay.
      * */
-    if (YUVLayer == NULL)
+    if (YUVLayer != NULL)
     {
-        ALOGI_IF(mDebugFlag, "revisitOverlayComposerLayer must include video layer");
-        mSkipLayerFlag = true;
+        if (mYUVLayerCount > 1)
+        {
+            ALOGI_IF(mDebugFlag, "YUVLayerCount: %d", mYUVLayerCount);
+            mSkipLayerFlag = true;
+        }
+        else if ((mYUVLayerCount == 1)
+                 && (YUVLayer->getProtectedFlag() == false))
+        {
+            ALOGI_IF(mDebugFlag, "Not protected Video, switch back to SF. L :%d", __LINE__);
+            mSkipLayerFlag = true;
+        }
+        else if (YUVLayer->getProtectedFlag())
+        {
+            ALOGI_IF(mDebugFlag, "Find Protected Video layer, force Overlay");
+            mSkipLayerFlag = false;
+        }
     }
 
     if (mSkipLayerFlag == false)
@@ -1227,18 +1208,6 @@ int SprdHWLayerList:: revisitOverlayComposerLayer(SprdHWLayer *YUVLayer, SprdHWL
                 continue;
             }
 
-            if (mGlobalProtectedFlag)
-            {
-                ALOGI_IF(mDebugFlag, "Find Protected Video layer, force Overlay");
-                mSkipLayerFlag = false;
-            }
-            else if (mYUVLayerCount > 0)
-            {
-                ALOGI_IF(mDebugFlag, "Not find protected video, switch to SF");
-                mSkipLayerFlag = true;
-                break;
-            }
-
             if (l->compositionType == HWC_FRAMEBUFFER)
             {
                 int format = SprdLayer->getLayerFormat();
@@ -1250,7 +1219,7 @@ int SprdHWLayerList:: revisitOverlayComposerLayer(SprdHWLayer *YUVLayer, SprdHWL
                 {
                     SprdLayer->setLayerType(LAYER_OVERLAY);
                 }
-                ALOGI_IF(mDebugFlag, "Force layer format:%d go into OVC", format);
+                ALOGI_IF(mDebugFlag, "Force layer format:%d go into OverlayComposer", format);
                 setOverlayFlag(SprdLayer, j);
 
                 (*FBLayerCount)--;
@@ -1258,8 +1227,7 @@ int SprdHWLayerList:: revisitOverlayComposerLayer(SprdHWLayer *YUVLayer, SprdHWL
         }
         displayType |= HWC_DISPLAY_OVERLAY_COMPOSER_GPU;
     }
-
-    if (mSkipLayerFlag)
+    else
     {
         for (int i = 0; i < LayerCount; i++)
         {

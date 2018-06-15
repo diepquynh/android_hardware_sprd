@@ -51,10 +51,8 @@ OverlayNativeWindow::OverlayNativeWindow(SprdPrimaryPlane *displayPlane)
       mWindowUsage(-1),
       mNumBuffers(NUM_FRAME_BUFFERS),
       mNumFreeBuffers(NUM_FRAME_BUFFERS), mBufferHead(0),
-      mInvalidateCount(NUM_FRAME_BUFFERS),
       mCurrentBufferIndex(0),
-      mUpdateOnDemand(false),
-      mDirtyTargetFlag(false)
+      mUpdateOnDemand(false)
 {
 
 }
@@ -92,17 +90,6 @@ int OverlayNativeWindow:: releaseNativeBuffer()
     }
 
     return 0;
-}
-
-void OverlayNativeWindow:: notifyDirtyTarget(bool flag)
-{
-    OverlayNativeWindow* self = getSelf(this);
-    if (!(self->mDirtyTargetFlag))
-    {
-        Mutex::Autolock _l(self->mutex);
-        self->mDirtyTargetFlag = true;
-        self->mInvalidateCount = mNumBuffers - 1;
-    }
 }
 
 sp<NativeBuffer> OverlayNativeWindow::CreateGraphicBuffer(private_handle_t* buffer)
@@ -158,12 +145,6 @@ int OverlayNativeWindow::dequeueBuffer(ANativeWindow* window,
         }
     }
     *buffer = self->buffers[index].get();
-#ifdef INVALIDATE_WINDOW_TARGET
-    if (self->mDirtyTargetFlag)
-    {
-        IONBuffer->buf_idx = 0x100;
-    }
-#endif
 
     *fenceFd = -1;
 
@@ -176,7 +157,6 @@ int OverlayNativeWindow::dequeueBuffer(ANativeWindow* window,
 int OverlayNativeWindow::queueBuffer(ANativeWindow* window,
         ANativeWindowBuffer* buffer, int fenceFd)
 {
-    private_handle_t *hnd = (private_handle_t *)buffer->handle;
     OverlayNativeWindow* self = getSelf(window);
     Mutex::Autolock _l(self->mutex);
 
@@ -192,14 +172,6 @@ int OverlayNativeWindow::queueBuffer(ANativeWindow* window,
     const int index = self->mCurrentBufferIndex;
     self->front = static_cast<NativeBuffer*>(buffer);
     self->mNumFreeBuffers++;
-
-    if ((self->mInvalidateCount)-- <= 0)
-    {
-        self->mDirtyTargetFlag = false;
-    }
-#ifdef INVALIDATE_WINDOW_TARGET
-    hnd->buf_idx = 0;
-#endif
     self->mCondition.broadcast();
 
     queryDebugFlag(&mDebugFlag);
@@ -264,13 +236,9 @@ int OverlayNativeWindow::query(const ANativeWindow* window,
             return NO_ERROR;
         case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND:
             *value = 0;
-            return NO_ERROR;
         case NATIVE_WINDOW_CONSUMER_USAGE_BITS:
             *value = GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_RENDER |
                      GRALLOC_USAGE_HW_COMPOSER | self->mWindowUsage;
-            return NO_ERROR;
-        case NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS:
-            *value = 1;
             return NO_ERROR;
     }
     return BAD_VALUE;

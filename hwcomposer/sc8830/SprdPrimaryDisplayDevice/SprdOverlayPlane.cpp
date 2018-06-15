@@ -275,13 +275,13 @@ private_handle_t* SprdOverlayPlane::flush()
     }
     BaseContext->buffer = (unsigned char *)(flushingBuffer->phyaddr);
 
-    ALOGI_IF(mDebugFlag, "SprdOverlayPlane::flush SET_OVERLAY parameter datatype = %d, x = %d, y = %d, w = %d, h = %d, buffer = 0x%p",
+    ALOGI_IF(mDebugFlag, "SprdOverlayPlane::flush SET_OVERLAY parameter datatype = %d, x = %d, y = %d, w = %d, h = %d, buffer = 0x%08x",
              BaseContext->data_type,
              BaseContext->rect.x,
              BaseContext->rect.y,
              BaseContext->rect.w,
              BaseContext->rect.h,
-             BaseContext->buffer);
+             (unsigned int)BaseContext->buffer);
 
     if (HWCOMPOSER_DUMP_VIDEO_OVERLAY_FLAG & mDumpFlag)
     {

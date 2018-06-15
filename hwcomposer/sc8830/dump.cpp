@@ -90,29 +90,6 @@ static int dump_bmp(const char* filename, void* buffer_addr, unsigned int buffer
         quad.rgbReservedMask = 0x00000000;
         bmInfo.bmiHeader.biSizeImage = buffer_width * buffer_height * sizeof(U8) * 3;
         break;
-#if 0
-    /* do not support HAL_PIXEL_FORMAT_RGBA_5551 */
-    case HAL_PIXEL_FORMAT_RGBA_5551: /*not sure need investigation*/
-        bmInfo.bmfHeader.bfOffBits += 4*sizeof(U32);
-        bmInfo.bmiHeader.biBitCount = 16;
-        bmInfo.bmiHeader.biCompression = BI_BITFIELDS;
-        quad.rgbRedMask      = 0x000000FF;
-        quad.rgbGreenMask    = 0x0000FF00;
-        quad.rgbBlueMask     = 0x00FF0000;
-        quad.rgbReservedMask = 0x00000000;
-        bmInfo.bmiHeader.biSizeImage = buffer_width * buffer_height * sizeof(U8) * 2;
-        break;
-    case HAL_PIXEL_FORMAT_RGBA_4444:/*not sure need investigation*/
-        bmInfo.bmfHeader.bfOffBits += 4*sizeof(U32);
-        bmInfo.bmiHeader.biBitCount = 16;
-        bmInfo.bmiHeader.biCompression = BI_BITFIELDS;
-        quad.rgbRedMask      = 0x000000FF;
-        quad.rgbGreenMask    = 0x0000FF00;
-        quad.rgbBlueMask     = 0x00FF0000;
-        quad.rgbReservedMask = 0x00000000;
-        bmInfo.bmiHeader.biSizeImage = buffer_width * buffer_height * sizeof(U8) * 2;
-        break;
-#endif
     case HAL_PIXEL_FORMAT_YCbCr_420_SP:
     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
     case HAL_PIXEL_FORMAT_YCbCr_420_P:
@@ -144,12 +121,8 @@ static int dump_bmp(const char* filename, void* buffer_addr, unsigned int buffer
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGB_888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
-#if 0
-    case HAL_PIXEL_FORMAT_RGBA_5551:
-    case HAL_PIXEL_FORMAT_RGBA_4444:
-#endif
     case HAL_PIXEL_FORMAT_RGBX_8888:
-        fwrite(&bfType, sizeof(WORD), 1, fp);
+	  fwrite(&bfType, sizeof(WORD), 1, fp);
         fwrite(&bmInfo, sizeof(BITMAPINFO), 1, fp);
         fwrite(&quad, 4*sizeof(U32), 1, fp);
         break;
@@ -167,45 +140,37 @@ fail_open:
     ALOGE("dump layer failed to open path is:%s" , filename);
     return ret;
 }
-static int dump_layer(const char* path ,const char* pSrc , const char* ptype ,  int width , int height , int format , int randNum ,  int index , int LayerIndex = 0) {
+static int dump_layer(const char* path ,const char* pSrc , const char* ptype ,  int width , int height , int format ,int64_t randNum ,  int index , int LayerIndex = 0) {
     char fileName[MAX_DUMP_PATH_LENGTH + MAX_DUMP_FILENAME_LENGTH];
     static int cnt = 0;
     switch(format)
     {
         case HAL_PIXEL_FORMAT_RGBA_8888:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgba_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgba_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_RGBX_8888:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgbx_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgbx_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_BGRA_8888:
-            sprintf(fileName , "%s%d_%d_%s_%d_bgra_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_bgra_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
             break;
         case HAL_PIXEL_FORMAT_RGB_888:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgb888_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgb888_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex ,width, height,index);
             break;
-#if 0
-        case HAL_PIXEL_FORMAT_RGBA_5551:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgba5551_%dx%d_%d.bmp" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
-            break;
-        case HAL_PIXEL_FORMAT_RGBA_4444:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgba4444_%dx%d_%d.bmp" ,path,cnt, randNum , ptype , LayerIndex ,width, height,index);
-            break;
-#endif
         case HAL_PIXEL_FORMAT_RGB_565:
-            sprintf(fileName , "%s%d_%d_%s_%d_rgb565_%dx%d_%d.bmp" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_rgb565_%dx%d_%d.bmp" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YCbCr_420_SP:
-            sprintf(fileName , "%s%d_%d_%s_%d_ybrsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_ybrsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-            sprintf(fileName , "%s%d_%d_%s_%d_yrbsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_yrbsp_%dx%d_%d.yuv" ,path,cnt, randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YV12:
-            sprintf(fileName , "%s%d_%d_%s_%d_yv12_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_yv12_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         case HAL_PIXEL_FORMAT_YCbCr_420_P:
-            sprintf(fileName , "%s%d_%d_%s_%d_ybrp_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
+            sprintf(fileName , "%s%d_%lld_%s_%d_ybrp_%dx%d_%d.yuv" ,path, cnt,randNum , ptype , LayerIndex , width, height,index);
             break;
         default:
             ALOGE("dump layer failed because of error format %d" , format);
@@ -241,6 +206,7 @@ void queryDebugFlag(int *debugFlag)
     char value[PROPERTY_VALUE_MAX];
     static int openFileFlag = 0;
 
+    //*debugFlag = 1;
     if (debugFlag == NULL)
     {
         ALOGE("queryDebugFlag, input parameter is NULL");

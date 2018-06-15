@@ -157,8 +157,7 @@ public:
 
     inline bool checkNotSupportOverlay(struct private_handle_t *privateH)
     {
-        return false;
-        //return (privateH->flags & private_handle_t::PRIV_FLAGS_NOT_OVERLAY);
+        return (privateH->flags & private_handle_t::PRIV_FLAGS_NOT_OVERLAY);
     }
 
     inline int getAccelerator()
