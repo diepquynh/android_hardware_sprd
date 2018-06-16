@@ -18,7 +18,6 @@
 #define LOG_TAG "SprdCameraHardware"
 
 #include <camera/Camera.h>
-#include "SprdCameraHardwareInterface.h"
 #include <utils/Log.h>
 #include <utils/String16.h>
 #include <sys/types.h>
@@ -30,9 +29,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cutils/properties.h>
-#include "gralloc_priv.h"
-#include "ion_sprd.h"
+
+#include <video/ion_sprd.h>
+#include <gralloc_priv.h>
+
 #include <media/hardware/MetadataBufferType.h>
+
+#include "SprdCameraHardwareInterface.h"
 #include "SprdOEMCamera.h"
 
 #ifdef CONFIG_CAMERA_ISP
@@ -105,7 +108,7 @@ bool gIsApctRead = false;
 
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
 
-const CameraInfo SprdCameraHardware::kCameraInfo[] = {
+const CameraInfoWrapper SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -118,7 +121,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 #endif
 };
 
-const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
+const CameraInfoWrapper SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -238,6 +241,8 @@ int SprdCameraHardware::getCameraInfo(int cameraId, struct camera_info *cameraIn
 	}
 	return 0;
 }
+
+
 
 SprdCameraHardware::SprdCameraHardware(int cameraId)
 	:

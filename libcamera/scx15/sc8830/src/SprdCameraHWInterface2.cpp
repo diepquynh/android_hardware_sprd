@@ -20,7 +20,8 @@
 #include "SprdCameraHWInterface2.h"
 #include "SprdOEMCamera.h"
 #include <binder/MemoryHeapBase.h>
-#include "ion_sprd.h"
+
+#include <video/ion_sprd.h>
 
 namespace android {
 

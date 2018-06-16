@@ -26,11 +26,12 @@ LOCAL_C_INCLUDES := \
         external/jhead \
         external/sqlite/dist \
 	system/media/camera/include \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include \
 	hardware/sprd/gralloc/$(TARGET_BOARD_PLATFORM) \
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr \
 
 LOCAL_SRC_FILES:= \
 	sc8830/src/SprdOEMCamera.c \
@@ -50,31 +51,10 @@ LOCAL_SRC_FILES:= \
 	sc8830/src/sensor_cfg.c \
 	sc8830/src/cmr_arith.c \
 	sensor_drv_u/src/sensor_drv_u.c \
-	sensor/sensor_ov8825_mipi_raw.c \
-	sensor/sensor_autotest_ov8825_mipi_raw.c \
-	sensor/sensor_ov13850_mipi_raw.c \
-	sensor/sensor_ov5648_mipi_raw.c \
-	sensor/sensor_imx179_mipi_raw.c \
-	sensor/sensor_ov5640_mipi.c \
-	sensor/sensor_autotest_ov5640_mipi_yuv.c \
-	sensor/sensor_ov5640.c \
-	sensor/sensor_autotest_ov5640_ccir_yuv.c \
 	sensor/sensor_autotest_ccir_yuv.c \
-	sensor/sensor_gc2035.c \
-	sensor/sensor_ov8865_mipi_raw.c \
-	sensor/sensor_gc2155.c \
-	sensor/sensor_gc0311.c \
-	sensor/sensor_gt2005.c \
-	sensor/sensor_gc0308.c \
 	sensor/sensor_hi702_ccir.c \
 	sensor/sensor_pattern.c \
-	sensor/sensor_ov7675.c\
-	sensor/sensor_hi253.c\
-	sensor/sensor_hi255.c\
 	sensor/sensor_sr352.c \
-	sensor/sensor_sr030pc50_mipi.c \
-	sensor/sensor_s5k4ecgx_mipi.c \
-        sensor/sensor_s5k4ecgx.c \
 	vsp/sc8830/src/jpg_drv_sc8830.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_bufmgr.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_global.c \
@@ -113,8 +93,9 @@ LOCAL_SRC_FILES+= \
 	sc8830/src/SprdCameraHardwareInterface.cpp
 endif
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_CFLAGS := -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -DCONFIG_CAMERA_2M  -DANDROID_4100
+LOCAL_MODULE_RELATIVE_PATH := hw
+
+LOCAL_CFLAGS := -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -DCONFIG_CAMERA_2M -DANDROID_4100
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),scx15)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_SMALL_PREVSIZE
@@ -154,6 +135,12 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sc8830)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_ISP
+CONFIG_CAMERA_ISP := true
+endif
+
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),scx15)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_ISP
+CONFIG_CAMERA_ISP := true
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CAPTURE_MODE)),true)

@@ -22,7 +22,8 @@
 #include <semaphore.h>
 #include <sys/types.h>
 
-#include "SprdOEMCamera.h"
+#include <video/sprd_dma_copy_k.h>
+
 #include <utils/threads.h>
 #include <utils/RefBase.h>
 #include <binder/MemoryBase.h>
@@ -30,10 +31,10 @@
 #include <hardware/camera.h>
 #include <hardware/gralloc.h>
 #include <camera/CameraParameters.h>
+
 #include "SprdCameraParameters.h"
 #include "SprdOEMCamera.h"
 #include "cmr_oem.h"
-#include "sprd_dma_copy_k.h"
 
 namespace android {
 
@@ -53,6 +54,19 @@ typedef struct sprd_camera_memory {
 	bool busy_flag;
 }sprd_camera_memory_t;
 
+namespace hardware {
+
+class CameraInfoWrapper : public CameraInfo {
+public:
+	CameraInfoWrapper(int facing, int orientation) {
+		this->facing = facing;
+		this->orientation = orientation;
+	}
+};
+
+} // namespace hardware
+
+using hardware::CameraInfoWrapper;
 
 #define MAX_SUB_RAWHEAP_NUM 10
 
@@ -108,8 +122,8 @@ public:
 	static int                   getPropertyAtv();
 	static int                   getNumberOfCameras();
 	static int                   getCameraInfo(int cameraId, struct camera_info *cameraInfo);
-	static const CameraInfo      kCameraInfo[];
-	static const CameraInfo      kCameraInfo3[];
+	static const CameraInfoWrapper kCameraInfo[];
+	static const CameraInfoWrapper kCameraInfo3[];
 	static int                   switch_monitor_thread_init(void *p_data);
 	static int                   switch_monitor_thread_deinit(void *p_data);
 	static void*                 switch_monitor_thread_proc(void *p_data);

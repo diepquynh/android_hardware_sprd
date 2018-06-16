@@ -21,8 +21,9 @@ extern "C"
 {
 #endif
 
+#include <video/sprd_dma_copy_k.h>
+
 #include "cmr_common.h"
-#include "sprd_dma_copy_k.h"
 
 enum cmr_img_cvt_evt {
 	CMR_IMG_CVT_ROT_DONE = CMR_EVT_CVT_BASE,

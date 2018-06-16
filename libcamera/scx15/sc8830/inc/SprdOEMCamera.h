@@ -22,9 +22,11 @@ extern "C"
 #endif
 
 #include <sys/types.h>
+
+#include <video/sprd_dma_copy_k.h>
+
 #include "../../arithmetic/sc8830/inc/FaceSolid.h"
 #include "../../arithmetic/sc8830/inc/HDR2.h"
-#include "sprd_dma_copy_k.h"
 #include "cmr_v4l2.h"
 #include "isp_app.h"
 #include "sensor_drv_u.h"

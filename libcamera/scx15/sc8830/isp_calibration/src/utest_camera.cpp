@@ -32,7 +32,8 @@
 #include "SprdOEMCamera.h"
 #include "isp_cali_interface.h"
 #include "sensor_drv_u.h"
-#include "ion_sprd.h"
+
+#include <video/ion_sprd.h>
 
 using namespace android;
 

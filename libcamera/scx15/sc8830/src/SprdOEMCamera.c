@@ -20,9 +20,11 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <math.h>
+
+#include <video/sprd_rot_k.h>
+
 #include "SprdOEMCamera.h"
 #include "cmr_oem.h"
-#include "sprd_rot_k.h"
 #include "isp_video.h"
 
 static int camera_capture_need_exit(void);

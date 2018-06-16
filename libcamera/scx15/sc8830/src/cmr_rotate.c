@@ -21,8 +21,10 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
+
+#include <video/sprd_rot_k.h>
+
 #include "cmr_cvt.h"
-#include "sprd_rot_k.h"
 
 static char rot_dev_name[50] = "/dev/sprd_rotation";
 

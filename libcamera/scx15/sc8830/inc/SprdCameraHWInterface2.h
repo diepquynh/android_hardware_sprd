@@ -25,13 +25,14 @@
 #include <utils/List.h>
 #include <MemoryHeapIon.h>
 #include <binder/MemoryBase.h>
-#include "SprdBaseThread.h"
-#include "gralloc_priv.h"
 #include <fcntl.h>
 
-#include "SprdCamera2.h"
+#include <cutils/properties.h>
 
-#include "cutils/properties.h"
+#include <gralloc_priv.h>
+
+#include "SprdBaseThread.h"
+#include "SprdCamera2.h"
 #include "SprdOEMCamera.h"
 #include "SprdCameraHardwareConfig2.h"
 

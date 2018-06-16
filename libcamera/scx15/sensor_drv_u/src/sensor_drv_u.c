@@ -14,6 +14,7 @@
 * limitations under the License.
 */
 
+#define LOG_NDEBUG 0
 #include <utils/Log.h>
 #include <fcntl.h>              /* low-level i/o */
 #include <errno.h>
