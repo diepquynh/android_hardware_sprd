@@ -46,7 +46,7 @@
 #define AUDIO_AT_FM_LOOP_VBC_NAME "FM loop vbc"
 #define AUDIO_AT_VOIP_DSP_PROCESS_NAME "VOIP DSP Pro"
 
-#define ENG_AUDIO_PARA  			"/etc/audio_para"
+#define ENG_AUDIO_PARA  			"/vendor/etc/audio_para"
 #define ENG_AUDIO_PARA_DEBUG 			"/data/local/media/audio_para"
 #define AUDFIFO "/data/local/media/audiopara_tuning"
 #define AUDFIFO_2 "/data/local/media/audiopara_tuning_2"

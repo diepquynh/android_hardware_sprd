@@ -30,7 +30,7 @@
 #define I2S_CTL_INDEX_MAX     3
 #define AUDIO_MODE_NAME_MAX_LEN 16
 
-#define AUDIO_XML_PATH "/system/etc/audio_hw.xml"
+#define AUDIO_XML_PATH "/system/vendor/etc/audio_hw.xml"
 
 #define MODEM_T_ENABLE_PROPERTY     "persist.modem.t.enable"
 #define MODEM_W_ENABLE_PROPERTY     "persist.modem.w.enable"

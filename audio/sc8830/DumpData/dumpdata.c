@@ -59,7 +59,7 @@ static int dump_open_file(int );
 FILE *AUDIO_OUT_fd[DUMP_FILE_MAX_NUM];
 
 
-#define AUDIO_XML_PATH "/system/etc/audio_hw.xml"
+#define AUDIO_XML_PATH "/system/vendor/etc/audio_hw.xml"
 #define BUF_SIZE 1024
 
 static  aud_dump_item_t *dump_create_mem(aud_dump_t  *aud_dump_info, const char *num)

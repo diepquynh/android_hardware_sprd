@@ -4848,7 +4848,7 @@ static int adev_config_parse(struct tiny_audio_device *adev)
     int len;
 
     //property_get("ro.product.device", property, "tiny_hw");
-    snprintf(file, sizeof(file), "/system/etc/%s", "tiny_hw.xml");
+    snprintf(file, sizeof(file), "/system/vendor/etc/%s", "tiny_hw.xml");
 
     ALOGV("Reading configuration from %s\n", file);
     f = fopen(file, "r");

@@ -28,7 +28,7 @@
 #include <tinyalsa/asoundlib.h>
 
 #define BUF_SIZE 1024
-#define PGA_XML_PATH "/system/etc/codec_pga.xml"
+#define PGA_XML_PATH "/system/vendor/etc/codec_pga.xml"
 #define INITIAL_PROFILE_SIZE 8
 #define INITIAL_PROFILE_ITEM_SIZE 2
 

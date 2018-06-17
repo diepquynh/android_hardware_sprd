@@ -250,7 +250,7 @@ static int adev_config_parse_linein(struct tiny_audio_device *adev)
     int len;
 
     //property_get("ro.product.device", property, "tiny_hw");
-    snprintf(file, sizeof(file), "/system/etc/%s", "tiny_hw_lineincall.xml");
+    snprintf(file, sizeof(file), "/system/vendor/etc/%s", "tiny_hw_lineincall.xml");
 
     ALOGV("Reading configuration from %s\n", file);
     f = fopen(file, "r");
