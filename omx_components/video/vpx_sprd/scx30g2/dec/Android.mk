@@ -42,6 +42,7 @@ LOCAL_STATIC_LIBRARIES := \
 	libcolorformat_switcher
 
 LOCAL_MODULE := libstagefright_sprd_vpxdec
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
