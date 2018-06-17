@@ -72,7 +72,15 @@ static int wrapper_sensors_module_close(struct hw_device_t* device) {
 WRAP_HAL(setDelay, int, (struct sensors_poll_device_t *dev, int handle, int64_t ns), (samsung_hw_dev, handle, ns))
 WRAP_HAL(activate, int, (struct sensors_poll_device_t *dev, int handle, int enabled), (samsung_hw_dev, handle, enabled))
 WRAP_HAL(poll, int, (struct sensors_poll_device_t *dev, sensors_event_t* data, int count), (samsung_hw_dev, data, count))
+
+#ifndef NO_FLUSH
 WRAP_HAL(flush, int, (struct sensors_poll_device_1_t *dev, int handle), (samsung_hw_dev, handle))
+#else
+static int wrapper_flush(struct sensors_poll_device_1_t *dev, int handle) {
+	ALOGI("Hey! We don't support flush, and NPDs aren't allowed here!");
+	return 0;
+}
+#endif
 
 static int sensors_module_open(const struct hw_module_t* module, const char* id, struct hw_device_t** device) {
 	int ret=0;

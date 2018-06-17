@@ -29,6 +29,10 @@ LOCAL_SRC_FILES := sensorswrapper.c
 LOCAL_SHARED_LIBRARIES := liblog libcutils libhardware
 LOCAL_MODULE_TAGS := optional
 
+ifeq ($(TARGET_SENSORS_HAS_NO_FLUSH),true)
+LOCAL_CFLAGS := -DNO_FLUSH
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 endif # TARGET_USES_SENSORS_WRAPPER
