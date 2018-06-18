@@ -17,14 +17,17 @@
 
 #LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_CAMERA_OPEN_SOURCE),true)
 supported_boards := \
+	sc8830 \
 	sc8810 \
 	scx15 \
 
 ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
+ifeq ($(SOC_SCX30G_V2),true)
+include $(call all-named-subdir-makefiles,scx30g2)
+else
 include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM))
-endif
-
-ifeq ($(TARGET_CAMERA_OPEN_SOURCE),true)
-include $(call all-named-subdir-makefiles,sc8830)
-endif
+endif # SOC_SCX30G_V2
+endif # supported_boards
+endif # TARGET_CAMERA_OPEN_SOURCE
