@@ -46,7 +46,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libsync \
 	$(SHARED_MEM_LIBS) \
 
+ifeq ($(TARGET_USES_GRALLOC1), true)
 LOCAL_STATIC_LIBRARIES := libgralloc1-adapter
+endif
 
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \

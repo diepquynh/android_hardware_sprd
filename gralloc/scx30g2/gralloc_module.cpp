@@ -39,7 +39,9 @@ static int s_ump_is_open = 0;
 #include <sys/mman.h>
 #endif
 
+#ifdef ADVERTISE_GRALLOC1
 #include <gralloc1-adapter.h>
+#endif
 
 static pthread_mutex_t s_map_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -78,9 +80,11 @@ static int gralloc_register_buffer(gralloc_module_t const *module, buffer_handle
 	// if this handle was created in this process, then we keep it as is.
 	private_handle_t *hnd = (private_handle_t *)handle;
 
+#ifdef ADVERTISE_GRALLOC1
     if (hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER) {
         return 0;
     }
+#endif
 
 	ALOGD_IF(mDebug,"register buffer  handle:%p ion_hnd:0x%x",handle,hnd->ion_hnd);
 
@@ -438,6 +442,7 @@ static int gralloc_unlock(gralloc_module_t const* module, buffer_handle_t handle
 	return 0;
 }
 
+#ifdef ADVERTISE_GRALLOC1
 static int gralloc_perform(struct gralloc_module_t const* module,
                     int operation, ... )
 {
@@ -519,6 +524,7 @@ static int gralloc_perform(struct gralloc_module_t const* module,
     va_end(args);
     return res;
 }
+#endif
 
 // There is one global instance of the module
 
@@ -551,7 +557,11 @@ private_module_t::private_module_t()
 	base.lock = gralloc_lock;
 	base.lock_ycbcr = gralloc_lock_ycbcr;
 	base.unlock = gralloc_unlock;
+#ifdef ADVERTISE_GRALLOC1
 	base.perform = gralloc_perform;
+#else
+	base.perform = NULL;
+#endif
 	INIT_ZERO(base.reserved_proc);
 
 	framebuffer = NULL;
