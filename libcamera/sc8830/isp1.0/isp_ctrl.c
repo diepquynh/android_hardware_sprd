@@ -8482,7 +8482,7 @@ static int32_t _ispISPInfoIOCtrl(uint32_t handler_id, void* param_ptr, int(*call
 	}
 
 	if (ISP_CTRL_GET ==info_ctrl_ptr->mode) {
-		_isp_info_get(handler_id, info_ctrl_ptr);
+		_isp_info_get((struct isp_context *)handler_id, info_ctrl_ptr);
 		info_ctrl_ptr->version_id = 0;
 		info_ctrl_ptr->len = sizeof(struct isp_info_ctrl);
 	}

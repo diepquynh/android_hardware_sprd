@@ -28,17 +28,22 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cutils/properties.h>
-#include "../../../gralloc/gralloc_priv.h"
-#include "ion_sprd.h"
+#include <gralloc_priv.h>
+#include <ion_sprd.h>
 #include <media/hardware/MetadataBufferType.h>
 #include "SprdOEMCamera.h"
-#include <androidfw/SprdIlog.h>
+//#include <androidfw/SprdIlog.h>
 
 #ifdef CONFIG_CAMERA_ISP
 extern "C" {
 #include "isp_video.h"
 }
 #endif
+
+#define sprd_isPerformanceTestable()   0
+#define sprd_startPerfTracking(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define sprd_stopPerfTracking(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define sprd_perfInfo(format,...)  ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
 namespace android {
 
@@ -110,7 +115,7 @@ bool gIsApctRead = false;
 
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
 
-const CameraInfo SprdCameraHardware::kCameraInfo[] = {
+const CameraInfoWrapper SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -123,7 +128,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 #endif
 };
 
-const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
+const CameraInfoWrapper SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -7258,7 +7263,7 @@ extern "C" {
 		get_camera_info : HAL_getCameraInfo,
 		set_callbacks : NULL,
 		get_vendor_tag_ops : NULL,
-		reserved : {0,0,0,0,0,0,0,0}
+		//reserved : {0,0,0,0,0,0,0,0}
 	};
 }
 

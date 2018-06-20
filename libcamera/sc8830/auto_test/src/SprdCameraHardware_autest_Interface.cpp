@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <cutils/properties.h>
 #include <linux/ion.h>
-#include <binder/MemoryHeapIon.h>
+#include <MemoryHeapIon.h>
 #include <camera/Camera.h>
 #include <semaphore.h>
 #include "cmr_oem.h"
@@ -33,7 +33,7 @@
 #include "isp_cali_interface.h"
 #include "sensor_drv_u.h"
 #include "sensor_cfg.h"
-#include "ion_sprd.h"
+#include <ion_sprd.h>
 
 
 

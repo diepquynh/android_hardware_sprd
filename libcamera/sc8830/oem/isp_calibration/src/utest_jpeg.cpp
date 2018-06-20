@@ -25,9 +25,9 @@
 #include <unistd.h>
 #include <cutils/properties.h>
 #include <linux/ion.h>
-#include <binder/MemoryHeapIon.h>
+#include <MemoryHeapIon.h>
 #include <semaphore.h>
-#include "ion_sprd.h"
+#include <ion_sprd.h>
 #include "jpegenc_api.h"
 
 using namespace android;

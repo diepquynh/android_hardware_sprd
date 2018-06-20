@@ -16,16 +16,15 @@
 #ifndef ANDROID_HARDWARE_SPRD_CAMERA_HARDWARE_H
 #define ANDROID_HARDWARE_SPRD_CAMERA_HARDWARE_H
 
-#include <binder/MemoryHeapIon.h>
+#include <MemoryHeapIon.h>
 #include <utils/threads.h>
 #include <pthread.h>
 #include <semaphore.h>
-extern "C" {
-    #include <linux/android_pmem.h>
-}
+//extern "C" {
+//    #include <linux/android_pmem.h>
+//}
 #include <sys/types.h>
 
-#include "SprdOEMCamera.h"
 #include <utils/threads.h>
 #include <utils/RefBase.h>
 #include <binder/MemoryBase.h>
@@ -36,7 +35,7 @@ extern "C" {
 #include "SprdCameraParameters.h"
 #include "SprdOEMCamera.h"
 #include "cmr_oem.h"
-#include "sprd_dma_copy_k.h"
+#include <sprd_dma_copy_k.h>
 
 namespace android {
 
@@ -59,6 +58,20 @@ typedef struct sprd_camera_memory {
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
+
+namespace hardware {
+
+class CameraInfoWrapper : public CameraInfo {
+public:
+	CameraInfoWrapper(int facing, int orientation) {
+		this->facing = facing;
+		this->orientation = orientation;
+	}
+};
+
+} // namespace hardware
+
+using hardware::CameraInfoWrapper;
 
 class SprdCameraHardware : public virtual RefBase {
 public:
@@ -112,8 +125,8 @@ public:
 	static int                   getPropertyAtv();
 	static int                   getNumberOfCameras();
 	static int                   getCameraInfo(int cameraId, struct camera_info *cameraInfo);
-	static const CameraInfo      kCameraInfo[];
-	static const CameraInfo      kCameraInfo3[];
+	static const CameraInfoWrapper       kCameraInfo[];
+	static const CameraInfoWrapper       kCameraInfo3[];
 	static int                   switch_monitor_thread_init(void *p_data);
 	static int                   switch_monitor_thread_deinit(void *p_data);
 	static void*                 switch_monitor_thread_proc(void *p_data);

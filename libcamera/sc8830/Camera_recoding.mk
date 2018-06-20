@@ -1,4 +1,14 @@
 LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libcamsensors
+LOCAL_SRC_FILES := sensor/libcamsensors.so
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
+
 include $(CLEAR_VARS)
 
 sc8830like:=0
@@ -26,12 +36,11 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/mtrace \
 	external/skia/include/images \
 	external/skia/include/core\
-        external/jhead \
-        external/sqlite/dist \
+	external/jhead \
+	external/sqlite/dist \
 	system/media/camera/include \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-	$(TOP)/vendor/sprd/open-source/libs/gralloc \
-	$(TOP)/vendor/sprd/open-source/libs/mali/src/ump/include
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/source/include/video \
+	$(LOCAL_PATH)/../../gralloc/sc8830
 
 LOCAL_SRC_FILES:= \
 	oem/src/SprdOEMCamera.c \
@@ -57,43 +66,10 @@ LOCAL_SRC_FILES:= \
 	oem/src/cmr_uvdenoise.c \
 	oem/src/cmr_focus.c \
 	oem/src/sensor_drv_u.c \
-	sensor/sensor_ov8825_mipi_raw.c \
-	sensor/sensor_autotest_ov8825_mipi_raw.c \
-	sensor/sensor_ov13850_mipi_raw.c \
-	sensor/sensor_ov5648_mipi_raw.c \
-	sensor/sensor_ov5670_mipi_raw.c \
-	sensor/sensor_ov2680_mipi_raw.c \
-	sensor/sensor_imx179_mipi_raw.c \
-	sensor/sensor_imx219_mipi_raw.c \
-	sensor/sensor_hi544_mipi_raw.c \
-	sensor/sensor_ov5640_mipi.c \
-	sensor/sensor_autotest_ov5640_mipi_yuv.c \
-	sensor/sensor_ov5640.c \
-	sensor/sensor_autotest_ov5640_ccir_yuv.c \
 	sensor/sensor_autotest_ccir_yuv.c \
-	sensor/sensor_JX205_mipi_raw.c \
-	sensor/sensor_gc2035.c \
-	sensor/sensor_gc2155.c \
-	sensor/sensor_gc2155_mipi.c \
-	sensor/sensor_gc0308.c \
-	sensor/sensor_gc0310_mipi.c \
-	sensor/sensor_hm2058.c \
-	sensor/sensor_ov8865_mipi_raw.c \
-	sensor/sensor_gt2005.c \
-	sensor/sensor_hi702_ccir.c \
 	sensor/sensor_pattern.c \
-	sensor/sensor_ov7675.c\
-	sensor/sensor_hi253.c\
-	sensor/sensor_hi255.c\
 	sensor/sensor_s5k4ecgx_mipi.c \
-	sensor/sensor_sp2529_mipi.c \
 	sensor/sensor_s5k4ecgx.c \
-	sensor/sensor_sr352.c \
-	sensor/sensor_sr352_mipi.c \
-	sensor/sensor_sr030pc50_mipi.c \
-	sensor/sensor_autotest_ov2680_mipi_raw.c \
-	sensor/sensor_autotest_ov5670_mipi_raw.c \
-	sensor/sensor_autotest_gc0310_mipi.c \
 	vsp/sc8830/src/jpg_drv_sc8830.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_bufmgr.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_global.c \
@@ -126,7 +102,7 @@ LOCAL_SRC_FILES+= \
 include $(LOCAL_PATH)/isp1.0/isp1_0.mk
 endif
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_CFLAGS := -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -DCONFIG_CAMERA_2M -DANDROID_4100
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),scx15)
@@ -331,7 +307,7 @@ endif
 LOCAL_MODULE_TAGS := optional
 
 ifeq ($(strip $(sc8830like)),1)
-LOCAL_SHARED_LIBRARIES := libandroidfw libexif libutils libbinder libcamera_client libskia libcutils libhardware libawb libae libaf liblsc libuvdenoise libmorpho_easy_hdr libcamera_metadata
+LOCAL_SHARED_LIBRARIES := libandroidfw libexif libutils libbinder libcamera_client libskia libcutils libhardware libawb libae libaf liblsc libuvdenoise libmorpho_easy_hdr libcamera_metadata libmemoryheapion libui libgui libcamsensors
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_SHARED_LIBRARIES += libface_finder
@@ -344,31 +320,67 @@ include $(BUILD_SHARED_LIBRARY)
 ifeq ($(strip $(sc8830like)),1)
 
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := oem/isp1.0/libawb.so \
-        oem/isp1.0/libae.so \
-        oem/isp1.0/libaf.so \
-        oem/isp1.0/liblsc.so
+LOCAL_MODULE := libawb
+LOCAL_SRC_FILES := oem/isp1.0/libawb.so
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := oem/isp/libuvdenoise.so
+LOCAL_MODULE := libae
+LOCAL_SRC_FILES := oem/isp1.0/libae.so
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := arithmetic/sc8830/libmorpho_easy_hdr.so
+LOCAL_MODULE := libaf
+LOCAL_SRC_FILES := oem/isp1.0/libaf.so
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := liblsc
+LOCAL_SRC_FILES := oem/isp1.0/liblsc.so
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libuvdenoise
+LOCAL_SRC_FILES := oem/isp/libuvdenoise.so
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libmorpho_easy_hdr
+LOCAL_SRC_FILES := arithmetic/sc8830/libmorpho_easy_hdr.so
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := arithmetic/sc8830/libface_finder.so
+LOCAL_MODULE := libface_finder
+LOCAL_SRC_FILES := arithmetic/sc8830/libface_finder.so
 LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
+include $(BUILD_PREBUILT)
 endif
-
-
 endif
-
-

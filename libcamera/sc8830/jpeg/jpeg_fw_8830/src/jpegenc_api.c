@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include "sprd_scale.h"
+#include <sprd_scale.h>
 
 #ifdef   __cplusplus
     extern   "C"
@@ -14,7 +14,7 @@
 #endif
 
 #if defined(JPEG_ENC)
-#include "sprd_jpg.h"
+#include <sprd_jpg.h>
 
 #define SPRD_JPG_DRIVER "/dev/sprd_jpg"
 
