@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include "gralloc_priv.h"
 
+
 #define BI_RGB          0
 #define BI_BITFIELDS    3
 
@@ -143,6 +144,7 @@ void dump_bmp(const char* filename, void* addr, PBINFO pBInfo, PREGION pScissor)
         bmInfo.bmiHeader.biSizeImage = bmInfo.bmiHeader.biWidth * bmInfo.bmiHeader.biHeight * pixel_size;
         break;
 
+    case HAL_PIXEL_FORMAT_YCbCr_420_888:
     case HAL_PIXEL_FORMAT_YCbCr_420_SP:
     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
     case HAL_PIXEL_FORMAT_YCbCr_420_P:
@@ -178,6 +180,7 @@ void dump_bmp(const char* filename, void* addr, PBINFO pBInfo, PREGION pScissor)
     case HAL_PIXEL_FORMAT_RGBX_8888:
       fwrite(&quad, 4*sizeof(U32), 1, fp);
         break;
+    case HAL_PIXEL_FORMAT_YCbCr_420_888:
     case HAL_PIXEL_FORMAT_YCbCr_420_SP:
     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
     case HAL_PIXEL_FORMAT_YCbCr_420_P:

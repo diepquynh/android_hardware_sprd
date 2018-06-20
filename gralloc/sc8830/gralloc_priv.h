@@ -30,30 +30,12 @@
 #include <cutils/native_handle.h>
 #include <alloc_device.h>
 #include <utils/Log.h>
-
+#include "gralloc_ext_sprd.h"
 #ifdef MALI_600
 #define GRALLOC_ARM_UMP_MODULE 0
 #define GRALLOC_ARM_DMA_BUF_MODULE 1
 #else
 
-enum {
-    GRALLOC_USAGE_OVERLAY_BUFFER        = 0x01000000,
-    GRALLOC_USAGE_VIDEO_BUFFER          = 0x02000000,
-    GRALLOC_USAGE_CAMERA_BUFFER         = 0x04000000,
-};
-
-enum {
-    HAL_PIXEL_FORMAT_YCbCr_422_P        = 0x12,
-    HAL_PIXEL_FORMAT_YCbCr_420_P        = 0x13,
-    HAL_PIXEL_FORMAT_YCbCr_420_I        = 0x15,
-    HAL_PIXEL_FORMAT_CbYCrY_422_I       = 0x16,
-    HAL_PIXEL_FORMAT_CbYCrY_420_I       = 0x17,
-    HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED = 0x18,
-    HAL_PIXEL_FORMAT_YCbCr_420_SP       = 0x19,
-    HAL_PIXEL_FORMAT_YCrCb_420_SP_TILED = 0x1A,
-    HAL_PIXEL_FORMAT_YCrCb_422_SP       = 0x1B,
-    HAL_PIXEL_FORMAT_YCrCb_420_P        = 0x1C,
-};
 /* NOTE:
  * If your framebuffer device driver is integrated with UMP, you will have to
  * change this IOCTL definition to reflect your integration with the framebuffer
@@ -79,17 +61,25 @@ struct fb_dmabuf_export
 	__u32 flags;
 };
 /*#define FBIOGET_DMABUF    _IOR('F', 0x21, struct fb_dmabuf_export)*/
-#endif /* GRALLOC_ARM_DMA_BUF_MODULE */
 
+#define ION_INVALID_HANDLE 0
+
+#endif /* GRALLOC_ARM_DMA_BUF_MODULE */
 
 #endif
 
-static int mDebug=1;
+static int mDebug=0;
+
+/* mali 400 use tile buffer to get high DDR access performance when use 720P LCD.
+ */
+#define SIZE_USE_TILE_ALIGN	(1280*720)
+extern int g_useTileAlign;
 
 /* the max string size of GRALLOC_HARDWARE_GPU0 & GRALLOC_HARDWARE_FB0
  * 8 is big enough for "gpu0" & "fb0" currently
  */
 #define MALI_GRALLOC_HARDWARE_MAX_STR_LEN 8
+#define NUM_FB_BUFFERS 3
 
 #if GRALLOC_ARM_UMP_MODULE
 #include <ump/ump.h>
@@ -112,6 +102,7 @@ struct private_module_t
 	gralloc_module_t base;
 
 	private_handle_t *framebuffer;
+	void *psCtx;// SPRD_ADF_context_t *psCtx;
 	uint32_t flags;
 	uint32_t numBuffers;
 	uint32_t bufferMask;
@@ -160,6 +151,7 @@ struct private_handle_t
 	{
 		LOCK_STATE_WRITE     =   1 << 31,
 		LOCK_STATE_MAPPED    =   1 << 30,
+		LOCK_STATE_UNREGISTERED  =   1 << 29,
 		LOCK_STATE_READ_MASK =   0x3FFFFFFF
 	};
 
@@ -176,7 +168,11 @@ struct private_handle_t
 	int     height;
 	int     format;
 	int     stride;
-	void    *base;
+	union
+	{
+		void   *base;
+		uint64_t padding;
+	};
 	int     lockState;
 	int     writeOwner;
 	int     pid;
@@ -187,22 +183,15 @@ struct private_handle_t
 #if GRALLOC_ARM_UMP_MODULE
 	int     ump_id;
 	int     ump_mem_handle;
-#define GRALLOC_ARM_UMP_NUM_INTS 2
-#else
-#define GRALLOC_ARM_UMP_NUM_INTS 0
 #endif
 
 	// Following members is for framebuffer only
 	int     fd;
 	int     offset;
-
 	int     phyaddr;
 
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	struct ion_handle *ion_hnd;
-#define GRALLOC_ARM_DMA_BUF_NUM_INTS 1
-#else
-#define GRALLOC_ARM_DMA_BUF_NUM_INTS 0
 #endif
 
 #if GRALLOC_ARM_DMA_BUF_MODULE
@@ -216,13 +205,6 @@ struct private_handle_t
 	uint64_t consumer_usage;
 
 #ifdef __cplusplus
-	/*
-	 * We track the number of integers in the structure. There are 11 unconditional
-	 * integers (magic - pid, yuv_info, fd and offset). The GRALLOC_ARM_XXX_NUM_INTS
-	 * variables are used to track the number of integers that are conditionally
-	 * included.
-	 */
-	static const int sNumInts = 16 + GRALLOC_ARM_UMP_NUM_INTS + GRALLOC_ARM_DMA_BUF_NUM_INTS;
 	static const int sNumFds = GRALLOC_ARM_NUM_FDS;
 	static const int sMagic = 0x3141592;
 
@@ -249,13 +231,14 @@ struct private_handle_t
 		fd(0),
 		offset(0)
 #if GRALLOC_ARM_DMA_BUF_MODULE
-		,ion_hnd(NULL)
+		,
+		ion_hnd(ION_INVALID_HANDLE)
 #endif
 
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
-		numInts = sNumInts;
+		numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 	}
 #endif
 
@@ -281,12 +264,12 @@ struct private_handle_t
 #endif
 		fd(0),
 		offset(0),
-		ion_hnd(NULL)
+		ion_hnd(ION_INVALID_HANDLE)
 
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
-		numInts = sNumInts;
+		numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 	}
 
 #endif
@@ -315,13 +298,14 @@ struct private_handle_t
 		fd(fb_file),
 		offset(fb_offset)
 #if GRALLOC_ARM_DMA_BUF_MODULE
-		,ion_hnd(NULL)
+		,
+		ion_hnd(ION_INVALID_HANDLE)
 #endif
 
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
-		numInts = sNumInts;
+		numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 	}
 
 	~private_handle_t()
@@ -338,7 +322,9 @@ struct private_handle_t
 	{
 		const private_handle_t *hnd = (const private_handle_t *)h;
 
-		if (!h || h->version != sizeof(native_handle) || h->numInts != sNumInts || h->numFds != sNumFds || hnd->magic != sMagic)
+		if (!h || h->version != sizeof(native_handle) || h->numFds != sNumFds ||
+		        h->numInts != (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds ||
+		        hnd->magic != sMagic)
 		{
 			return -EINVAL;
 		}

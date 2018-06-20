@@ -27,6 +27,7 @@ LOCAL_MODULE := libcolorformat_switcher
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_C_INCLUDES += \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video/ \
 	$(TOP)/hardware/sprd/gralloc/sc8830 \
 	$(TOP)/frameworks/av/include/media/ \
 	$(TOP)/frameworks/native/include/media/openmax
