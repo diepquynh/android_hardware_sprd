@@ -103,6 +103,28 @@ static uint64_t next_backing_store_id()
     return next_id++;
 }
 
+#ifdef FBIOGET_DMABUF
+static int fb_get_framebuffer_dmabuf(private_module_t *m, private_handle_t *hnd)
+{
+	struct fb_dmabuf_export fb_dma_buf;
+	int res;
+	res = ioctl(m->framebuffer->fd, FBIOGET_DMABUF, &fb_dma_buf);
+
+	if (res == 0)
+	{
+		hnd->share_fd = fb_dma_buf.fd;
+		return 0;
+	}
+	else
+	{
+		AINF("FBIOGET_DMABUF ioctl failed(%d). See gralloc_priv.h and the integration manual for vendor framebuffer "
+		     "integration",
+		     res);
+		return -1;
+	}
+}
+#endif
+
 static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buffer_handle_t *pHandle)
 {
 	ALOGV("%s: size:%d usage:%d", __func__, size, usage);
@@ -111,7 +133,7 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 	{
 		private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
 		struct ion_handle *ion_hnd;
-		unsigned char *cpu_ptr;
+		void *cpu_ptr = MAP_FAILED;
 		int shared_fd;
 		int ret;
 		int ion_heap_mask = 0;
@@ -174,17 +196,19 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 			return -1;
 		}
 
-		cpu_ptr = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0);
+		// ion_hnd is no longer needed once we acquire shared_fd.
+		if (0 != ion_free(m->ion_client, ion_hnd))
+		{
+			AWAR("ion_free( %d ) failed", m->ion_client);
+		}
+
+		ion_hnd = NULL;
+
+		cpu_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shared_fd, 0);
 
 		if (MAP_FAILED == cpu_ptr)
 		{
 			AERR("ion_map( %d ) failed", m->ion_client);
-
-			if (0 != ion_free(m->ion_client, ion_hnd))
-			{
-				AERR("ion_free( %d ) failed", m->ion_client);
-			}
-
 			close(shared_fd);
 			return -1;
 		}
@@ -198,7 +222,6 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 				hnd->flags=(private_handle_t::PRIV_FLAGS_USES_ION)|(private_handle_t::PRIV_FLAGS_USES_PHY);
 			}
 			hnd->share_fd = shared_fd;
-			hnd->ion_hnd = ion_hnd;
 			*pHandle = hnd;
 			sprd_ion_invalidate_fd(m->ion_client,hnd->share_fd);
 			return 0;
@@ -214,13 +237,6 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 		if (0 != ret)
 		{
 			AERR("munmap failed for base:%p size: %lu", cpu_ptr, (unsigned long)size);
-		}
-
-		ret = ion_free(m->ion_client, ion_hnd);
-
-		if (0 != ret)
-		{
-			AERR("ion_free( %d ) failed", m->ion_client);
 		}
 
 		return -1;
@@ -324,7 +340,7 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t *dev, size_t size, in
 		}
 	}
 
-	const uint32_t bufferMask = m->bufferMask;
+	uint32_t bufferMask = m->bufferMask;
 	const uint32_t numBuffers = m->numBuffers;
 	const size_t bufferSize = m->finfo.line_length * m->info.yres;
 
@@ -340,8 +356,9 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t *dev, size_t size, in
 
 	if (bufferMask >= ((1LU << numBuffers) - 1))
 	{
-		// We ran out of buffers.
-		return -ENOMEM;
+		// We ran out of buffers, reset bufferMask.
+		bufferMask = 0;
+		m->bufferMask = 0;
 	}
 
 	void *vaddr = m->framebuffer->base;
@@ -360,7 +377,7 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t *dev, size_t size, in
 
 	// The entire framebuffer memory is already mapped, now create a buffer object for parts of this memory
 	private_handle_t *hnd = new private_handle_t(private_handle_t::PRIV_FLAGS_FRAMEBUFFER, usage, size, vaddr,
-	        0, dup(m->framebuffer->fd), (uintptr_t)vaddr - (uintptr_t) m->framebuffer->base);
+	        0, m->framebuffer->fd, (uintptr_t)vaddr - (uintptr_t) m->framebuffer->base, m->framebuffer->fb_paddr);
 #if GRALLOC_ARM_UMP_MODULE
 	hnd->ump_id = m->framebuffer->ump_id;
 
@@ -380,16 +397,28 @@ static int gralloc_alloc_framebuffer_locked(alloc_device_t *dev, size_t size, in
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	{
 #ifdef FBIOGET_DMABUF
-		struct fb_dmabuf_export fb_dma_buf;
-
-		if (ioctl(m->framebuffer->fd, FBIOGET_DMABUF, &fb_dma_buf) == 0)
+		/*
+		 * Perform allocator specific actions. If these fail we fall back to a regular buffer
+		 * which will be memcpy'ed to the main screen when fb_post is called.
+		 */
+		if (fb_get_framebuffer_dmabuf(m, hnd) == -1)
 		{
-			AINF("framebuffer accessed with dma buf (fd 0x%x)\n", (int)fb_dma_buf.fd);
-			hnd->share_fd = fb_dma_buf.fd;
+			int newUsage = (usage & ~GRALLOC_USAGE_HW_FB) | GRALLOC_USAGE_HW_2D;
+
+			AINF("Fallback to single buffering. Unable to map framebuffer memory to handle:%p", hnd);
+			return gralloc_alloc_buffer(dev, bufferSize, newUsage, pHandle);
 		}
 
 #endif
 	}
+
+	// correct numFds/numInts when there is no dmabuf fd
+	if (hnd->share_fd < 0)
+	{
+		hnd->numFds--;
+		hnd->numInts++;
+	}
+
 #endif
 
 	*pHandle = hnd;
@@ -438,13 +467,13 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 		{
 			case 21:
 			case HAL_PIXEL_FORMAT_YCbCr_420_SP:
-                            stride = GRALLOC_ALIGN(w, 16);
-                            size = GRALLOC_ALIGN(h, 16) * (stride + GRALLOC_ALIGN(stride / 2, 16));
-                            break;
+				stride = GRALLOC_ALIGN(w, 16);
+				size = GRALLOC_ALIGN(h, 16) * (stride + GRALLOC_ALIGN(stride / 2, 16));
+				break;
 			case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-                            stride = GRALLOC_ALIGN(w, 16);
-                            size = GRALLOC_ALIGN(h, 16) * (stride + GRALLOC_ALIGN(stride / 2, 16));
-                            break;
+				stride = GRALLOC_ALIGN(w, 16);
+				size = GRALLOC_ALIGN(h, 16) * (stride + GRALLOC_ALIGN(stride / 2, 16));
+				break;
 			case HAL_PIXEL_FORMAT_YCbCr_420_888:
 			case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
 				stride = w;
@@ -456,19 +485,15 @@ static int alloc_device_alloc(alloc_device_t *dev, int w, int h, int format, int
 				// mali GPU hardware requires u/v-plane 64byte-alignment
 				size = GRALLOC_ALIGN(h * stride, 64) + GRALLOC_ALIGN(h/2 * GRALLOC_ALIGN(stride/2,16), 64) + h/2 * GRALLOC_ALIGN(stride/2,16);
 				break;
-
-
 			case HAL_PIXEL_FORMAT_YV12:
 				stride = GRALLOC_ALIGN(w, 128);
 				// mali GPU hardware requires u/v-plane 64byte-alignment
 				size = GRALLOC_ALIGN(h * stride, 128) + GRALLOC_ALIGN(h/2 * GRALLOC_ALIGN(stride/2,128), 128) + h/2 * GRALLOC_ALIGN(stride/2,128);
 				break;
-
 			case HAL_PIXEL_FORMAT_YCbCr_422_I:
 				stride = GRALLOC_ALIGN(w, 16);
 				size = h * stride * 2;
 				break;
-
 			default:
 				return -EINVAL;
 		}
@@ -611,12 +636,6 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 
 	if (hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER)
 	{
-		// free this buffer
-		private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
-		const size_t bufferSize = m->finfo.line_length * m->info.yres;
-		int index = ((uintptr_t)hnd->base - (uintptr_t)m->framebuffer->base) / bufferSize;
-		m->bufferMask &= ~(1 << index);
-		close(hnd->fd);
 
 #if GRALLOC_ARM_UMP_MODULE
 
@@ -639,7 +658,7 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 		}
 
 #else
-		AERR("Can't free ump memory for handle:0x%p. Not supported.", hnd);
+		AERR("Can't free ump memory for handle:%p. Not supported.", hnd);
 #endif
 	}
 	else if (hnd->flags & private_handle_t::PRIV_FLAGS_USES_ION)
@@ -652,16 +671,11 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 		{
 			if (0 != munmap((void *)hnd->base, hnd->size))
 			{
-				AERR("Failed to munmap handle 0x%p", hnd);
+				AERR("Failed to munmap handle %p", hnd);
 			}
 		}
 
 		close(hnd->share_fd);
-
-		if (0 != ion_free(m->ion_client, hnd->ion_hnd))
-		{
-			AERR("Failed to ion_free( ion_client: %d ion_hnd: %p )", m->ion_client, (void *)(uintptr_t)hnd->ion_hnd);
-		}
 
 		memset((void *)hnd, 0, sizeof(*hnd));
 #else
