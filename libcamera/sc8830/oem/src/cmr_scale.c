@@ -21,7 +21,7 @@
 #include "cmr_type.h"
 #include "cmr_msg.h"
 #include "cmr_cvt.h"
-#include "sprd_scale_k.h"
+#include <sprd_scale_k.h>
 
 
 #define CMR_EVT_SCALE_INIT              (CMR_EVT_OEM_BASE + 16)

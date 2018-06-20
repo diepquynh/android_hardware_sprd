@@ -28,7 +28,7 @@
 #include "cmr_msg.h"
 #include "sensor_raw.h"
 #include "isp_raw.h"
-#include "sensor_drv_k.h"
+#include <sensor_drv_k.h>
 
 #ifdef	 __cplusplus
 extern	 "C"
@@ -187,7 +187,7 @@ typedef struct sensor_reg_bits_tag                    SENSOR_REG_BITS_T, *SENSOR
 typedef struct sensor_reg_tab_tag                     SENSOR_REG_TAB_T, *SENSOR_REG_TAB_PTR;
 typedef struct sensor_flash_level                     SENSOR_FLASH_LEVEL_T;
 typedef struct sensor_if_cfg_tag                      SENSOR_IF_CFG_T;
-typedef struct sensor_socid_tag                       SENSOR_SOCID_T;
+//typedef struct sensor_socid_tag                       SENSOR_SOCID_T;
 
 
 

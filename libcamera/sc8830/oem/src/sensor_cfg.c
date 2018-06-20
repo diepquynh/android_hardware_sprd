@@ -19,130 +19,89 @@
 #include "sensor_cfg.h"
 
 #if 0
-extern SENSOR_INFO_T g_OV7675_yuv_info;
-extern SENSOR_INFO_T g_OV7670_yuv_info;
-extern SENSOR_INFO_T g_OV9655_yuv_info;
-extern SENSOR_INFO_T g_OV2640_yuv_info;
-extern SENSOR_INFO_T g_OV2655_yuv_info;
-extern SENSOR_INFO_T g_GC0306_yuv_info;
-extern SENSOR_INFO_T g_SIV100A_yuv_info;
-extern SENSOR_INFO_T g_SIV100B_yuv_info;
-extern SENSOR_INFO_T g_OV3640_yuv_info;
-extern SENSOR_INFO_T g_mt9m112_yuv_info;
-extern SENSOR_INFO_T g_OV9660_yuv_info;
-extern SENSOR_INFO_T g_OV7690_yuv_info;
-extern SENSOR_INFO_T g_OV7675_yuv_info;
-extern SENSOR_INFO_T g_GT2005_yuv_info;
-extern SENSOR_INFO_T g_GC0309_yuv_info;
-extern SENSOR_INFO_T g_ov5640_yuv_info;
-extern SENSOR_INFO_T g_ov5640_raw_info;
-extern SENSOR_INFO_T g_OV7660_yuv_info;
-extern SENSOR_INFO_T g_nmi600_yuv_info;
-extern SENSOR_INFO_T g_ov5640_mipi_raw_info;
-extern SENSOR_INFO_T g_ov5647_mipi_raw_info;
-extern SENSOR_INFO_T g_ov5648_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k5ccgx_yuv_info_mipi;
-extern SENSOR_INFO_T g_s5k4e1ga_mipi_raw_info;
-extern SENSOR_INFO_T g_hi351_mipi_yuv_info;
-extern SENSOR_INFO_T g_ov8830_mipi_raw_infoextern;
+static const SENSOR_INFO_T *find_sr200pc20() {
+	const SENSOR_INFO_T *result;
+	void *handle = dlopen("libcamsensors.so", RTLD_NOW);
+	
+	if (handle) {
+		result = (SENSOR_INFO_T *) dlsym(handle, "g_sr200pc20_yuv_info");
+		if (result) {
+			ALOGI("Successfully catched sr200pc20 sensor info");
+		} else {
+			ALOGE("Couldn't find sr200pc20 sensor info from libcamsensors!");
+			result = NULL;
+			dlclose(handle);
+		}
+	} else {
+		ALOGE("Cannot open libcamsensors.so: %s", dlerror());
+	}
+	return result;
+}
 #endif
-SENSOR_INFO_T g_GT2005_yuv_info;
-SENSOR_INFO_T g_GC0308_yuv_info;
-SENSOR_INFO_T g_GC2035_yuv_info;
-extern SENSOR_INFO_T g_ov5640_mipi_yuv_info;
-extern SENSOR_INFO_T g_ov8825_mipi_raw_info;
-extern SENSOR_INFO_T g_imx179_mipi_raw_info;
-extern SENSOR_INFO_T g_imx219_mipi_raw_info;
-extern SENSOR_INFO_T g_ov8865_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
+
 extern SENSOR_INFO_T g_s5k4ec_mipi_yuv_info;
-extern SENSOR_INFO_T g_HI702_yuv_info;
-extern SENSOR_INFO_T g_ov5640_yuv_info;
-extern SENSOR_INFO_T g_OV7675_yuv_info;
-extern SENSOR_INFO_T g_hi253_yuv_info;
-extern SENSOR_INFO_T g_s5k4ec_yuv_info;
-extern SENSOR_INFO_T g_sr352_yuv_info;
-extern SENSOR_INFO_T g_sr352_mipi_yuv_info;
-extern SENSOR_INFO_T g_HM2058_yuv_info;
-extern SENSOR_INFO_T g_GC2155_yuv_info;
-extern SENSOR_INFO_T g_SP2529_MIPI_yuv_info;
-extern SENSOR_INFO_T g_GC2155_MIPI_yuv_info;
-extern SENSOR_INFO_T g_ov5648_mipi_raw_info;
-extern SENSOR_INFO_T g_ov5670_mipi_raw_info;
-extern SENSOR_INFO_T g_autotest_ov8825_mipi_raw_info;
-extern SENSOR_INFO_T g_autotest_ov5640_mipi_yuv_info;
-extern SENSOR_INFO_T g_at_ov5640_ccir_yuv_info;
-extern SENSOR_INFO_T g_autotest_yuv_info;
-extern SENSOR_INFO_T g_hi544_mipi_raw_info;
-extern SENSOR_INFO_T g_hi255_yuv_info;
-extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
-extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
-extern SENSOR_INFO_T g_sr030pc50_yuv_info;
-extern SENSOR_INFO_T g_at_ov2680_mipi_raw_info;
-extern SENSOR_INFO_T g_at_GC0310_MIPI_yuv_info;
-extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
+extern SENSOR_INFO_T g_sr200pc20_yuv_info;// = find_sr200pc20();
 
 /**---------------------------------------------------------------------------*
  **                         Constant Variables                                *
  **---------------------------------------------------------------------------*/
-const SENSOR_INFO_T* main_sensor_infor_tab[]=
+SENSOR_INFO_T* main_sensor_infor_tab[]=
 {
 #ifdef CONFIG_BACK_CAMERA_MIPI
-	&g_ov2680_mipi_raw_info,
-	&g_ov8825_mipi_raw_info,
 	&g_s5k4ec_mipi_yuv_info,
-	&g_ov5648_mipi_raw_info,
-	&g_ov5670_mipi_raw_info,
-	&g_ov8865_mipi_raw_info,
-	&g_ov5640_mipi_yuv_info,
-	&g_hi544_mipi_raw_info,
-	&g_sr352_mipi_yuv_info,
-	&g_imx219_mipi_raw_info,
+	//&g_ov5648_mipi_raw_info,
+	//&g_ov5670_mipi_raw_info,
+	//&g_ov8865_mipi_raw_info,
+	//&g_ov5640_mipi_yuv_info,
+	//&g_hi544_mipi_raw_info,
+	//&g_sr352_mipi_yuv_info,
+	//&g_imx219_mipi_raw_info,
 	//&g_ov8830_mipi_raw_info,
-	&g_imx179_mipi_raw_info,
-	&g_ov13850_mipi_raw_info,
+	//&g_imx179_mipi_raw_info,
+	//&g_ov13850_mipi_raw_info,
 	//&g_ov5640_mipi_raw_info,
 	//&g_s5k5ccgx_yuv_info_mipi,
 	//&g_s5k4e1ga_mipi_raw_info,
 	//&g_hi351_mipi_yuv_info,
 	//&g_ov5640_mipi_raw_info,
 	//&g_ov5647_mipi_raw_info,
-	&g_SP2529_MIPI_yuv_info,
+	//&g_SP2529_MIPI_yuv_info,
 #endif
 #ifdef CONFIG_BACK_CAMERA_CCIR
-	&g_ov5640_yuv_info,
-	&g_hi253_yuv_info,
-	&g_GT2005_yuv_info,
-	&g_s5k4ec_yuv_info,
-	&g_sr352_yuv_info,
+	//&g_ov5640_yuv_info,
+	//&g_hi253_yuv_info,
+	//&g_GT2005_yuv_info,
+	//&g_s5k4ec_yuv_info,
+	//&g_sr352_yuv_info,
 	//&g_OV7675_yuv_info,
 	//&g_OV2655_yuv_info,
 	//&g_OV7675_yuv_info,
 	//&g_OV2640_yuv_info,
-	&g_HM2058_yuv_info,
+	//&g_HM2058_yuv_info,
 #endif
 	PNULL
 };
 
-const SENSOR_INFO_T* sub_sensor_infor_tab[]=
+SENSOR_INFO_T* sub_sensor_infor_tab[]=
 {
 #ifdef CONFIG_FRONT_CAMERA_CCIR
-	&g_hi253_yuv_info,
-	&g_GC0308_yuv_info,
-	&g_GC2035_yuv_info,
-	&g_HI702_yuv_info,
-	&g_OV7675_yuv_info,
+	//&g_hi253_yuv_info,
+	//&g_GC0308_yuv_info,
+	//&g_GC2035_yuv_info,
+	//&g_HI702_yuv_info,
+	//&g_OV7675_yuv_info,
 	//&g_GC0309_yuv_info,
 	//g_OV7690_yuv_info,
-	&g_GC2155_yuv_info,
+	//&g_GC2155_yuv_info,
 #endif
 
 #ifdef CONFIG_FRONT_CAMERA_MIPI
-	&g_GC0310_MIPI_yuv_info,
-	&g_hi255_yuv_info,
-	&g_GC2155_MIPI_yuv_info,
-	&g_sr030pc50_yuv_info,
+	//&g_GC0310_MIPI_yuv_info,
+	//&g_hi255_yuv_info,
+	//&g_GC2155_MIPI_yuv_info,
+	//&g_sr030pc50_yuv_info,
 #endif
+	&g_sr200pc20_yuv_info,
 	PNULL
 };
 
@@ -160,17 +119,17 @@ const SENSOR_INFO_T* atv_infor_tab[]=
 const SENSOR_INFO_T* at_main_sensor_infor_tab[]=
 {
 #ifdef CONFIG_BACK_CAMERA_MIPI
-	&g_at_ov2680_mipi_raw_info,
-	&g_autotest_ov8825_mipi_raw_info,
-	&g_autotest_ov5640_mipi_yuv_info,
-	&g_at_ov5670_mipi_raw_info,
+	//&g_at_ov2680_mipi_raw_info,
+	//&g_autotest_ov8825_mipi_raw_info,
+	//&g_autotest_ov5640_mipi_yuv_info,
+	//&g_at_ov5670_mipi_raw_info,
 #endif
 #ifdef CONFIG_BACK_CAMERA_CCIR
-	&g_at_ov5640_ccir_yuv_info,
-	&g_hi253_yuv_info,
+	//&g_at_ov5640_ccir_yuv_info,
+	//&g_hi253_yuv_info,
 	//&g_GT2005_yuv_info,
 	//&g_s5k4ec_yuv_info,
-	&g_autotest_yuv_info,
+	//&g_autotest_yuv_info,
 #endif
 PNULL
 
@@ -179,13 +138,13 @@ PNULL
 const SENSOR_INFO_T* at_sub_sensor_infor_tab[]=
 {
 #ifdef CONFIG_FRONT_CAMERA_CCIR
-	&g_GC0308_yuv_info,
-	&g_GC2035_yuv_info,
+	//&g_GC0308_yuv_info,
+	//&g_GC2035_yuv_info,
 //	&g_HI702_yuv_info,
-	&g_OV7675_yuv_info,
+	//&g_OV7675_yuv_info,
 	//&g_autotest_yuv_info,
 #else
-	&g_at_GC0310_MIPI_yuv_info,
+	//&g_at_GC0310_MIPI_yuv_info,
 #endif
 PNULL
 

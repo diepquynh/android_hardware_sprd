@@ -446,7 +446,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifInteroperabilityInfo(JPEG_WRITE_STREAM_CONTEXT_T 
     /***********************************************************************/
 
     if (valid.InteroperabilityIndex
-        && PNULL != inter_ptr->InteroperabilityIndex.ptr
         && inter_ptr->InteroperabilityIndex.count > 0)
     {
         ifd_info.tag = IFD_INTEROPERABILITYINDEX;
@@ -618,7 +617,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.ISOSpeedRatings
-        && PNULL != pic_taking_cond_ptr->ISOSpeedRatings.ptr
         && pic_taking_cond_ptr->ISOSpeedRatings.count > 0)
     {
         //size of any
@@ -638,7 +636,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
 
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.OECF
-        && PNULL != pic_taking_cond_ptr->OECF.ptr
         && pic_taking_cond_ptr->OECF.count > 0)
     {
         //size of any
@@ -899,7 +896,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.SubjectArea
-        && PNULL != pic_taking_cond_ptr->SubjectArea.ptr
         && pic_taking_cond_ptr->SubjectArea.count > 0)
     {
         ifd_info.tag = IFD_SUBJECTAREA;
@@ -1121,7 +1117,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.SpatialFrequencyResponse
-        && PNULL != pic_taking_cond_ptr->SpatialFrequencyResponse.ptr
         && pic_taking_cond_ptr->SpatialFrequencyResponse.count > 0)
     {
         ifd_info.tag = IFD_SPATIALFREQUENCYRESPONSE;
@@ -1267,7 +1262,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.CFAPattern
-        && PNULL != pic_taking_cond_ptr->CFAPattern.ptr
         && pic_taking_cond_ptr->CFAPattern.count > 0)
     {
         ifd_info.tag = IFD_CFAPATTERN;
@@ -1445,7 +1439,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.DeviceSettingDescription
-        && PNULL != pic_taking_cond_ptr->DeviceSettingDescription.ptr
         && pic_taking_cond_ptr->DeviceSettingDescription.count > 0)
     {
         ifd_info.tag = IFD_DEVICESETTINGDESCRIPTION;
@@ -1990,7 +1983,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifGPSInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     }
 
     if (valid.GPSProcessingMethod
-        && PNULL != gps_ptr->GPSProcessingMethod.ptr
         && gps_ptr->GPSProcessingMethod.count > 0)
     {
         ifd_info.tag = IFD_GPSPROCESSINGMETHOD;
@@ -2008,7 +2000,6 @@ LOCAL JPEG_RET_E Jpeg_WriteExifGPSInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     }
 
     if (valid.GPSAreaInformation
-        && PNULL != gps_ptr->GPSAreaInformation.ptr
         && gps_ptr->GPSAreaInformation.count > 0)
     {
         ifd_info.tag = IFD_GPSAREAINFORMATION;
@@ -2377,8 +2368,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifIFD(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
         entries++;
     }
 
-    if (PNULL != thumbnail_ptr && PNULL != thumbnail_ptr->stream_buf_ptr
-        && thumbnail_ptr->stream_buf_size > 0)
+    if (PNULL != thumbnail_ptr && thumbnail_ptr->stream_buf_size > 0)
     {
         thumbnail_offset = 0;
 
@@ -2399,8 +2389,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifIFD(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
         entries++;
     }
 
-    if (PNULL != thumbnail_ptr && PNULL != thumbnail_ptr->stream_buf_ptr
-        && thumbnail_ptr->stream_buf_size > 0)
+    if (PNULL != thumbnail_ptr && thumbnail_ptr->stream_buf_size > 0)
     {
         thumbnail_size = thumbnail_ptr->stream_buf_size;
         ifd_info.tag = IFD_JPEGINTERCHANGEFORMATLENGTH;
@@ -2571,8 +2560,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifIFD(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     JPEG_PRINT_LOW("thumbnail_ptr=0x%x.",(uint32_t)thumbnail_ptr);
 #endif
     /*write thumbnail image*/
-    if (PNULL != thumbnail_ptr && PNULL != thumbnail_ptr->stream_buf_ptr
-        && thumbnail_ptr->stream_buf_size > 0)
+    if (PNULL != thumbnail_ptr && thumbnail_ptr->stream_buf_size > 0)
     {
         thumbnail_offset = ifd_value_offset - ifh_offset;
 

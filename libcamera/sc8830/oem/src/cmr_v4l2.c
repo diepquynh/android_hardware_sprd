@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "cmr_v4l2.h"
-#include "sprd_v4l2.h"
+#include <sprd_v4l2.h>
 
 
 #define CMR_CHECK_FD \

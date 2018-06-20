@@ -20,7 +20,7 @@
 #include <sys/ioctl.h>
 #include "cmr_type.h"
 #include "cmr_cvt.h"
-#include "sprd_rot_k.h"
+#include <sprd_rot_k.h>
 
 static cmr_s8 rot_dev_name[50] = "/dev/sprd_rotation";
 
