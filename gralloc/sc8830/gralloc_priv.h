@@ -173,8 +173,6 @@ struct private_handle_t
 #else
 	ion_user_handle_t ion_hnd;
 #endif
-#define GRALLOC_ARM_DMA_BUF_NUM_INTS 1
-#define GRALLOC_ARM_NUM_FDS 1
 
 	uint64_t backing_store;
 	uint64_t producer_usage;
@@ -187,8 +185,8 @@ struct private_handle_t
 	 * variables are used to track the number of integers that are conditionally
 	 * included.
 	 */
-	static const int sNumInts = 16 + GRALLOC_ARM_DMA_BUF_NUM_INTS;
-	static const int sNumFds = GRALLOC_ARM_NUM_FDS;
+	int __sNumInts_padding;
+	static const int sNumFds = 1;
 	static const int sMagic = 0x3141592;
 
 	private_handle_t(int flags, int usage, int size, void *base, int lock_state):
@@ -213,7 +211,7 @@ struct private_handle_t
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
-		numInts = sNumInts;
+		numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 	}
 
 	private_handle_t(int flags, int usage, int size, void *base, int lock_state, int fb_file, int fb_offset):
@@ -238,7 +236,7 @@ struct private_handle_t
 	{
 		version = sizeof(native_handle);
 		numFds = sNumFds;
-		numInts = sNumInts;
+		numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 	}
 
 	~private_handle_t()
@@ -254,8 +252,9 @@ struct private_handle_t
 	static int validate(const native_handle *h)
 	{
 		const private_handle_t *hnd = (const private_handle_t *)h;
+		int numInts = (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds;
 
-		if (!h || h->version != sizeof(native_handle) || h->numInts != sNumInts || h->numFds != sNumFds || hnd->magic != sMagic)
+		if (!h || h->version != sizeof(native_handle) || h->numInts != numInts || h->numFds != sNumFds || hnd->magic != sMagic)
 		{
 			return -EINVAL;
 		}
