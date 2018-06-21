@@ -11,7 +11,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/native/include/media/hardware \
 	frameworks/native/include \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video \
-	$(LOCAL_PATH)/../../../../../gralloc/scx30g2
+	$(LOCAL_PATH)/../../../../../gralloc/$(TARGET_BOARD_PLATFORM)
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr

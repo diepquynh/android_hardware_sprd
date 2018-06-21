@@ -100,7 +100,11 @@ static int gralloc_alloc_buffer(alloc_device_t *dev, size_t size, int usage, buf
 #if GRALLOC_ARM_DMA_BUF_MODULE
 	{
 		private_module_t *m = reinterpret_cast<private_module_t *>(dev->common.module);
+#ifdef SCX30G_V2
+		ion_user_handle_t ion_hnd;
+#else
 		struct ion_handle *ion_hnd;
+#endif
 		unsigned char *cpu_ptr;
 		int shared_fd;
 		int ret;

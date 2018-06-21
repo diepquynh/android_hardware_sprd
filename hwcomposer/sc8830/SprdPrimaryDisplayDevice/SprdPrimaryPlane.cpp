@@ -175,7 +175,7 @@ void SprdPrimaryPlane::AttachFramebufferTargetLayer(hwc_layer_1_t *FBTargetLayer
 
     mDisplayFormat = privateH->format;
 
-    MemoryHeapIon::Get_phy_addr_from_ion(privateH->share_fd, (int *)&phy_addr, &size);
+    MemoryHeapIon::Get_phy_addr_from_ion(privateH->share_fd, &phy_addr, &size);
 
     mDisplayFBTargetPhyAddr = (unsigned char *)phy_addr;
 

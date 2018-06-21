@@ -79,6 +79,7 @@ struct fb_dmabuf_export
 	__u32 flags;
 };
 /*#define FBIOGET_DMABUF    _IOR('F', 0x21, struct fb_dmabuf_export)*/
+typedef int ion_user_handle_t;
 #endif /* GRALLOC_ARM_DMA_BUF_MODULE */
 
 
@@ -196,10 +197,18 @@ struct private_handle_t
 	int     fd;
 	int     offset;
 
+#ifdef SCX30G_V2
+	unsigned long phyaddr;
+#else
 	int     phyaddr;
+#endif
 
 #if GRALLOC_ARM_DMA_BUF_MODULE
+#ifndef SCX30G_V2
 	struct ion_handle *ion_hnd;
+#else
+	ion_user_handle_t ion_hnd;
+#endif
 #define GRALLOC_ARM_DMA_BUF_NUM_INTS 1
 #else
 #define GRALLOC_ARM_DMA_BUF_NUM_INTS 0
