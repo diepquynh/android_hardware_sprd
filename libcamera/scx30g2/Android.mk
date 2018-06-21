@@ -30,13 +30,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/common/inc \
 	$(LOCAL_PATH)/jpeg/inc \
 	$(LOCAL_PATH)/tool/mtrace \
-	$(LOCAL_PATH)/vsp/inc
-
-ifeq ($(SOC_SCX30G_V2),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/scx30g2
-else
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../gralloc/sc8830
-endif
+	$(LOCAL_PATH)/vsp/inc \
+	$(LOCAL_PATH)/../../gralloc/sc8830
 
 LOCAL_SRC_FILES := \
 	common/src/cmr_msg.c \
