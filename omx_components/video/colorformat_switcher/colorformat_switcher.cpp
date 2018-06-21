@@ -21,7 +21,6 @@
 
 void setColorFormat(OMX_COLOR_FORMATTYPE &eNativeColorFormat)
 {
-#ifndef UPDATED_MALI
     switch (eNativeColorFormat) {
         case OMX_COLOR_FormatYUV420SemiPlanar:
             eNativeColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YCbCr_420_SP;
@@ -31,5 +30,4 @@ void setColorFormat(OMX_COLOR_FORMATTYPE &eNativeColorFormat)
             eNativeColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YCbCr_420_P;
             break;
     }
-#endif
 }
