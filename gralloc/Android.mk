@@ -21,13 +21,6 @@ supported_boards := \
 	sc8830 \
 	scx15 \
 
-ifeq ($(SOC_SCX30G_V2),true)
-
-ifeq ($(TARGET_UPDATED_MALI),true)
-include $(call all-named-subdir-makefiles,scx30g2)
-endif
-
-else ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
+ifneq (,$(filter $(supported_boards),$(TARGET_BOARD_PLATFORM)))
 include $(call all-named-subdir-makefiles,$(TARGET_BOARD_PLATFORM))
-
 endif
