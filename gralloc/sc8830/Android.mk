@@ -70,6 +70,10 @@ LOCAL_CFLAGS += -DSPRD_DITHER_ENABLE
 LOCAL_SHARED_LIBRARIES += libdither
 endif
 
+ifeq ($(SOC_SCX30G_V2),true)
+LOCAL_CFLAGS += -DSCX30G_V2
+endif
+
 LOCAL_SRC_FILES := \
 	gralloc_module.cpp \
 	alloc_device.cpp \
