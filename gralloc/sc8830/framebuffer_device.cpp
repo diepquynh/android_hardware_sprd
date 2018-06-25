@@ -34,14 +34,6 @@
 /* @} */
 #include <GLES/gl.h>
 
-#ifdef SPRD_MONITOR_FBPOST
-#include <signal.h>
-#endif
-
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-#include "gralloc_vsync_report.h"
-#endif
-
 #include "alloc_device.h"
 #include "gralloc_priv.h"
 #include "gralloc_helper.h"
@@ -51,12 +43,7 @@
 #endif
 
 // numbers of buffers for page flipping
-//#define DEBUG_FB_POST
 #define DEBUG_FB_POST_1SECOND
-
-#ifdef DUMP_FB
-extern void dump_fb(void* addr, struct fb_var_screeninfo * info , int format);
-#endif
 
 static int swapInterval = 1;
 
@@ -72,64 +59,6 @@ static int64_t systemTime()
 	clock_gettime(CLOCK_MONOTONIC, &t);
 	return t.tv_sec*1000000000LL + t.tv_nsec;
 }
-
-#ifdef SPRD_MONITOR_FBPOST
-static int TIMEOUT_VALUE = 100000; //us
-static struct itimerval current_value;
-static struct itimerval orignal_value;
-static bool signal_flag;
-static int64_t post_fb_before = 0;
-static int64_t post_fb_after = 0;
-
-static void post_fb_timeout_func(int signo)
-{
-	MALI_IGNORE(signo);
-	if (signal_flag == false)
-	{
-		ALOGW("[Gralloc]: post Framebuffer timeout > %d ms", TIMEOUT_VALUE/1000);
-	}
-}
-
-static void insert_timer()
-{
-	int ret = -1;
-	current_value.it_value.tv_sec = 0;
-	current_value.it_value.tv_usec = TIMEOUT_VALUE;
-	orignal_value.it_value.tv_sec = 0;
-	orignal_value.it_value.tv_usec = 0;
-
-	ret = setitimer(ITIMER_REAL, &current_value, &orignal_value);
-	if (ret != 0)
-	{
-		ALOGE("[Gralloc]: insert_timer failed");
-		return;
-	}
-
-	signal(SIGALRM, post_fb_timeout_func);
-
-	signal_flag = false;
-
-	post_fb_before = systemTime();
-}
-
-static void signal_timer()
-{
-	static int64_t diff = 0;
-	signal_flag = true;
-
-	post_fb_after = systemTime();
-
-	diff = post_fb_after - post_fb_before;
-
-	/*
-	 *  If FBPost take more than 300ms, need print the Log info.
-	 * */
-	if (diff > 300000000LL)
-	{
-		ALOGW("[Gralloc] FBPost actually take %lfms", (((double)diff)/((double)1000000)));
-	}
-}
-#endif
 
 #ifdef SPRD_DITHER_ENABLE
 
@@ -349,28 +278,21 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 	private_module_t* m = reinterpret_cast<private_module_t*>(dev->common.module);
 
 #ifdef DEBUG_FB_POST_1SECOND
-	{
-		static int64_t now = 0, last = 0;
-		static int flip_count = 0;
+	/* reset */
+	now = 0;
+	last = 0;
+	flip_count = 0;
 
-		flip_count++;
-		now = systemTime();
-		if ((now - last) >= 1000000000LL)
-		{
-			ALOGD("%s fps = %f\n", __FUNCTION__, flip_count*1000000000.0f/(now-last));
-			flip_count = 0;
-			last = now;
-		}
+	flip_count++;
+	now = systemTime();
+	if ((now - last) >= 1000000000LL)
+	{
+		ALOGD("%s fps = %f\n", __FUNCTION__, flip_count*1000000000.0f/(now-last));
+		flip_count = 0;
+		last = now;
 	}
 #endif
 
-#ifdef DEBUG_FB_POST
-	AINF( "%s in line=%d\n", __FUNCTION__, __LINE__);
-#endif
-
-#ifdef SPRD_MONITOR_FBPOST
-	insert_timer();
-#endif
 	if (m->currentBuffer)
 	{
 		m->base.unlock(&m->base, m->currentBuffer);
@@ -386,12 +308,6 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 		int interrupt;
 		m->info.activate = FB_ACTIVATE_VBL;
 		m->info.yoffset = offset / m->finfo.line_length;
-
-#ifdef DUMP_FB
-		{
-			dump_fb((void*)(hnd->base),&m->info,dev->format);
-		}
-#endif
 
 #ifdef SPRD_DITHER_ENABLE
 		struct dither_info *dither = (struct dither_info *)dev->reserved[6];
@@ -445,23 +361,14 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 			}
 
 			// wait for VSYNC
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-			gralloc_mali_vsync_report(MALI_VSYNC_EVENT_BEGIN_WAIT);
-#endif
 			int crtc = 0;
 
 			if (ioctl(m->framebuffer->fd, FBIO_WAITFORVSYNC, &crtc) < 0)
 			{
 				AERR("FBIO_WAITFORVSYNC failed for fd: %d", m->framebuffer->fd);
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-				gralloc_mali_vsync_report(MALI_VSYNC_EVENT_END_WAIT);
-#endif
 				return 0;
 			}
 
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-			gralloc_mali_vsync_report(MALI_VSYNC_EVENT_END_WAIT);
-#endif
 			// disable VSYNC
 			interrupt = 0;
 
@@ -474,23 +381,12 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 
 #else
 		/*Standard Android way*/
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-		gralloc_mali_vsync_report(MALI_VSYNC_EVENT_BEGIN_WAIT);
-#endif
-
 		if (ioctl(m->framebuffer->fd, FBIOPUT_VSCREENINFO, &m->info) == -1)
 		{
 			AERR("FBIOPUT_VSCREENINFO failed for fd: %d", m->framebuffer->fd);
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-			gralloc_mali_vsync_report(MALI_VSYNC_EVENT_END_WAIT);
-#endif
 			m->base.unlock(&m->base, buffer);
 			return -errno;
 		}
-
-#ifdef MALI_VSYNC_EVENT_REPORT_ENABLE
-		gralloc_mali_vsync_report(MALI_VSYNC_EVENT_END_WAIT);
-#endif
 #endif
 
 		m->currentBuffer = buffer;
@@ -511,14 +407,6 @@ static int fb_post(struct framebuffer_device_t* dev, buffer_handle_t buffer)
 		m->base.unlock(&m->base, buffer);
 		m->base.unlock(&m->base, m->framebuffer);
 	}
-
-#ifdef DEBUG_FB_POST
-	AINF( "%s out line=%d\n", __FUNCTION__, __LINE__);
-#endif
-
-#ifdef SPRD_MONITOR_FBPOST
-	signal_timer();
-#endif
 
 	return 0;
 }
@@ -813,18 +701,6 @@ int init_frame_buffer_locked(struct private_module_t *module)
 
 	init_hwui_cache_param(fbSize / module->numBuffers);
 
-#if GRALLOC_ARM_UMP_MODULE
-#ifdef IOCTL_GET_FB_UMP_SECURE_ID
-	ioctl(fd, IOCTL_GET_FB_UMP_SECURE_ID, &module->framebuffer->ump_id);
-#endif
-
-	if ((int)UMP_INVALID_SECURE_ID != module->framebuffer->ump_id)
-	{
-		AINF("framebuffer accessed with UMP secure ID %i\n", module->framebuffer->ump_id);
-	}
-
-#endif
-
 	return 0;
 }
 
@@ -848,16 +724,6 @@ static int fb_close(struct hw_device_t *device)
 		AINF("dither close ID %i\n", 1);
 	}
 #endif
-
-	if (dev)
-	{
-#if GRALLOC_ARM_UMP_MODULE
-		ump_close();
-#endif
-#if 0
-		free(dev);
-#endif
-	}
 
 	return 0;
 }

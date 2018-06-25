@@ -73,14 +73,6 @@ ifeq ($(TARGET_USES_GRALLOC1), true)
 LOCAL_CFLAGS += -DADVERTISE_GRALLOC1
 endif
 
-ifeq ($(strip $(USE_UI_OVERLAY)),true)
-LOCAL_CFLAGS += -DUSE_UI_OVERLAY
-endif
-
-ifneq ($(strip $(TARGET_BUILD_VARIANT)),user)
-LOCAL_CFLAGS += -DDUMP_FB
-endif
-
 ifeq ($(USE_SPRD_DITHER),true)
 LOCAL_CFLAGS += -DSPRD_DITHER_ENABLE
 LOCAL_SHARED_LIBRARIES += libdither
@@ -93,10 +85,8 @@ endif
 LOCAL_SRC_FILES := \
 	gralloc_module.cpp \
 	alloc_device.cpp \
-	framebuffer_device.cpp \
-	dump_bmp.cpp \
+	framebuffer_device.cpp
 
-#LOCAL_CFLAGS+= -DMALI_VSYNC_EVENT_REPORT_ENABLE
 include $(BUILD_SHARED_LIBRARY)
 
 endif
