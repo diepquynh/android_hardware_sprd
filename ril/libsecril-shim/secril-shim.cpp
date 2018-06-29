@@ -289,17 +289,17 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
                 /* Our RIL doesn't support this, so we implement this ourself */
-                case RIL_REQUEST_GET_CELL_INFO_LIST:
+		case RIL_REQUEST_GET_CELL_INFO_LIST:
 			OnRequestGetCellInfoList(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
-                /* Our RIL doesn't support this, so we implement this ourself */
-                case RIL_REQUEST_VOICE_RADIO_TECH:
+			/* Our RIL doesn't support this, so we implement this ourself */
+		case RIL_REQUEST_VOICE_RADIO_TECH:
 			onRequestVoiceRadioTech(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
-                /* Our RIL doesn't support this, so we implement this ourself */
-                case RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:
+		/* Our RIL doesn't support this, so we implement this ourself */
+		case RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:
 			onRequestCdmaGetSubscriptionSource(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
@@ -522,14 +522,20 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 	pRI = (RequestInfo *)t;
 
 	/* If pRI is null, this entire function is useless. */
-	if (pRI == NULL)
+	if (pRI == NULL) {
+		RLOGE("pRI is NULL!");
 		goto null_token_exit;
+	}
 
 	/* If pCI is null, this entire function is useless. */
-	if (pRI->pCI == NULL)
+	if (pRI->pCI == NULL) {
+		RLOGE("pRI->pCI is NULL");
 		goto null_token_exit;
+	}
 
 	request = pRI->pCI->requestNumber;
+	RLOGD("Request: %d", request);
+
 	switch (request) {
 		case RIL_REQUEST_GET_IMEI:
 			RLOGD("%s: got request %s to support %s and shimming response!\n",
@@ -541,16 +547,16 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
 			onRequestCompleteGetImeiSv(t, e, response, responselen);
 			return;
-                case RIL_REQUEST_VOICE_REGISTRATION_STATE:
-                        /* libsecril expects responselen of 60 (bytes) */
-                        /* numstrings (15 * sizeof(char *) = 60) */
+		case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+			/* libsecril expects responselen of 60 (bytes) */
+			/* numstrings (15 * sizeof(char *) = 60) */
 			if (response != NULL && responselen < VOICE_REGSTATE_SIZE) {
 				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
 				onRequestCompleteVoiceRegistrationState(t, e, response, responselen);
 				return;
 			}
 			break;
-                case RIL_REQUEST_DATA_REGISTRATION_STATE:
+		case RIL_REQUEST_DATA_REGISTRATION_STATE:
 			RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
 			onRequestCompleteDataRegistrationState(t, e, response, responselen);
 			return;
@@ -685,6 +691,7 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 	patchMem(origRil);
 
 	//remove "-c" command line as Samsung's RIL does not understand it - it just barfs instead
+	RLOGD("Ditching -c command...");
 	for (int i = 0; i < argc; i++) {
 		if (!strcmp(argv[i], "-c") && i != argc -1) {	//found it
 			memcpy(argv + i, argv + i + 2, sizeof(char*[argc - i - 2]));
@@ -693,6 +700,7 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 	}
 
 	origRilFunctions = origRilInit(&shimmedEnv, argc, argv);
+	RLOGD("Assigning original RIL funcs...");
 	if (CC_UNLIKELY(!origRilFunctions)) {
 		RLOGE("%s: the original RIL_Init derped.\n", __FUNCTION__);
 		goto fail_after_dlopen;
@@ -703,6 +711,7 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 	shimmedFunctions.onRequest = onRequestShim;
 	shimmedFunctions.onStateRequest = onStateRequestShim;
 
+	RLOGD("RIL_Init completed");
 	return &shimmedFunctions;
 
 fail_after_dlopen:
