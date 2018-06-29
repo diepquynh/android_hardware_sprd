@@ -144,6 +144,7 @@ typedef struct _RilClientPrv {
     RilOnError      err_cb;         // error callback
     void            *err_cb_data;   // error callback data
     uint8_t b_del_handler;
+    int             data;          // Some random stuffs by Samsung used by at_distributor?
 } RilClientPrv;
 
 
@@ -171,6 +172,50 @@ static bool isValidTwoMicCtrl(TwoMicSolDevice device, TwoMicSolReport report);
 static char ConvertSoundType(SoundType type);
 static char ConvertAudioPath(AudioPath path);
 
+/**
+ * @fn  int GetClientData(HRilClient client)
+ *
+ * @params client: Client handle.
+ *
+ * @return client data (data or error)
+ */
+extern "C"
+int GetClientData(HRilClient client) {
+	RilClientPrv *client_prv;
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+	client_prv = (RilClientPrv *)client;
+	
+	return client_prv->data;
+}
+
+/**
+ * @fn  int SetClientData(HRilClient client, int unknown)
+ *
+ * @params client: Client handle.
+ *         data:   What is this actually??
+ *
+ * @return 0 or error
+ */
+extern "C"
+int SetClientData(HRilClient client, int data) {
+    RilClientPrv *client_prv;
+
+    if (client == NULL || client->prv == NULL) {
+        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
+        return RIL_CLIENT_ERR_INVAL;
+    }
+
+    client_prv = (RilClientPrv *)(client->prv);
+
+    client_prv->data = data;
+
+    return RIL_CLIENT_ERR_SUCCESS;
+}
 
 /**
  * @fn  int RegisterUnsolicitedHandler(HRilClient client, uint32_t id, RilOnUnsolicited handler)

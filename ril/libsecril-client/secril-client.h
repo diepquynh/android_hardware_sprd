@@ -52,6 +52,13 @@ typedef int (*RilOnError)(void *data, int error);
 //---------------------------------------------------------------------------
 
 /**
+ * Get/set client data
+ */
+int GetClientData(HRilClient client);
+
+int SetClientData(HRilClient client, int unknown);
+
+/**
  * Open RILD multi-client.
  * Return is client handle, NULL on error.
  */
