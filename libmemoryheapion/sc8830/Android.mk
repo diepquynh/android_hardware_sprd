@@ -24,7 +24,8 @@ LOCAL_MODULE := libmemoryheapion
 LOCAL_PROPRIETARY_MODULE := true
 
 LOCAL_SRC_FILES := \
-	MemoryHeapIon.cpp
+	MemoryHeapIon.cpp \
+	MemoryHeapIon_custom.cpp
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
@@ -42,6 +43,10 @@ LOCAL_SHARED_LIBRARIES := \
 
 ifeq ($(TARGET_UPDATED_MALI),true)
 LOCAL_CFLAGS += -DUPDATED_MALI
+endif
+
+ifeq ($(SOC_SCX30G_V2),true)
+LOCAL_CFLAGS += -DSCX30G_V2
 endif
 
 LOCAL_MODULE_TAGS := optional
