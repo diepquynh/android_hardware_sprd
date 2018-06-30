@@ -36,7 +36,12 @@
 
 namespace android {
 
-MemoryHeapIon::MemoryHeapIon() : mIonDeviceFd(-1), mIonHandle(-1)
+MemoryHeapIon::MemoryHeapIon() : mIonDeviceFd(-1),
+#ifdef SCX30G_V2
+	mIonHandle(-1)
+#else
+	mIonHandle(NULL)
+#endif
 {
 }
 
@@ -74,7 +79,11 @@ status_t MemoryHeapIon::mapIonFd(int fd, size_t size, unsigned long memory_type,
     data.len = size;
     data.align = getpagesize();
 #if (ION_DRIVER_VERSION == 1)
+#ifdef SCX30G_V2
     data.heap_id_mask = memory_type;
+#else
+    data.heap_mask = memory_type;
+#endif
     //if cached buffer , force set the lowest two bits 11
     if((memory_type&(1<<31)))
     {
@@ -275,7 +284,9 @@ int MemoryHeapIon::get_gsp_iova(unsigned long *mmu_addr, size_t *size){
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_GSP;
+#endif
         mmu_data.fd_buffer = mFD;
         custom_data.cmd = ION_SPRD_CUSTOM_GSP_MAP;
         custom_data.arg = (unsigned long)&mmu_data;
@@ -300,7 +311,9 @@ int MemoryHeapIon::free_gsp_iova(unsigned long mmu_addr, size_t size){
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_GSP;
+#endif
         mmu_data.fd_buffer = mFD;
         mmu_data.iova_addr = mmu_addr;
         mmu_data.iova_size = size;
@@ -325,7 +338,9 @@ int MemoryHeapIon::get_mm_iova(unsigned long *mmu_addr, size_t *size){
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_MM;
+#endif
         mmu_data.fd_buffer = mFD;
         custom_data.cmd = ION_SPRD_CUSTOM_MM_MAP;
         custom_data.arg = (unsigned long)&mmu_data;
@@ -350,7 +365,9 @@ int MemoryHeapIon::free_mm_iova(unsigned long mmu_addr, size_t size){
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_MM;
+#endif
         mmu_data.fd_buffer = mFD;
         mmu_data.iova_addr = mmu_addr;
         mmu_data.iova_size = size;
@@ -375,7 +392,9 @@ int MemoryHeapIon::Get_gsp_iova(int buffer_fd,unsigned long *mmu_addr, size_t *s
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_GSP;
+#endif
         mmu_data.fd_buffer = buffer_fd;
         custom_data.cmd = ION_SPRD_CUSTOM_GSP_MAP;
         custom_data.arg = (unsigned long)&mmu_data;
@@ -401,7 +420,9 @@ int MemoryHeapIon::Get_mm_iova(int buffer_fd,unsigned long *mmu_addr, size_t *si
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_MM;
+#endif
         mmu_data.fd_buffer =  buffer_fd;
         custom_data.cmd = ION_SPRD_CUSTOM_MM_MAP;
         custom_data.arg = (unsigned long)&mmu_data;
@@ -428,7 +449,9 @@ int MemoryHeapIon::Free_gsp_iova(int buffer_fd,unsigned long mmu_addr, size_t si
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_GSP;
+#endif
         mmu_data.fd_buffer = buffer_fd;
         mmu_data.iova_addr = mmu_addr;
         mmu_data.iova_size = size;
@@ -454,7 +477,9 @@ int MemoryHeapIon::Free_mm_iova(int buffer_fd,unsigned long mmu_addr, size_t siz
         struct ion_mmu_data mmu_data;
         struct ion_custom_data  custom_data;
 
+#ifdef SCX30G_V2
         mmu_data.master_id = ION_MM;
+#endif
         mmu_data.fd_buffer = buffer_fd;
         mmu_data.iova_addr = mmu_addr;
         mmu_data.iova_size = size;
@@ -487,118 +512,6 @@ bool MemoryHeapIon::Mm_iommu_is_enabled(void)
 		return false;
 	}
 	return true;
-}
-
-int MemoryHeapIon::get_iova(int master_id, unsigned long *mmu_addr, size_t *size) {
-    if(mIonDeviceFd<0){
-        ALOGE("%s:open dev ion error!",__func__);
-        return -1;
-    }else{
-        int ret;
-        struct ion_mmu_data mmu_data;
-        struct ion_custom_data  custom_data;
-
-        mmu_data.master_id = master_id;
-        mmu_data.fd_buffer = mFD;
-        custom_data.cmd = ION_SPRD_CUSTOM_MAP;
-        custom_data.arg = (unsigned long)&mmu_data;
-        ret = ioctl(mIonDeviceFd,ION_IOC_CUSTOM,&custom_data);
-        *mmu_addr = mmu_data.iova_addr;
-        *size = mmu_data.iova_size;
-        if(ret)
-        {
-            ALOGE("%s: return error: %d", __func__, ret);
-            return -2;
-        }
-     }
-
-    return 0;
-}
-
-int MemoryHeapIon::free_iova(int master_id, unsigned long mmu_addr, size_t size) {
-    if(mIonDeviceFd<0){
-        ALOGE("%s:open dev ion error!",__func__);
-        return -1;
-    }else{
-        int ret;
-        struct ion_mmu_data mmu_data;
-        struct ion_custom_data  custom_data;
-
-        mmu_data.master_id = master_id;
-        mmu_data.fd_buffer = mFD;
-        mmu_data.iova_addr = mmu_addr;
-        mmu_data.iova_size = size;
-        custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
-        custom_data.arg = (unsigned long)&mmu_data;
-        ret = ioctl(mIonDeviceFd,ION_IOC_CUSTOM,&custom_data);
-        if(ret)
-        {
-            ALOGE("%s: return error: %d", __func__, ret);
-            return -2;
-        }
-     }
-
-    return 0;
-}
-
-int MemoryHeapIon::Get_iova(int master_id, int buffer_fd,
-        unsigned long *mmu_addr, size_t *size) {
-    int fd = open("/dev/ion", O_SYNC);
-
-    if(fd<0){
-        ALOGE("%s:open dev ion error!",__func__);
-        return -1;
-    }else{
-        int ret;
-        struct ion_mmu_data mmu_data;
-        struct ion_custom_data  custom_data;
-
-        mmu_data.master_id = master_id;
-        mmu_data.fd_buffer =  buffer_fd;
-        custom_data.cmd = ION_SPRD_CUSTOM_MAP;
-        custom_data.arg = (unsigned long)&mmu_data;
-        ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
-        *mmu_addr = mmu_data.iova_addr;
-        *size = mmu_data.iova_size;
-        close(fd);
-        if(ret)
-        {
-            ALOGE("%s: return error: %d", __func__, ret);
-            return -2;
-        }
-    }
-
-    return 0;
-}
-
-int MemoryHeapIon::Free_iova(int master_id, int buffer_fd,
-        unsigned long mmu_addr, size_t size) {
-    int fd = open("/dev/ion", O_SYNC);
-
-    if(fd<0){
-        ALOGE("%s:open dev ion error!",__func__);
-        return -1;
-    }else{
-        int ret;
-        struct ion_mmu_data mmu_data;
-        struct ion_custom_data  custom_data;
-
-        mmu_data.master_id = master_id;
-        mmu_data.fd_buffer = buffer_fd;
-        mmu_data.iova_addr = mmu_addr;
-        mmu_data.iova_size = size;
-        custom_data.cmd = ION_SPRD_CUSTOM_UNMAP;
-        custom_data.arg = (unsigned long)&mmu_data;
-        ret = ioctl(fd,ION_IOC_CUSTOM,&custom_data);
-        close(fd);
-        if(ret)
-        {
-            ALOGE("%s: return error: %d", __func__, ret);
-            return -2;
-        }
-    }
-
-    return 0;
 }
 
 #ifdef UPDATED_MALI
