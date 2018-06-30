@@ -1639,15 +1639,6 @@ void SPRDAVCEncoder::onQueueFilled(OMX_U32 portIndex) {
                     height = (uint32_t)(*((uint32_t *) mataData++));
                     x = (uint32_t)(*((uint32_t *) mataData++));
                     y = (uint32_t)(*((uint32_t *) mataData));
-                } else if (type == kMetadataBufferTypeNativeHandleSource) {
-                    native_handle_t *nh = (native_handle_t*)(*(uint32_t *)mataData);
-
-                    py_phy = (uint8_t*)nh->data[1];
-                    py = (uint8_t*)nh->data[2];
-                    width = (uint32_t)nh->data[3];
-                    height = (uint32_t)nh->data[4];
-                    x = (uint32_t)nh->data[5];
-                    y = (uint32_t)nh->data[6];
                 } else if (type == kMetadataBufferTypeGrallocSource) {
                     buffer_handle_t buf = *((buffer_handle_t *)(inputData + 4));
                     struct private_handle_t *private_h = (struct private_handle_t*)buf;
