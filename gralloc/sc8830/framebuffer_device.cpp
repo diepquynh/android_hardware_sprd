@@ -43,7 +43,7 @@
 #endif
 
 // numbers of buffers for page flipping
-#define DEBUG_FB_POST_1SECOND
+//#define DEBUG_FB_POST_1SECOND
 
 static int swapInterval = 1;
 
