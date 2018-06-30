@@ -39,10 +39,6 @@
 
 namespace android {
 
-#define MAX_INSTANCES 16
-
-static int instances = 0;
-
 typedef enum {
     H263_MODE = 0,MPEG4_MODE,
     FLV_MODE,
@@ -94,7 +90,7 @@ void dump_bs( uint8 * pBuffer,uint32 aInBufSize) {
 }
 
 void dump_yuv( uint8 * pBuffer,uint32 aInBufSize) {
-    FILE *fp = fopen("/data/dump/video_out.yuv","ab");
+    FILE *fp = fopen("/data/video_omx.yuv","ab");
     fwrite(pBuffer,1,aInBufSize,fp);
     fclose(fp);
 }
@@ -108,7 +104,6 @@ SPRDMPEG4Decoder::SPRDMPEG4Decoder(
       mMode(MODE_MPEG4),
       mHandle(new tagMP4Handle),
       mInputBufferCount(0),
-      mSetFreqCount(0),
       mWidth(352),
       mHeight(288),
       mCropLeft(0),
@@ -117,33 +112,28 @@ SPRDMPEG4Decoder::SPRDMPEG4Decoder(
       mCropBottom(mHeight - 1),
       mMaxWidth(352),
       mMaxHeight(288),
-      mEOSStatus(INPUT_DATA_AVAILABLE),
-      mOutputPortSettingsChange(NONE),
-      mHeadersDecoded(false),
+      mSetFreqCount(0),
       mSignalledError(false),
-      mDecoderSwFlag(false),
-      mChangeToSwDec(false),
-      mAllocateBuffers(false),
-      mNeedIVOP(true),
       mInitialized(false),
       mFramesConfigured(false),
+      mNumSamplesOutput(0),
+      mOutputPortSettingsChange(NONE),
       mIOMMUEnabled(false),
-      mIOMMUID(-1),
-      mStopDecode(false),
-      mThumbnailMode(OMX_FALSE),
       mCodecInterBuffer(NULL),
       mCodecExtraBuffer(NULL),
-      mPmem_stream(NULL),
-      mPbuf_stream_v(NULL),
-      mPbuf_stream_p(0),
-      mPbuf_stream_size(0),
-      mPmem_extra(NULL),
       mPbuf_extra_v(NULL),
       mPbuf_extra_p(0),
       mPbuf_extra_size(0),
-      mPVolHeader(NULL),
-      mPVolHeaderSize(0),
+      mPbuf_stream_v(NULL),
+      mPbuf_stream_p(0),
+      mPbuf_stream_size(0),
       mLibHandle(NULL),
+      mDecoderSwFlag(true),
+      mChangeToHwDec(false),
+      mEOSStatus(INPUT_DATA_AVAILABLE),
+      mNeedIVOP(true),
+      mHeadersDecoded(false),
+      mAllocateBuffers(false),
       mMP4DecSetCurRecPic(NULL),
       mMP4DecInit(NULL),
       mMP4DecVolHeader(NULL),
@@ -152,20 +142,9 @@ SPRDMPEG4Decoder::SPRDMPEG4Decoder(
       mMP4DecRelease(NULL),
       mMp4GetVideoDimensions(NULL),
       mMp4GetBufferDimensions(NULL),
-      mMP4DecReleaseRefBuffers(NULL),
-      mMP4DecSetReferenceYUV(NULL),
-      mMP4DecGetLastDspFrm(NULL),
-      mMP4GetCodecCapability(NULL) {
+      mMP4DecGetLastDspFrm(NULL) {
 
-    ALOGI("Construct SPRDMPEG4Decoder, this: 0x%p", (void *)this);
-
-    mInitCheck = OMX_ErrorNone;
-
-    instances++;
-    if (instances > MAX_INSTANCES) {
-        ALOGE("instances(%d) are too much, return OMX_ErrorInsufficientResources", instances);
-        mInitCheck = OMX_ErrorInsufficientResources;
-    }
+    ALOGI("Construct SPRDMPEG4Decoder, this: %0x", (void *)this);
 
     if (!strcmp(name, "OMX.sprd.h263.decoder")) {
         mMode = MODE_H263;
@@ -174,45 +153,26 @@ SPRDMPEG4Decoder::SPRDMPEG4Decoder(
     }
 
     bool ret = false;
-    ret = openDecoder("libomx_m4vh263dec_hw_sprd.so");
+    ret = openDecoder("libomx_m4vh263dec_sw_sprd.so");
     if(ret == false) {
-        mDecoderSwFlag = true;
-        ret = openDecoder("libomx_m4vh263dec_sw_sprd.so");
+        mDecoderSwFlag = false;
+        ret = openDecoder("libomx_m4vh263dec_hw_sprd.so");
     }
 
-    if (!ret){
-        mInitCheck = OMX_ErrorInsufficientResources;
-    }
+    CHECK_EQ(ret, true);
 
-    if (MemoryHeapIon::IOMMU_is_enabled(ION_MM)) {
-        mIOMMUEnabled = true;
-        mIOMMUID = ION_MM;
-    } else if (MemoryHeapIon::IOMMU_is_enabled(ION_VSP)) {
-        mIOMMUEnabled = true;
-        mIOMMUID = ION_VSP;
-    }
-    ALOGI("%s, is IOMMU enabled: %d, ID: %d", __FUNCTION__, mIOMMUEnabled, mIOMMUID);
+    mIOMMUEnabled = MemoryHeapIon::Mm_iommu_is_enabled();
+    ALOGI("%s, is IOMMU enabled: %d", __FUNCTION__, mIOMMUEnabled);
 
     if(mDecoderSwFlag) {
-        if (OK != initDecoder()){
-            mInitCheck = OMX_ErrorInsufficientResources;
-        }
+        CHECK_EQ(initDecoder(), (status_t)OK);
     } else {
         if(initDecoder() != OK) {
             mDecoderSwFlag = true;
             ret = openDecoder("libomx_m4vh263dec_sw_sprd.so");
-            if (!ret){
-                mInitCheck = OMX_ErrorInsufficientResources;
-            }
-            if (OK != initDecoder()){
-                mInitCheck = OMX_ErrorInsufficientResources;
-            }
+            CHECK_EQ(ret, true);
+            CHECK_EQ(initDecoder(), (status_t)OK);
         }
-    }
-
-    mPVolHeader = (uint8_t *)malloc(MPEG4_VOL_HEADER_SIZE);
-    if (NULL == mPVolHeader){
-        mInitCheck = OMX_ErrorInsufficientResources;
     }
 
     initPorts();
@@ -221,7 +181,7 @@ SPRDMPEG4Decoder::SPRDMPEG4Decoder(
 }
 
 SPRDMPEG4Decoder::~SPRDMPEG4Decoder() {
-    ALOGI("Destruct SPRDMPEG4Decoder, this: %p, instances: %d", (void *)this, instances);
+    ALOGI("Destruct SPRDMPEG4Decoder, this: %0x", (void *)this);
 
     releaseDecoder();
 
@@ -231,22 +191,9 @@ SPRDMPEG4Decoder::~SPRDMPEG4Decoder() {
         mSetFreqCount--;
     }
 
-    if (mPVolHeader != NULL) {
-        free(mPVolHeader);
-        mPVolHeader = NULL;
-    }
-
     delete mHandle;
     mHandle = NULL;
-
-    instances--;
 }
-
-OMX_ERRORTYPE SPRDMPEG4Decoder::initCheck() const{
-    ALOGI("%s, mInitCheck: 0x%x", __FUNCTION__, mInitCheck);
-    return mInitCheck;
-}
-
 
 void SPRDMPEG4Decoder::initPorts() {
     OMX_PARAM_PORTDEFINITIONTYPE def;
@@ -254,8 +201,8 @@ void SPRDMPEG4Decoder::initPorts() {
 
     def.nPortIndex = 0;
     def.eDir = OMX_DirInput;
-    def.nBufferCountMin = kNumInputBuffers;
-    def.nBufferCountActual = def.nBufferCountMin;
+    def.nBufferCountMin = 1;
+    def.nBufferCountActual = kNumInputBuffers;
     def.nBufferSize = 160*1024; ///8192;
     def.bEnabled = OMX_TRUE;
     def.bPopulated = OMX_FALSE;
@@ -287,8 +234,8 @@ void SPRDMPEG4Decoder::initPorts() {
 
     def.nPortIndex = 1;
     def.eDir = OMX_DirOutput;
-    def.nBufferCountMin = kNumOutputBuffers;
-    def.nBufferCountActual = def.nBufferCountMin;
+    def.nBufferCountMin = 2;
+    def.nBufferCountActual = kNumOutputBuffers;
     def.bEnabled = OMX_TRUE;
     def.bPopulated = OMX_FALSE;
     def.eDomain = OMX_PortDomainVideo;
@@ -334,9 +281,9 @@ void SPRDMPEG4Decoder::set_ddr_freq(const char* freq_in_khz)
 void SPRDMPEG4Decoder::change_ddr_freq()
 {
     if(!mDecoderSwFlag)
-    {
+	{
         uint32_t frame_size = mWidth * mHeight;
-        const char* ddr_freq;
+        char* ddr_freq;
 
         if(frame_size > 1280*720)
         {
@@ -374,49 +321,44 @@ status_t SPRDMPEG4Decoder::initDecoder() {
     mHandle->VSP_bindCb = BindFrameWrapper;
     mHandle->VSP_unbindCb = UnbindFrameWrapper;
 
-    unsigned long phy_addr = 0;
-    size_t size = 0, size_stream;
+    int32 phy_addr = 0;
+    int32 size = 0, size_stream;
 
     size_stream = ONEFRAME_BITSTREAM_BFR_SIZE;
-
-    if (mDecoderSwFlag) {
-        mPbuf_stream_v = (uint8_t *)malloc(size_stream * sizeof(unsigned char));
-        mPbuf_stream_p = 0L;
-        mPbuf_stream_size = size_stream;
+    if (mIOMMUEnabled) {
+        mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
     } else {
+        mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+    }
+    if (mPmem_stream->getHeapID() < 0) {
+        ALOGE("Failed to alloc bitstream pmem buffer, getHeapID failed");
+        return OMX_ErrorInsufficientResources;
+    } else
+    {
+        int32 ret;
         if (mIOMMUEnabled) {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            ret = mPmem_stream->get_mm_iova(&phy_addr, &size);
         } else {
-            mPmem_stream = new MemoryHeapIon(SPRD_ION_DEV, size_stream, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            ret = mPmem_stream->get_phy_addr_from_ion(&phy_addr, &size);
         }
-        if (mPmem_stream->getHeapID() < 0) {
-            ALOGE("Failed to alloc bitstream pmem buffer, getHeapID failed");
+        if (ret < 0) {
+            ALOGE("Failed to alloc bitstream pmem buffer, get phy addr failed");
             return OMX_ErrorInsufficientResources;
         } else {
-            int ret;
-            if (mIOMMUEnabled) {
-                ret = mPmem_stream->get_iova(mIOMMUID, &phy_addr, &size);
-            } else {
-                ret = mPmem_stream->get_phy_addr_from_ion(&phy_addr, &size);
-            }
-            if (ret < 0) {
-                ALOGE("Failed to alloc bitstream pmem buffer, get phy addr failed");
-                return OMX_ErrorInsufficientResources;
-            } else {
-                mPbuf_stream_v = (uint8_t *)mPmem_stream->getBase();
-                mPbuf_stream_p = phy_addr;
-                mPbuf_stream_size = size;
-                ALOGI("pmem 0x%lx - 0x%p - %zd", mPbuf_stream_p, mPbuf_stream_v, mPbuf_stream_size);
-            }
+            mPbuf_stream_v = (uint8 *)mPmem_stream->base();
+            mPbuf_stream_p = phy_addr;
+            mPbuf_stream_size = size;
+            ALOGI("pmem %p - %p - %d", mPbuf_stream_p, mPbuf_stream_v, mPbuf_stream_size);
         }
     }
-    uint32_t size_inter = MP4DEC_INTERNAL_BUFFER_SIZE;
-    mCodecInterBuffer = (uint8_t *)malloc(size_inter);
+
+    int32 size_inter = MP4DEC_INTERNAL_BUFFER_SIZE;
+    mCodecInterBuffer = (uint8 *)malloc(size_inter);
     CHECK(mCodecInterBuffer != NULL);
 
     MMCodecBuffer codec_buf;
 
-    codec_buf.common_buffer_ptr = mCodecInterBuffer;
+    codec_buf.common_buffer_ptr = (uint8 *)mCodecInterBuffer;
     codec_buf.common_buffer_ptr_phy= 0;
     codec_buf.size = size_inter;
     codec_buf.int_buffer_ptr = NULL;
@@ -427,6 +369,7 @@ status_t SPRDMPEG4Decoder::initDecoder() {
         return OMX_ErrorUndefined;
     }
 
+    int32 codec_capabilty;
     if ((*mMP4GetCodecCapability)(mHandle, &mMaxWidth, &mMaxHeight) != MMDEC_OK) {
         ALOGE("Failed to mMP4GetCodecCapability");
     }
@@ -434,8 +377,7 @@ status_t SPRDMPEG4Decoder::initDecoder() {
 }
 
 void SPRDMPEG4Decoder::releaseDecoder() {
-    if( mMP4DecRelease!=NULL )
-        (*mMP4DecRelease)(mHandle);
+    (*mMP4DecRelease)(mHandle);
 
     if (mInitialized) {
         mInitialized = false;
@@ -452,23 +394,18 @@ void SPRDMPEG4Decoder::releaseDecoder() {
     }
 
     if (mPbuf_stream_v != NULL) {
-        if (mDecoderSwFlag) {
-            free(mPbuf_stream_v);
-            mPbuf_stream_v = NULL;
-        } else {
-            if (mIOMMUEnabled) {
-                mPmem_stream->free_iova(mIOMMUID, mPbuf_stream_p, mPbuf_stream_size);
-            }
-            mPmem_stream.clear();
-            mPbuf_stream_v = NULL;
-            mPbuf_stream_p = 0;
-            mPbuf_stream_size = 0;
+        if (mIOMMUEnabled) {
+            mPmem_stream->free_mm_iova(mPbuf_stream_p, mPbuf_stream_size);
         }
+        mPmem_stream.clear();
+        mPbuf_stream_v = NULL;
+        mPbuf_stream_p = 0;
+        mPbuf_stream_size = 0;
     }
 
     if(mPbuf_extra_v != NULL) {
         if (mIOMMUEnabled) {
-            mPmem_extra->free_iova(mIOMMUID, mPbuf_extra_p, mPbuf_extra_size);
+            mPmem_extra->free_mm_iova(mPbuf_extra_p, mPbuf_extra_size);
         }
         mPmem_extra.clear();
         mPbuf_extra_v = NULL;
@@ -479,8 +416,6 @@ void SPRDMPEG4Decoder::releaseDecoder() {
     if(mLibHandle) {
         dlclose(mLibHandle);
         mLibHandle = NULL;
-        mMP4DecReleaseRefBuffers = NULL;
-        mMP4DecRelease = NULL;
     }
 }
 
@@ -510,10 +445,11 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalGetParameter(
         } else {
             CHECK_EQ(formatParams->nPortIndex, 1u);
 
-            PortInfo *pOutPort = editPortInfo(kOutputPortIndex);
+            PortInfo *pOutPort = editPortInfo(OMX_DirOutput);
             ALOGI("internalGetParameter, OMX_IndexParamVideoPortFormat, eColorFormat: 0x%x",pOutPort->mDef.format.video.eColorFormat);
             formatParams->eCompressionFormat = OMX_VIDEO_CodingUnused;
-            formatParams->eColorFormat = pOutPort->mDef.format.video.eColorFormat;
+            formatParams->eColorFormat = pOutPort->mDef.format.video.eColorFormat;//OMX_COLOR_FormatYUV420Planar;
+            setColorFormat(pOutPort->mDef.format.video.eColorFormat);
             formatParams->xFramerate = 0;
         }
 
@@ -526,7 +462,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalGetParameter(
             (OMX_VIDEO_PARAM_PROFILELEVELTYPE *) params;
 
         if (profileLevel->nPortIndex != 0) {  // Input port only
-            ALOGE("Invalid port index: %d", profileLevel->nPortIndex);
+            ALOGE("Invalid port index: %ld", profileLevel->nPortIndex);
             return OMX_ErrorUnsupportedIndex;
         }
 
@@ -571,7 +507,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalGetParameter(
         } else {
             pganbp->nUsage = GRALLOC_USAGE_VIDEO_BUFFER|GRALLOC_USAGE_SW_READ_OFTEN|GRALLOC_USAGE_SW_WRITE_OFTEN;
         }
-        ALOGI("internalGetParameter, OMX_IndexParamGetAndroidNativeBuffer 0x%x",pganbp->nUsage);
+        ALOGI("internalGetParameter, OMX_IndexParamGetAndroidNativeBuffer %x",pganbp->nUsage);
         return OMX_ErrorNone;
     }
 
@@ -624,7 +560,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalSetParameter(
     case OMX_IndexParamEnableAndroidBuffers:
     {
         EnableAndroidNativeBuffersParams *peanbp = (EnableAndroidNativeBuffersParams *)params;
-        PortInfo *pOutPort = editPortInfo(kOutputPortIndex);
+        PortInfo *pOutPort = editPortInfo(OMX_DirOutput);
         if (peanbp->enable == OMX_FALSE) {
             ALOGI("internalSetParameter, disable AndroidNativeBuffer");
             iUseAndroidNativeBuffer[OMX_DirOutput] = OMX_FALSE;
@@ -681,11 +617,11 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalSetParameter(
         }
 
         if (!((mWidth < 1280 && mHeight < 720) || (mWidth < 720 && mHeight < 1280))) {
-            PortInfo *port = editPortInfo(kInputPortIndex);
+            PortInfo *port = editPortInfo(0);
             if(port->mDef.nBufferSize < 384*1024)
                 port->mDef.nBufferSize = 384*1024;
         } else if (!((mWidth < 720 && mHeight < 480) || (mWidth < 480 && mHeight < 720))) {
-            PortInfo *port = editPortInfo(kInputPortIndex);
+            PortInfo *port = editPortInfo(0);
             if(port->mDef.nBufferSize < 256*1024)
                 port->mDef.nBufferSize = 256*1024;
         }
@@ -733,7 +669,6 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalUseBuffer(
         CHECK((*header)->pOutputPortPrivate != NULL);
         BufferCtrlStruct* pBufCtrl= (BufferCtrlStruct*)((*header)->pOutputPortPrivate);
         pBufCtrl->iRefCount = 1; //init by1
-        pBufCtrl->id = mIOMMUID;
         if(mAllocateBuffers) {
             if(bufferPrivate != NULL) {
                 pBufCtrl->pMem = ((BufferPrivateStruct*)bufferPrivate)->pMem;
@@ -742,17 +677,17 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalUseBuffer(
                 pBufCtrl->bufferFd = 0;
             } else {
                 pBufCtrl->pMem = NULL;
-                pBufCtrl->phyAddr = 0;
+                pBufCtrl->phyAddr = NULL;
                 pBufCtrl->bufferSize = 0;
                 pBufCtrl->bufferFd = 0;
             }
         } else {
-            if (mIOMMUEnabled) {
-                unsigned long picPhyAddr = 0;
-                size_t bufferSize = 0;
+            bool iommu_is_enable = MemoryHeapIon::Mm_iommu_is_enabled();
+            if (iommu_is_enable) {
+                int picPhyAddr = 0, bufferSize = 0;
                 native_handle_t *pNativeHandle = (native_handle_t *)((*header)->pBuffer);
                 struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd, &picPhyAddr, &bufferSize);
+                MemoryHeapIon::Get_mm_iova(private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
 
                 pBufCtrl->pMem = NULL;
                 pBufCtrl->bufferFd = private_h->share_fd;
@@ -773,7 +708,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::internalUseBuffer(
 
     BufferInfo *buffer =
         &port->mBuffers.editItemAt(port->mBuffers.size() - 1);
-    ALOGI("internalUseBuffer, header=0x%p, pBuffer=0x%p, size=%d",*header, ptr, size);
+    ALOGI("internalUseBuffer, header=%p, pBuffer=%p, size=%d",*header, ptr, size);
     buffer->mHeader = *header;
     buffer->mOwnedByUs = false;
 
@@ -798,19 +733,19 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
     case OMX_DirOutput:
     {
         mAllocateBuffers = true;
-        if(mDecoderSwFlag  || mChangeToSwDec) {
+        if(mDecoderSwFlag) {
             return SprdSimpleOMXComponent::allocateBuffer(header, portIndex, appPrivate, size);
         } else {
             MemoryHeapIon* pMem = NULL;
-            unsigned long phyAddr = 0;
-            size_t bufferSize = 0;
-            OMX_U8* pBuffer = NULL;
-            size_t size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
+            int phyAddr = 0;
+            int bufferSize = 0;
+            unsigned char* pBuffer = NULL;
+            OMX_U32 size64word = (size + 1024*4 - 1) & ~(1024*4 - 1);
 
             if (mIOMMUEnabled) {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
             } else {
-                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+                pMem = new MemoryHeapIon(SPRD_ION_DEV, size64word, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
             }
             if(pMem->getHeapID() < 0) {
                 ALOGE("Failed to alloc outport pmem buffer");
@@ -818,7 +753,7 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
             }
 
             if (mIOMMUEnabled) {
-                if(pMem->get_iova(mIOMMUID, &phyAddr, &bufferSize)) {
+                if(pMem->get_mm_iova(&phyAddr, &bufferSize)) {
                     ALOGE("get_mm_iova fail");
                     return OMX_ErrorInsufficientResources;
                 }
@@ -829,14 +764,14 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::allocateBuffer(
                 }
             }
 
-            pBuffer = (OMX_U8 *)(pMem->getBase());
+            pBuffer = (unsigned char*)(pMem->base());
             BufferPrivateStruct* bufferPrivate = new BufferPrivateStruct();
             bufferPrivate->pMem = pMem;
             bufferPrivate->phyAddr = phyAddr;
             bufferPrivate->bufferSize = bufferSize;
-            ALOGI("allocateBuffer, allocate buffer from pmem, pBuffer: 0x%p, phyAddr: 0x%lx, size: %zd", pBuffer, phyAddr, bufferSize);
+            ALOGI("allocateBuffer, allocate buffer from pmem, pBuffer: 0x%x, phyAddr: 0x%x, size: %d", pBuffer, phyAddr, bufferSize);
 
-            SprdSimpleOMXComponent::useBuffer(header, portIndex, appPrivate, (OMX_U32)bufferSize, pBuffer, bufferPrivate);
+            SprdSimpleOMXComponent::useBuffer(header, portIndex, appPrivate, bufferSize, pBuffer, bufferPrivate);
             delete bufferPrivate;
 
             return OMX_ErrorNone;
@@ -862,9 +797,9 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::freeBuffer(
         BufferCtrlStruct* pBufCtrl= (BufferCtrlStruct*)(header->pOutputPortPrivate);
         if(pBufCtrl != NULL) {
             if(pBufCtrl->pMem != NULL) {
-                ALOGI("freeBuffer, phyAddr: 0x%lx", pBufCtrl->phyAddr);
+                ALOGI("freeBuffer, phyAddr: 0x%x", pBufCtrl->phyAddr);
                 if (mIOMMUEnabled) {
-                    pBufCtrl->pMem->free_iova(mIOMMUID, pBufCtrl->phyAddr, pBufCtrl->bufferSize);
+                    pBufCtrl->pMem->free_mm_iova(pBufCtrl->phyAddr, pBufCtrl->bufferSize);
                 }
                 pBufCtrl->pMem.clear();
             }
@@ -904,38 +839,6 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::getConfig(
     }
 }
 
-OMX_ERRORTYPE SPRDMPEG4Decoder::setConfig(
-    OMX_INDEXTYPE index, const OMX_PTR params) {
-    switch (index) {
-    case OMX_IndexConfigThumbnailMode:
-    {
-        OMX_BOOL *pEnable = (OMX_BOOL *)params;
-
-        if (*pEnable == OMX_TRUE) {
-            mThumbnailMode = OMX_TRUE;
-        }
-
-        ALOGI("setConfig, mThumbnailMode = %d", mThumbnailMode);
-
-        if (mThumbnailMode) {
-            PortInfo *pInPort = editPortInfo(OMX_DirInput);
-            PortInfo *pOutPort = editPortInfo(OMX_DirOutput);
-            pInPort->mDef.nBufferCountActual = 2;
-            pOutPort->mDef.nBufferCountActual = 2;
-            pOutPort->mDef.format.video.eColorFormat = OMX_COLOR_FormatYUV420Planar;
-            if(!mDecoderSwFlag) {
-                mChangeToSwDec = true;
-            }
-            setColorFormat(pOutPort->mDef.format.video.eColorFormat);
-        }
-        return OMX_ErrorNone;
-    }
-
-    default:
-        return SprdSimpleOMXComponent::setConfig(index, params);
-    }
-}
-
 void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
     if (mSignalledError || mOutputPortSettingsChange != NONE) {
         return;
@@ -945,26 +848,23 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
         return;
     }
 
-    if(mChangeToSwDec) {
+    if(mChangeToHwDec) {
 
-        mChangeToSwDec = false;
+        mChangeToHwDec = false;
 
-        ALOGI("%s, %d, change to sw decoder", __FUNCTION__, __LINE__);
+        ALOGI("%s, %d, change to hw decoder", __FUNCTION__, __LINE__);
 
         releaseDecoder();
 
-        if(!openDecoder("libomx_m4vh263dec_sw_sprd.so")) {
-            ALOGE("onQueueFilled, open  libomx_m4vh263dec_sw_sprd.so failed.");
+        if(!openDecoder("libomx_m4vh263dec_hw_sprd.so")) {
+            ALOGE("onQueueFilled, open  libomx_m4vh263dec_hw_sprd.so failed.");
             notify(OMX_EventError, OMX_ErrorDynamicResourcesUnavailable, 0, NULL);
             mSignalledError = true;
-            mDecoderSwFlag = false;
             return;
         }
 
-        mDecoderSwFlag = true;
-
         if(initDecoder() != OK) {
-            ALOGE("onQueueFilled, init sw decoder failed.");
+            ALOGE("onQueueFilled, init hw decoder failed.");
             notify(OMX_EventError, OMX_ErrorDynamicResourcesUnavailable, 0, NULL);
             mSignalledError = true;
             return;
@@ -974,7 +874,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
     List<BufferInfo *> &inQueue = getPortQueue(0);
     List<BufferInfo *> &outQueue = getPortQueue(1);
 
-    while (!mStopDecode && (mEOSStatus != INPUT_DATA_AVAILABLE || !inQueue.empty())
+    while ((mEOSStatus != INPUT_DATA_AVAILABLE || !inQueue.empty())
             && outQueue.size() != 0) {
 
         if (mEOSStatus == INPUT_EOS_SEEN) {
@@ -989,7 +889,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
         List<BufferInfo *>::iterator itBuffer = outQueue.begin();
         OMX_BUFFERHEADERTYPE *outHeader = NULL;
         BufferCtrlStruct *pBufCtrl = NULL;
-        size_t count = 0;
+        uint32 count = 0;
         do {
             if(count >= outQueue.size()) {
                 ALOGI("onQueueFilled, get outQueue buffer, return, count=%d, queue_size=%d",count, outQueue.size());
@@ -1010,9 +910,8 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
         }
         while(pBufCtrl->iRefCount > 0);
 
-        ALOGI("%s, %d, outHeader:0x%p, inHeader: 0x%p, len: %d, time: %lld, EOS: %d, cfg:%d", __FUNCTION__, __LINE__,outHeader,
-              inHeader, inHeader->nFilledLen,inHeader->nTimeStamp,inHeader->nFlags & OMX_BUFFERFLAG_EOS,inHeader->nFlags & OMX_BUFFERFLAG_CODECCONFIG);
-
+//        ALOGI("%s, %d, mBuffer=0x%x, outHeader=0x%x, iRefCount=%d", __FUNCTION__, __LINE__, *itBuffer, outHeader, pBufCtrl->iRefCount);
+        ALOGI("%s, %d, outHeader:0x%x, inHeader: 0x%x, len: %d, time: %lld, EOS: %d", __FUNCTION__, __LINE__,outHeader, inHeader, inHeader->nFilledLen,inHeader->nTimeStamp,inHeader->nFlags & OMX_BUFFERFLAG_EOS);
         if (inHeader->nFlags & OMX_BUFFERFLAG_EOS) {
             mEOSStatus = INPUT_EOS_SEEN; //the last frame size may be not zero, it need to be decoded.
         }
@@ -1028,13 +927,6 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             if (inHeader->nFlags & OMX_BUFFERFLAG_CODECCONFIG) {
                 vol_data[0] = bitstream;
                 vol_size = inHeader->nFilledLen;
-                if (vol_size <= MPEG4_VOL_HEADER_SIZE && mPVolHeaderSize == 0) {
-                    memcpy(mPVolHeader, bitstream, vol_size);
-                    mPVolHeaderSize = vol_size;
-                }
-            } else if (mPVolHeaderSize > 0) {
-                vol_data[0] = mPVolHeader;
-                vol_size = mPVolHeaderSize;
             }
 
             MP4DecodingMode mode =
@@ -1045,8 +937,8 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             video_format.i_extra = vol_size;
             if(video_format.i_extra>0 && (mPbuf_stream_v != NULL)) {
                 memcpy(mPbuf_stream_v, vol_data[0],vol_size);
-                video_format.p_extra = mPbuf_stream_v;
-                video_format.p_extra_phy = mPbuf_stream_p;
+                video_format.p_extra = (uint8 *)mPbuf_stream_v;
+                video_format.p_extra_phy = (uint32)mPbuf_stream_p;
             } else {
                 video_format.i_extra = 0;
                 video_format.p_extra = NULL;
@@ -1055,18 +947,19 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
 
             if(mode == H263_MODE) {
                 video_format.video_std = ITU_H263;
-            } else {
+            } else if(mode == MPEG4_MODE) {
                 video_format.video_std = MPEG4;
+            } else {
+                video_format.video_std = FLV_V1;
             }
 
-            video_format.frame_width = mWidth;
-            video_format.frame_height = mHeight;
-            video_format.yuv_format = mThumbnailMode ? YUV420P_YU12 : YUV420SP_NV12;
+            video_format.frame_width = 0;
+            video_format.frame_height = 0;
+            video_format.uv_interleaved = 1;
 
             MMDecRet ret = (*mMP4DecVolHeader)(mHandle, &video_format);
 
-            ALOGI("%s, %d, MP4DecVolHeader, ret: %d, width: %d, height: %d, yuv_format: %d", __FUNCTION__, __LINE__,
-                  ret, video_format.frame_width, video_format.frame_height, video_format.yuv_format);
+            ALOGI("%s, %d, MP4DecVolHeader, ret: %d, width: %d, height: %d", __FUNCTION__, __LINE__, ret, video_format.frame_width, video_format.frame_height);
 
             if (ret != MMDEC_OK) {
                 ALOGW("MP4DecVolHeader failed. Unsupported content?");
@@ -1117,17 +1010,12 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
 
         outHeader->nTimeStamp = inHeader->nTimeStamp;
 
-        if (mThumbnailMode && !mFramesConfigured) {
-            (*mMP4DecSetReferenceYUV)(mHandle, outHeader->pBuffer);
-            mFramesConfigured = true;
-        }
-
-        uint32_t bufferSize = inHeader->nFilledLen;
+        int32_t bufferSize = inHeader->nFilledLen;
 
         MMDecInput dec_in;
         MMDecOutput dec_out;
 
-        unsigned long picPhyAddr = 0;
+        unsigned int picPhyAddr = 0;
 
         if(!mDecoderSwFlag) {
             pBufCtrl= (BufferCtrlStruct*)(outHeader->pOutputPortPrivate);
@@ -1142,29 +1030,33 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
                 } else {
                     native_handle_t *pNativeHandle = (native_handle_t *)outHeader->pBuffer;
                     struct private_handle_t *private_h = (struct private_handle_t *)pNativeHandle;
-                    size_t bufferSize = 0;
-                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd, &picPhyAddr, &bufferSize);
+                    int bufferSize = 0;
+                    MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,(int*)&picPhyAddr, &bufferSize);
                     pBufCtrl->phyAddr = picPhyAddr;
                 }
             }
         }
-        ALOGV("%s, %d, outHeader: 0x%p, pBuffer: 0x%p, phyAddr: 0x%lx",__FUNCTION__, __LINE__, outHeader, outHeader->pBuffer, picPhyAddr);
+        ALOGV("%s, %d, outHeader: 0x%x, pBuffer: 0x%x, phyAddr: 0x%x",__FUNCTION__, __LINE__, outHeader, outHeader->pBuffer, picPhyAddr);
         GraphicBufferMapper &mapper = GraphicBufferMapper::get();
         if(iUseAndroidNativeBuffer[OMX_DirOutput]) {
-            OMX_PARAM_PORTDEFINITIONTYPE *def = &editPortInfo(kOutputPortIndex)->mDef;
+            OMX_PARAM_PORTDEFINITIONTYPE *def = &editPortInfo(OMX_DirOutput)->mDef;
             int width = def->format.video.nStride;
             int height = def->format.video.nSliceHeight;
             Rect bounds(width, height);
             void *vaddr;
             int usage;
 
-            usage = GRALLOC_USAGE_SW_READ_OFTEN|GRALLOC_USAGE_SW_WRITE_OFTEN;
+            if(mDecoderSwFlag) {
+                usage = GRALLOC_USAGE_SW_READ_OFTEN|GRALLOC_USAGE_SW_WRITE_OFTEN;
+            } else {
+                usage = GRALLOC_USAGE_SW_WRITE_RARELY;
+            }
 
             if(mapper.lock((const native_handle_t*)outHeader->pBuffer, usage, bounds, &vaddr)) {
-                ALOGE("onQueueFilled, mapper.lock fail 0x%p",outHeader->pBuffer);
+                ALOGE("onQueueFilled, mapper.lock fail %x",outHeader->pBuffer);
                 return ;
             }
-            ALOGV("%s, %d, pBuffer: 0x%p, vaddr: 0x%p", __FUNCTION__, __LINE__, outHeader->pBuffer,vaddr);
+            ALOGV("%s, %d, pBuffer: 0x%x, vaddr: 0x%x", __FUNCTION__, __LINE__, outHeader->pBuffer,vaddr);
             (*mMP4DecSetCurRecPic)(mHandle,(uint8*)(vaddr), (uint8*)picPhyAddr, (void *)(outHeader));
         } else {
             (*mMP4DecSetCurRecPic)(mHandle,outHeader->pBuffer, (uint8*)picPhyAddr, (void *)(outHeader));
@@ -1173,14 +1065,13 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
         if (mPbuf_stream_v != NULL) {
             memcpy(mPbuf_stream_v, bitstream, bufferSize);
         }
-        dec_in.pStream= mPbuf_stream_v;
-        dec_in.pStream_phy= mPbuf_stream_p;
+        dec_in.pStream= (uint8 *) mPbuf_stream_v;
+        dec_in.pStream_phy= (uint32) mPbuf_stream_p;
         dec_in.dataLen = bufferSize;
         dec_in.beLastFrm = 0;
         dec_in.expected_IVOP = mNeedIVOP;
         dec_in.beDisplayed = 1;
         dec_in.err_pkt_num = 0;
-        dec_in.nTimeStamp = (uint64)(inHeader->nTimeStamp);
 
         dec_out.VopPredType = -1;
         dec_out.frameEffective = 0;
@@ -1211,7 +1102,7 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
 
             if (portSettingsChanged()) {
                 return;
-            } else if(mChangeToSwDec == true) {
+            } else if(mChangeToHwDec == true) {
                 return;
             } else if(decRet == MMDEC_MEMORY_ALLOCED) {
                 continue;
@@ -1232,15 +1123,15 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             return;
         } else if (decRet == MMDEC_STREAM_ERROR) {
             ALOGE("failed to decode video frame, stream error");
+//            notify(OMX_EventError, OMX_ErrorStreamCorrupt, 0, NULL);
         } else if (decRet == MMDEC_HW_ERROR)
         {
             ALOGE("failed to decode video frame, hardware error");
+//            notify(OMX_EventError, OMX_ErrorHardware, 0, NULL);
         } else if (decRet == MMDEC_NOT_SUPPORTED)
         {
             ALOGE("failed to decode video frame, unsupported");
             notify(OMX_EventError, OMX_ErrorUnsupportedSetting, 0, NULL);
-            mSignalledError = true;
-            return;
         } else
         {
             ALOGE("now, we don't take care of the decoder return: %d", decRet);
@@ -1268,11 +1159,8 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
             outHeader->nOffset = 0;
             outHeader->nFilledLen = (mWidth * mHeight * 3) / 2;
             outHeader->nFlags = 0;
-            outHeader->nTimeStamp = (OMX_TICKS)(dec_out.pts);
-            if(mThumbnailMode) {
-                mStopDecode = true;
-            }
-            ALOGI("%s, %d, dec_out.pBufferHeader: 0x%p, time: %lld", __FUNCTION__, __LINE__, outHeader, outHeader->nTimeStamp);
+
+//            ALOGI("%s, %d, outHeader->nFilledLen: %d", __FUNCTION__, __LINE__, outHeader->nFilledLen);
 //           dump_yuv(dec_out.pOutFrameY, outHeader->nFilledLen);
         } else {
             continue;
@@ -1296,6 +1184,8 @@ void SPRDMPEG4Decoder::onQueueFilled(OMX_U32 portIndex) {
 
         notifyFillBufferDone(outHeader);
         outHeader = NULL;
+
+        ++mNumSamplesOutput;
     }
 }
 
@@ -1309,7 +1199,7 @@ bool SPRDMPEG4Decoder::drainAllOutputBuffers() {
 
     while (!outQueue.empty() && mEOSStatus != OUTPUT_FRAMES_FLUSHED) {
         if (mHeadersDecoded &&(*mMP4DecGetLastDspFrm)(mHandle, &pBufferHeader) ) {
-            ALOGI("%s, %d, MP4DecGetLastDspFrm, pBufferHeader: 0x%p", __FUNCTION__, __LINE__, pBufferHeader);
+            ALOGI("%s, %d, MP4DecGetLastDspFrm, pBufferHeader: 0x%x", __FUNCTION__, __LINE__, pBufferHeader);
             List<BufferInfo *>::iterator it = outQueue.begin();
             while ((*it)->mHeader != (OMX_BUFFERHEADERTYPE*)pBufferHeader && it != outQueue.end()) {
                 ++it;
@@ -1363,29 +1253,47 @@ bool SPRDMPEG4Decoder::portSettingsChanged() {
     CHECK_LE(disp_width, buf_width);
     CHECK_LE(disp_height, buf_height);
 
-    if (mCropRight != disp_width - 1
-            || mCropBottom != disp_height - 1) {
-        ALOGI("%s, %d, mCropLeft: %d, mCropTop: %d, mCropRight: %d, mCropBottom: %d", __FUNCTION__, __LINE__, mCropLeft, mCropTop, mCropRight, mCropBottom);
+    if(mDecoderSwFlag) {
+        if (mCropRight != disp_width  - 1
+                || mCropBottom != disp_height  - 1) {
+            ALOGI("%s, %d, SwDecoder, mCropLeft: %d, mCropTop: %d, mCropRight: %d, mCropBottom: %d", __FUNCTION__, __LINE__, mCropLeft, mCropTop, mCropRight, mCropBottom);
 
-        mCropLeft = 0;
-        mCropTop = 0;
-        mCropRight = disp_width - 1;
-        mCropBottom = disp_height - 1;
+            mCropLeft = 0;
+            mCropTop = 0;
+            mCropRight = disp_width  - 1;
+            mCropBottom = disp_height  - 1;
 
-        notify(OMX_EventPortSettingsChanged,
-               1,
-               OMX_IndexConfigCommonOutputCrop,
-               NULL);
+            notify(OMX_EventPortSettingsChanged,
+                   1,
+                   OMX_IndexConfigCommonOutputCrop,
+                   NULL);
+        }
+    } else {
+        if (mCropRight != disp_width - 1
+                || mCropBottom != disp_height - 1) {
+            ALOGI("%s, %d, mCropLeft: %d, mCropTop: %d, mCropRight: %d, mCropBottom: %d", __FUNCTION__, __LINE__, mCropLeft, mCropTop, mCropRight, mCropBottom);
+
+            mCropLeft = 0;
+            mCropTop = 0;
+            mCropRight = disp_width - 1;
+            mCropBottom = disp_height - 1;
+
+            notify(OMX_EventPortSettingsChanged,
+                   1,
+                   OMX_IndexConfigCommonOutputCrop,
+                   NULL);
+        }
     }
 
-    if(!mDecoderSwFlag) {
-        if ((buf_width <= 176 && buf_height <= 144) || (buf_height <= 176 && buf_width <= 144)) {
-            mChangeToSwDec = true;
+    if(mDecoderSwFlag) {
+        if (!((buf_width <= 176 && buf_height <= 144) || (buf_height <= 176 && buf_width <= 144))) {
+            mDecoderSwFlag = false;
+            mChangeToHwDec = true;
             ret = true;
         }
     }
 
-    if (buf_width != mWidth || buf_height != mHeight) {// || mChangeToHwDec) {
+    if (buf_width != mWidth || buf_height != mHeight || mChangeToHwDec) {
         ALOGI("%s, %d, mWidth: %d, mHeight: %d", __FUNCTION__, __LINE__, mWidth, mHeight);
         mWidth = buf_width;
         mHeight = buf_height;
@@ -1440,26 +1348,18 @@ void SPRDMPEG4Decoder::onPortEnableCompleted(OMX_U32 portIndex, bool enabled) {
 
 void SPRDMPEG4Decoder::onPortFlushPrepare(OMX_U32 portIndex) {
     if(portIndex == OMX_DirOutput) {
-        if( mMP4DecReleaseRefBuffers!=NULL )
-            (*mMP4DecReleaseRefBuffers)(mHandle);
+        (*mMP4DecReleaseRefBuffers)(mHandle);
     }
 }
 
-void SPRDMPEG4Decoder::onReset() {
-    mSignalledError = false;
-    mInitialized = false;
-    //avoid process error after stop codec and restart codec when port settings changing.
-    mOutputPortSettingsChange = NONE;
-}
-
 void SPRDMPEG4Decoder::updatePortDefinitions() {
-    OMX_PARAM_PORTDEFINITIONTYPE *def = &editPortInfo(kInputPortIndex)->mDef;
+    OMX_PARAM_PORTDEFINITIONTYPE *def = &editPortInfo(0)->mDef;
     def->format.video.nFrameWidth = mWidth;
     def->format.video.nFrameHeight = mHeight;
     def->format.video.nStride = def->format.video.nFrameWidth;
     def->format.video.nSliceHeight = def->format.video.nFrameHeight;
 
-    def = &editPortInfo(kOutputPortIndex)->mDef;
+    def = &editPortInfo(1)->mDef;
     def->format.video.nFrameWidth = mWidth;
     def->format.video.nFrameHeight = mHeight;
     def->format.video.nStride = def->format.video.nFrameWidth;
@@ -1490,34 +1390,22 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
     MMCodecBuffer extra_mem[MAX_MEM_TYPE];
     ALOGI("%s, %d, mDecoderSwFlag: %d, extra_mem_size: %d", __FUNCTION__, __LINE__, mDecoderSwFlag, extra_mem_size);
     if (mDecoderSwFlag) {
-        if (mCodecExtraBuffer != NULL)
-        {
-            free(mCodecExtraBuffer);
-            mCodecExtraBuffer = NULL;
-        }
-
         mCodecExtraBuffer = (uint8 *)malloc(extra_mem_size);
-        if (mCodecExtraBuffer == NULL) {
-            return -1;
-        }
 
         extra_mem[SW_CACHABLE].common_buffer_ptr = mCodecExtraBuffer;
         extra_mem[SW_CACHABLE].size = extra_mem_size;
     } else {
 
         if (mIOMMUEnabled) {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
         } else {
-            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+            mPmem_extra = new MemoryHeapIon(SPRD_ION_DEV, extra_mem_size, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
         }
         int fd = mPmem_extra->getHeapID();
         if(fd>=0) {
-            int ret;
-            unsigned long phy_addr;
-            size_t buffer_size;
-
+            int ret,phy_addr, buffer_size;
             if (mIOMMUEnabled) {
-                ret = mPmem_extra->get_iova(mIOMMUID, &phy_addr, &buffer_size);
+                ret = mPmem_extra->get_mm_iova(&phy_addr, &buffer_size);
             } else {
                 ret = mPmem_extra->get_phy_addr_from_ion(&phy_addr, &buffer_size);
             }
@@ -1528,10 +1416,10 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
 
             mPbuf_extra_p = phy_addr;
             mPbuf_extra_size = buffer_size;
-            mPbuf_extra_v = (uint8_t *)mPmem_extra->getBase();
-            ALOGI("pmem 0x%lx - %p - %zd", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
-            extra_mem[HW_NO_CACHABLE].common_buffer_ptr = mPbuf_extra_v;
-            extra_mem[HW_NO_CACHABLE].common_buffer_ptr_phy = mPbuf_extra_p;
+            mPbuf_extra_v = (uint8 *)mPmem_extra->base();
+            ALOGI("pmem %p - %p - %d", mPbuf_extra_p, mPbuf_extra_v, mPbuf_extra_size);
+            extra_mem[HW_NO_CACHABLE].common_buffer_ptr =(uint8 *) mPbuf_extra_v;
+            extra_mem[HW_NO_CACHABLE].common_buffer_ptr_phy = (void *)mPbuf_extra_p;
             extra_mem[HW_NO_CACHABLE].size = extra_mem_size;
         } else {
             ALOGE ("mPmem_extra: getHeapID fail %d", fd);
@@ -1548,10 +1436,8 @@ int SPRDMPEG4Decoder::extMemoryAlloc(unsigned int extra_mem_size) {
 
 int SPRDMPEG4Decoder::VSP_bind_cb(void *pHeader,int flag) {
     BufferCtrlStruct *pBufCtrl = (BufferCtrlStruct *)(((OMX_BUFFERHEADERTYPE *)pHeader)->pOutputPortPrivate);
-
-    ALOGI("VSP_bind_cb, pBuffer: 0x%p, pHeader: 0x%p; iRefCount=%d",
+    ALOGI("VSP_bind_cb, ref frame: 0x%x, 0x%x; iRefCount=%d",
           ((OMX_BUFFERHEADERTYPE *)pHeader)->pBuffer, pHeader,pBufCtrl->iRefCount);
-
     pBufCtrl->iRefCount++;
     return 0;
 }
@@ -1559,7 +1445,7 @@ int SPRDMPEG4Decoder::VSP_bind_cb(void *pHeader,int flag) {
 int SPRDMPEG4Decoder::VSP_unbind_cb(void *pHeader,int flag) {
     BufferCtrlStruct *pBufCtrl = (BufferCtrlStruct *)(((OMX_BUFFERHEADERTYPE *)pHeader)->pOutputPortPrivate);
 
-    ALOGI("VSP_unbind_cb, pBuffer: 0x%p, pHeader: 0x%p; iRefCount=%d",
+    ALOGI("VSP_unbind_cb, ref frame: 0x%x, 0x%x; iRefCount=%d",
           ((OMX_BUFFERHEADERTYPE *)pHeader)->pBuffer, pHeader,pBufCtrl->iRefCount);
 
     if (pBufCtrl->iRefCount  > 0) {
@@ -1585,10 +1471,6 @@ OMX_ERRORTYPE SPRDMPEG4Decoder::getExtensionIndex(
         ALOGI("getExtensionIndex:%s",SPRD_INDEX_PARAM_USE_ANB);
         *index = (OMX_INDEXTYPE) OMX_IndexParamUseAndroidNativeBuffer2;
         return OMX_ErrorNone;
-    }  else if (strcmp(name, SPRD_INDEX_CONFIG_THUMBNAIL_MODE) == 0) {
-        ALOGI("getExtensionIndex:%s",SPRD_INDEX_CONFIG_THUMBNAIL_MODE);
-        *index = (OMX_INDEXTYPE) OMX_IndexConfigThumbnailMode;
-        return OMX_ErrorNone;
     }
 
     return OMX_ErrorNotImplemented;
@@ -1610,6 +1492,14 @@ bool SPRDMPEG4Decoder::openDecoder(const char* libName) {
     mMP4DecSetCurRecPic = (FT_MP4DecSetCurRecPic)dlsym(mLibHandle, "MP4DecSetCurRecPic");
     if(mMP4DecSetCurRecPic == NULL) {
         ALOGE("Can't find MP4DecSetCurRecPic in %s",libName);
+        dlclose(mLibHandle);
+        mLibHandle = NULL;
+        return false;
+    }
+
+    mMP4GetCodecCapability = (FT_MP4GetCodecCapability)dlsym(mLibHandle, "MP4GetCodecCapability");
+    if(mMP4GetCodecCapability == NULL) {
+        ALOGE("Can't find MP4GetCodecCapability in %s",libName);
         dlclose(mLibHandle);
         mLibHandle = NULL;
         return false;
@@ -1679,25 +1569,9 @@ bool SPRDMPEG4Decoder::openDecoder(const char* libName) {
         return false;
     }
 
-    mMP4DecSetReferenceYUV = (FT_MP4DecSetReferenceYUV)dlsym(mLibHandle, "MP4DecSetReferenceYUV");
-    if(mMP4DecSetReferenceYUV == NULL) {
-        ALOGE("Can't find MP4DecSetReferenceYUV in %s",libName);
-        dlclose(mLibHandle);
-        mLibHandle = NULL;
-        return false;
-    }
-
     mMP4DecGetLastDspFrm = (FT_MP4DecGetLastDspFrm)dlsym(mLibHandle, "MP4DecGetLastDspFrm");
     if(mMP4DecGetLastDspFrm == NULL) {
         ALOGE("Can't find MP4DecGetLastDspFrm in %s",libName);
-        dlclose(mLibHandle);
-        mLibHandle = NULL;
-        return false;
-    }
-
-    mMP4GetCodecCapability = (FT_MP4GetCodecCapability)dlsym(mLibHandle, "MP4GetCodecCapability");
-    if(mMP4GetCodecCapability == NULL) {
-        ALOGE("Can't find MP4GetCodecCapability in %s",libName);
         dlclose(mLibHandle);
         mLibHandle = NULL;
         return false;

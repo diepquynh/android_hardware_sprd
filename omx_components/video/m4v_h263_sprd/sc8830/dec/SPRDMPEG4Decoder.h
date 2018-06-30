@@ -17,15 +17,15 @@
 #ifndef SPRD_MPEG4_DECODER_H_
 #define SPRD_MPEG4_DECODER_H_
 
-#include <SprdSimpleOMXComponent.h>
-#include <MemoryHeapIon.h>
-
+#include "SprdSimpleOMXComponent.h"
+#include "MemoryHeapIon.h"
 #include "m4v_h263_dec_api.h"
 
 #define SPRD_ION_DEV "/dev/ion"
 
 #define MP4DEC_INTERNAL_BUFFER_SIZE  (0x200000)
 #define ONEFRAME_BITSTREAM_BFR_SIZE	(1500*1024)  //for bitstream size of one encoded frame.
+#define MPEG4_VOL_HEADER_SIZE (1024)
 
 struct tagMP4Handle;
 
@@ -36,6 +36,8 @@ struct SPRDMPEG4Decoder : public SprdSimpleOMXComponent {
                      const OMX_CALLBACKTYPE *callbacks,
                      OMX_PTR appData,
                      OMX_COMPONENTTYPE **component);
+
+	OMX_ERRORTYPE initCheck() const;
 
 protected:
     virtual ~SPRDMPEG4Decoder();
@@ -65,11 +67,14 @@ protected:
         OMX_BUFFERHEADERTYPE *header);
 
     virtual OMX_ERRORTYPE getConfig(OMX_INDEXTYPE index, OMX_PTR params);
+    virtual OMX_ERRORTYPE setConfig(
+        OMX_INDEXTYPE index, const OMX_PTR params);
 
     virtual void onQueueFilled(OMX_U32 portIndex);
     virtual void onPortFlushCompleted(OMX_U32 portIndex);
     virtual void onPortEnableCompleted(OMX_U32 portIndex, bool enabled);
     virtual void onPortFlushPrepare(OMX_U32 portIndex);
+    virtual void onReset();
 
     virtual OMX_ERRORTYPE getExtensionIndex(
         const char *name, OMX_INDEXTYPE *index);
@@ -77,7 +82,7 @@ protected:
 private:
     enum {
         kNumInputBuffers  = 8,
-        kNumOutputBuffers = 5,
+        kNumOutputBuffers = 3,
     };
 
     enum {
@@ -92,45 +97,57 @@ private:
         OUTPUT_FRAMES_FLUSHED,
     };
 
+    enum OutputPortSettingChange{
+        NONE,
+        AWAITING_DISABLED,
+        AWAITING_ENABLED
+    };
+
+    OMX_ERRORTYPE mInitCheck;
+
     tagMP4Handle *mHandle;
 
     size_t mInputBufferCount;
+    int mSetFreqCount;
 
     int32_t mWidth, mHeight;
     int32_t mCropLeft, mCropTop, mCropRight, mCropBottom;
 
-    int32 mMaxWidth, mMaxHeight;
-    int mSetFreqCount;
+    int32_t mMaxWidth, mMaxHeight;
 
+    EOSStatus mEOSStatus;
+    OutputPortSettingChange mOutputPortSettingsChange;
+
+    bool mHeadersDecoded;
     bool mSignalledError;
+    bool mDecoderSwFlag;
+    bool mChangeToSwDec;
+    bool mAllocateBuffers;
+    bool mNeedIVOP;
     bool mInitialized;
     bool mFramesConfigured;
-
-    int32_t mNumSamplesOutput;
-
     bool mIOMMUEnabled;
+    int mIOMMUID;
+    bool mStopDecode;
+    OMX_BOOL mThumbnailMode;
+
     uint8_t *mCodecInterBuffer;
     uint8_t *mCodecExtraBuffer;
 
     sp<MemoryHeapIon> mPmem_stream;
-    unsigned char* mPbuf_stream_v;
-    int32 mPbuf_stream_p;
-    int32 mPbuf_stream_size;
+    uint8_t* mPbuf_stream_v;
+    unsigned long mPbuf_stream_p;
+    size_t mPbuf_stream_size;
 
     sp<MemoryHeapIon> mPmem_extra;
-    unsigned char*  mPbuf_extra_v;
-    int32  mPbuf_extra_p;
-    int32  mPbuf_extra_size;
+    uint8_t*  mPbuf_extra_v;
+    unsigned long  mPbuf_extra_p;
+    size_t  mPbuf_extra_size;
 
-    OMX_BOOL iUseAndroidNativeBuffer[2];
+    uint8_t *mPVolHeader;
+    int32_t  mPVolHeaderSize;
 
     void* mLibHandle;
-    bool mDecoderSwFlag;
-    bool mChangeToHwDec;
-    EOSStatus mEOSStatus;
-    bool mNeedIVOP;
-    bool mHeadersDecoded;
-    bool mAllocateBuffers;
     FT_MP4DecSetCurRecPic mMP4DecSetCurRecPic;
     FT_MP4DecInit mMP4DecInit;
     FT_MP4DecVolHeader mMP4DecVolHeader;
@@ -144,6 +161,8 @@ private:
     FT_MP4DecGetLastDspFrm mMP4DecGetLastDspFrm;
     FT_MP4GetCodecCapability mMP4GetCodecCapability;
 
+    OMX_BOOL iUseAndroidNativeBuffer[2];
+
     static int32_t extMemoryAllocWrapper(void *userData, unsigned int extra_mem_size);
     static int32_t BindFrameWrapper(void *aUserData, void *pHeader, int flag);
     static int32_t UnbindFrameWrapper(void *aUserData, void *pHeader, int flag);
@@ -151,12 +170,6 @@ private:
     int extMemoryAlloc(unsigned int extra_mem_size) ;
     int VSP_bind_cb(void *pHeader,int flag);
     int VSP_unbind_cb(void *pHeader,int flag);
-
-    enum {
-        NONE,
-        AWAITING_DISABLED,
-        AWAITING_ENABLED
-    } mOutputPortSettingsChange;
 
     void initPorts();
     status_t initDecoder();

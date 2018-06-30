@@ -31,6 +31,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libstagefrighthw \
 	libmemoryheapion \
 	libmedia \
+	libmedia \
 	libutils \
 	liblog \
 	libui \

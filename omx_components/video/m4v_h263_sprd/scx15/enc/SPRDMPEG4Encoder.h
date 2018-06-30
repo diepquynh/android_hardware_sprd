@@ -21,7 +21,7 @@
 #include "m4v_h263_enc_api.h"
 
 #define MP4ENC_INTERNAL_BUFFER_SIZE  (0x200000)
-//#define ONEFRAME_BITSTREAM_BFR_SIZE	(1500*1024)  //for bitstream size of one encoded frame.
+#define ONEFRAME_BITSTREAM_BFR_SIZE	(1500*1024)  //for bitstream size of one encoded frame.
 
 namespace android {
 
@@ -40,9 +40,6 @@ struct SPRDMPEG4Encoder : public SprdSimpleOMXComponent {
         OMX_INDEXTYPE index, OMX_PTR params);
 
     virtual OMX_ERRORTYPE internalSetParameter(
-        OMX_INDEXTYPE index, const OMX_PTR params);
-
-    virtual OMX_ERRORTYPE setConfig(
         OMX_INDEXTYPE index, const OMX_PTR params);
 
     virtual void onQueueFilled(OMX_U32 portIndex);
@@ -64,46 +61,48 @@ private:
         int32_t mFlags;
     } InputBufferInfo;
 
-    tagMP4Handle   *mHandle;
-    MMEncConfig *mEncConfig;
-    Vector<InputBufferInfo> mInputBufferInfoVec;
 
-    int64_t  mNumInputFrames;
-    int mSetFreqCount;
+    OMX_BOOL mStoreMetaData;
+
+    sp<MemoryHeapIon> mYUVInPmemHeap;
+    unsigned char* mPbuf_yuv_v;
+    int32_t mPbuf_yuv_p;
+    int32_t mPbuf_yuv_size;
+
+    bool mIOMMUEnabled;
+    uint8_t *mPbuf_inter;
+
+    sp<MemoryHeapIon> mPmem_stream;
+    unsigned char* mPbuf_stream_v;
+    int32_t mPbuf_stream_p;
+    int32_t mPbuf_stream_size;
+
+    sp<MemoryHeapIon> mPmem_extra;
+    unsigned char* mPbuf_extra_v;
+    int32_t mPbuf_extra_p;
+    int32_t mPbuf_extra_size;
+
+    int32_t mIsH263;
+    MMEncVideoInfo mEncInfo;
+    MMEncCapability mCapability;
 
     int32_t  mVideoWidth;
     int32_t  mVideoHeight;
     int32_t  mVideoFrameRate;
     int32_t  mVideoBitRate;
     int32_t  mVideoColorFormat;
-    OMX_U32 mPFrames;
+    int32_t  mIDRFrameRefreshIntervalInSec;
 
-    OMX_BOOL mStoreMetaData;
-    bool     mIOMMUEnabled;
-    int mIOMMUID;
+    int64_t  mNumInputFrames;
     bool     mStarted;
     bool     mSawInputEOS;
     bool     mSignalledError;
-    bool     mKeyFrameRequested;
 
-    int32_t mIsH263;
+    tagMP4Handle   *mHandle;
+    MMEncConfig *mEncConfig;
+    Vector<InputBufferInfo> mInputBufferInfoVec;
 
-    uint8_t *mPbuf_inter;
-
-    sp<MemoryHeapIon> mYUVInPmemHeap;
-    uint8_t *mPbuf_yuv_v;
-    unsigned long mPbuf_yuv_p;
-    size_t mPbuf_yuv_size;
-
-    sp<MemoryHeapIon> mPmem_stream;
-    uint8_t *mPbuf_stream_v;
-    unsigned long mPbuf_stream_p;
-    size_t mPbuf_stream_size;
-
-    sp<MemoryHeapIon> mPmem_extra;
-    uint8_t *mPbuf_extra_v;
-    unsigned long  mPbuf_extra_p;
-    size_t  mPbuf_extra_size;
+    int mSetFreqCount;
 
     void* mLibHandle;
     FT_MP4EncGetCodecCapability	mMP4EncGetCodecCapability;
@@ -114,9 +113,6 @@ private:
     FT_MP4EncStrmEncode        mMP4EncStrmEncode;
     FT_MP4EncGenHeader        mMP4EncGenHeader;
     FT_MP4EncRelease        mMP4EncRelease;
-
-    MMEncVideoInfo mEncInfo;
-    MMEncCapability mCapability;
 
 #ifdef SPRD_DUMP_YUV
     FILE* mFile_yuv;

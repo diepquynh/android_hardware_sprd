@@ -71,7 +71,7 @@ typedef enum
 typedef struct
 {
     uint8	*common_buffer_ptr;     // Pointer to buffer used when decoding
-    unsigned long common_buffer_ptr_phy;
+    uint32 common_buffer_ptr_phy;
     uint32	size;            		// Number of bytes decoding buffer
 
     int32 	frameBfr_num;			//YUV frame buffer number
@@ -98,9 +98,8 @@ typedef struct
     int32	frame_width;				//frame width
     int32	frame_height;				//frame Height
     int32	time_scale;
-    //int32 	uv_interleaved;				//tmp add
-    int32    yuv_format;
-    int32    b_anti_shake;
+    int32	yuv_format;
+    int32	b_anti_shake;
 } MMEncVideoInfo;
 
 // Encoder config structure
@@ -109,7 +108,6 @@ typedef struct
     uint32	RateCtrlEnable;            // 0 : disable  1: enable
     uint32	targetBitRate;             // 400 ~  (bit/s)
     uint32  FrameRate;
-    uint32  PFrames;
 
     uint32	vbv_buf_size;				//vbv buffer size, to determine the max transfer delay
 
@@ -119,7 +117,6 @@ typedef struct
     uint32	h263En;            			// 1 : H.263, 0 : MP4
 
     uint32	profileAndLevel;
-    uint32  EncSceneMode;
 } MMEncConfig;
 
 // Encoder input structure
@@ -133,7 +130,7 @@ typedef struct
     uint8   *p_src_u_phy;
     uint8   *p_src_v_phy;
 
-    bool	needIVOP;
+    int32	vopType;					//vopµÄÀàÐÍ  0 - I Frame    1 - P frame
     int32	time_stamp;					//time stamp
     int32   bs_remain_len;				//remained bitstream length
     int32 	channel_quality;			//0: good, 1: ok, 2: poor
@@ -148,7 +145,6 @@ typedef struct
 {
     uint8	*pOutBuf;					//Output buffer
     int32	strmSize;					//encoded stream size, if 0, should skip this frame.
-    int32	vopType;						//0: I VOP, 1: P VOP, 2: B VOP
 } MMEncOut;
 
 

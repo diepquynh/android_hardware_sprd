@@ -63,6 +63,14 @@ typedef enum
     MMDEC_MEMORY_ALLOCED = -10
 } MMDecRet;
 
+typedef enum
+{
+    YUV420P_YU12 = 0,
+    YUV420P_YV12 = 1,
+    YUV420SP_NV12 = 2,   /*u/v interleaved*/
+    YUV420SP_NV21 = 3,   /*v/u interleaved*/
+} MM_YUV_FORMAT_E;
+
 // decoder video format structure
 typedef struct
 {
@@ -71,15 +79,16 @@ typedef struct
     int32	frame_height;
     int32	i_extra;
     void 	*p_extra;
-    void *p_extra_phy;
-    int32	uv_interleaved;				//tmp add
+    unsigned long p_extra_phy;
+    //int32	uv_interleaved;				//tmp add
+    int32   yuv_format;
 } MMDecVideoFormat;
 
 // Decoder buffer for decoding structure
 typedef struct
 {
     uint8	*common_buffer_ptr;     // Pointer to buffer used when decoding
-    uint32 common_buffer_ptr_phy;
+    unsigned long common_buffer_ptr_phy;
     uint32	size;            		// Number of bytes decoding buffer
 
     int32 	frameBfr_num;			//YUV frame buffer number
@@ -102,7 +111,7 @@ typedef struct
 typedef struct
 {
     uint8		*pStream;          	// Pointer to stream to be decoded. Virtual address.
-    uint32		pStream_phy;          	// Pointer to stream to be decoded. Physical address.
+    unsigned long pStream_phy;          	// Pointer to stream to be decoded. Physical address.
     uint32		dataLen;           	// Number of bytes to be decoded
     int32		beLastFrm;			// whether the frame is the last frame.  1: yes,   0: no
 
@@ -162,7 +171,7 @@ typedef struct tagVPXHandle
 /**----------------------------------------------------------------------------*
 **                           Function Prototype                               **
 **----------------------------------------------------------------------------*/
-
+void VP8GetVideoDimensions(VPXHandle *vpxHandle, int32 *display_width, int32 *display_height);
 void VP8GetBufferDimensions(VPXHandle *vpxHandle, int32 *width, int32 *height);
 MMDecRet VP8GetCodecCapability(VPXHandle *vpxHandle, int32 *max_width, int32 *max_height);
 void VP8DecSetCurRecPic(VPXHandle *vpxHandle, uint8	*pFrameY,uint8 *pFrameY_phy,void *pBufferHeader);
@@ -174,7 +183,7 @@ int VP8DecGetLastDspFrm(VPXHandle *vpxHandle,void **pOutput);
 //  Author:
 //	Note:
 /*****************************************************************************/
-MMDecRet VP8DecInit(VPXHandle *vpxHandle, MMCodecBuffer *pInterMemBfr, MMCodecBuffer *pExtaMemBfr);
+MMDecRet VP8DecInit(VPXHandle *vpxHandle, MMCodecBuffer *pInterMemBfr, MMCodecBuffer *pExtaMemBfr, MMDecVideoFormat *pVideoFormat);
 
 /*****************************************************************************/
 //  Description: Decode one vop
@@ -192,10 +201,11 @@ MMDecRet VP8DecDecode(VPXHandle *vpxHandle, MMDecInput *pInput, MMDecOutput *pOu
 /*****************************************************************************/
 MMDecRet VP8DecRelease(VPXHandle *vpxHandle);
 
+typedef void (*FT_VPXGetVideoDimensions)(VPXHandle *vpxHandle, int32 *width, int32 *height);
 typedef void (*FT_VPXGetBufferDimensions)(VPXHandle *vpxHandle, int32 *width, int32 *height);
 typedef MMDecRet (*FT_VPXGetCodecCapability)(VPXHandle *vpxHandle, int32 *max_width, int32 *max_height);
 typedef void (*FT_VPXDecSetCurRecPic)(VPXHandle *vpxHandle, uint8	*pFrameY,uint8 *pFrameY_phy,void *pBufferHeader);
-typedef MMDecRet (*FT_VPXDecInit)(VPXHandle *vpxHandle, MMCodecBuffer *pInterMemBfr, MMCodecBuffer *pExtaMemBfr);
+typedef MMDecRet (*FT_VPXDecInit)(VPXHandle *vpxHandle, MMCodecBuffer *pInterMemBfr, MMCodecBuffer *pExtaMemBfr, MMDecVideoFormat *pVideoFormat);
 typedef MMDecRet (*FT_VPXDecDecode)(VPXHandle *vpxHandle, MMDecInput *pInput,MMDecOutput *pOutput);
 typedef MMDecRet (*FT_VPXDecRelease)(VPXHandle *vpxHandle);
 typedef void (* FT_VPXDecReleaseRefBuffers)(VPXHandle *vpxHandle);
