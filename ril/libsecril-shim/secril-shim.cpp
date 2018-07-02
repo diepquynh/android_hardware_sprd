@@ -398,41 +398,6 @@ static void onRequestCompleteVoiceRegistrationState(RIL_Token t, RIL_Errno e, vo
 	rilEnv->OnRequestComplete(t, e, voiceRegStateResponse, VOICE_REGSTATE_SIZE);
 }
 
-static void onRequestCompleteDataRegistrationState(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
-	char **resp = (char **) response;
-	int length = (int)responselen/ sizeof(char *);
-
-	if (length >= 4) {
-		/* Gather Cellidentity data for RIL_REQUEST_GET_CELL_INFO_LIST */
-		switch (atoi(resp[3])) {
-			case RIL_CELL_INFO_TYPE_GSM: {
-				RLOGI("%s: RIL_CELL_INFO_TYPE_GSM: lac:%s cid:%s \n",
-					__FUNCTION__,
-					resp[1],
-					resp[2]);
-				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac = atoi(resp[1]);
-				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid = atoi(resp[2]);
-				break;
-			}
-			case RIL_CELL_INFO_TYPE_WCDMA: {
-				RLOGI("%s: RIL_CELL_INFO_TYPE_WCDMA: lac:%s cid:%s \n",
-					__FUNCTION__,
-					resp[1],
-					resp[2]);
-				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac = -1;
-				cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid = -1;
-				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.lac = atoi(resp[1]);
-				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.cid = atoi(resp[2]);
-				break;
-			}
-			default:
-				break;
-		}
-	}
-	rilEnv->OnRequestComplete(t, e, response, responselen);
-}
-
-
 static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e) {
 	char empty[1] = "";
 	char *deviceIdentityResponse[4];
@@ -556,10 +521,6 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				return;
 			}
 			break;
-		case RIL_REQUEST_DATA_REGISTRATION_STATE:
-			RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-			onRequestCompleteDataRegistrationState(t, e, response, responselen);
-			return;
 		case RIL_REQUEST_GET_SIM_STATUS:
 			/* Remove unused extra elements from RIL_AppStatus */
 			if (response != NULL && responselen == sizeof(RIL_CardStatus_v5_samsung)) {
