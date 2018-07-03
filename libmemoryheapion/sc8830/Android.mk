@@ -25,7 +25,8 @@ LOCAL_PROPRIETARY_MODULE := true
 
 LOCAL_SRC_FILES := \
 	MemoryHeapIon.cpp \
-	MemoryHeapIon_custom.cpp
+	MemoryHeapIon_custom.cpp \
+	MemoryHeapIon_legacy.cpp
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
@@ -40,6 +41,8 @@ LOCAL_SHARED_LIBRARIES := \
 	liblog \
 	libcutils \
 	libutils
+
+LOCAL_CFLAGS += -Wno-conversion
 
 ifeq ($(TARGET_UPDATED_MALI),true)
 LOCAL_CFLAGS += -DUPDATED_MALI
