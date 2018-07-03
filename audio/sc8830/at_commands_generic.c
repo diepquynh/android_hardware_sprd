@@ -1,5 +1,4 @@
 #define VOICECALL_VOLUME_MAX_UI	6
-#define AT_RESPONSE_LEN 1024
 
 enum {
      ROUTE_BIT = 0,
@@ -16,48 +15,9 @@ enum {
 static pthread_mutex_t  ATlock = PTHREAD_MUTEX_INITIALIZER;         //eng cannot handle many at commands once
 static int at_cmd_routeDev(struct tiny_audio_device *adev,char* route,T_AT_CMD* at);
 
-typedef const char *(*send_at_func_t)(int modem_id, int sim_id, const char *at_cmd);
-static send_at_func_t send_at;
-
-static send_at_func_t find_send_at()
-{
-    send_at_func_t result = 0;
-    void *handle;
-    char *error;
-    ALOGD("%s", __FUNCTION__);
-    if ((handle = dlopen("libatchannel.so", RTLD_NOW))) {
-        dlerror(); /* clear any previous errors */
-        result = (send_at_func_t) dlsym(handle, "sendAt");
-        if ((error = (char *) dlerror())) {
-            result = 0;
-            dlclose(handle);
-            ALOGE("Cannot find '%s' function. Error: %s", "sendAt", error);
-        }
-    } else {
-        ALOGE("Cannot load: %s. Error: %s", "libatchannel.so", dlerror());
-    }
-    return result;
-}
-
-static size_t send_at_wrapper(void *buf, size_t buf_len, int sim_id, const char* at_cmd)
-{
-    ALOGI("at_cmd=[%s]", at_cmd);
-    if (!send_at)
-        send_at = find_send_at();
-    if (send_at) {
-        const int modem_id = 0; /* XXX Is 0 for w modem, 1 for other modem? */
-        const char *resp = send_at(modem_id, sim_id, at_cmd);
-        size_t outLen = MIN(buf_len, strlen(resp) + 1);
-        memcpy(buf, resp, outLen);
-        return outLen;
-    } else {
-        ALOGE("'send_at' is not initilized!");
-        }
-    return 0;
-}
-
 int do_cmd_dual(int modemId, int simId, struct tiny_audio_device *adev)
 {
+    const char *err_str = NULL;
     int indx = 0;
     T_AT_CMD process_at_cmd = {0};
     int dirty_count= 0;
@@ -92,9 +52,8 @@ int do_cmd_dual(int modemId, int simId, struct tiny_audio_device *adev)
         cmd_bit = cmd_queue_pri[dirty_count-indx-1];
         ALOGD("do_cmd_dual Switch incall AT command [%d][%d][%s][%d] ", modemId,simId,&(process_at_cmd.at_cmd[cmd_bit]),cmd_bit);
         adev->routeDev = at_cmd_routeDev(adev,&(process_at_cmd.at_cmd[cmd_bit]),&process_at_cmd);
-        char resp[AT_RESPONSE_LEN] = { 0 };
-        int ret = send_at_wrapper(resp, AT_RESPONSE_LEN, simId, &(process_at_cmd.at_cmd[cmd_bit]));
-        ALOGD("do_cmd_dual Switch incall AT command [%d][%s][%s] ", ret, &(process_at_cmd.at_cmd[cmd_bit]), resp);
+        err_str = sendAt(modemId, simId, &(process_at_cmd.at_cmd[cmd_bit]));
+        ALOGD("do_cmd_dual Switch incall AT command [%s][%s] ", &(process_at_cmd.at_cmd[cmd_bit]), err_str);
     }
     return 0;
 }

@@ -86,6 +86,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libvbpga \
 	libnvexchange \
 	libhardware_legacy \
+	libatchannel \
 
 LOCAL_REQUIRED_MODULES := \
 	liblog \
@@ -98,6 +99,7 @@ LOCAL_REQUIRED_MODULES := \
 	libvbpga \
 	libnvexchange \
 	libhardware_legacy \
+	libatchannel \
 
 LOCAL_MODULE_TAGS := optional
 

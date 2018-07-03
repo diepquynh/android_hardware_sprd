@@ -76,6 +76,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libnvexchange \
 	libdumpdata \
 	libhardware_legacy \
+	libatchannel \
 
 LOCAL_REQUIRED_MODULES := \
 	liblog \
@@ -89,6 +90,7 @@ LOCAL_REQUIRED_MODULES := \
 	libnvexchange \
 	libdumpdata \
 	libhardware_legacy \
+	libatchannel \
 
 LOCAL_MODULE_TAGS := optional
 

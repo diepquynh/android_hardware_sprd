@@ -43,6 +43,8 @@
 #include <tinyalsautils.h>
 #include <audio_utils/resampler.h>
 
+#include <AtChannel.h>
+
 #include "audio_pga.h"
 #include "vb_effect_if.h"
 #include "vb_pga.h"
