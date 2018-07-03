@@ -61,6 +61,22 @@ public:
     int         getHeapID() const;
     void*       getBase() const;
 
+    /* Old stuffs from legacy libmemoryheapion needed for legacy blobs adaption */
+    int get_phy_addr_from_ion(int *phy_addr, int *size);
+    static int Get_phy_addr_from_ion(int fd, int *phy_addr, int *size);/*fd is "fd of the corresponding ion hanlde"*/
+    int flush_ion_buffer(void *v_addr, void *p_addr,int size);
+    static int Flush_ion_buffer(int buffer_fd, void *v_addr,void *p_addr, int size);
+
+    int get_gsp_iova(int *mmu_addr, int *size);
+    int free_gsp_iova(int mmu_addr, int size);
+    int get_mm_iova(int *mmu_addr, int *size);
+    int free_mm_iova(int mmu_addr, int size);
+    static int Get_gsp_iova(int buffer_fd, int *mmu_addr, int *size);
+    static int Free_gsp_iova(int buffer_fd, int mmu_addr, int size);
+    static int Get_mm_iova(int buffer_fd,int *mmu_addr, int *size);
+    static int Free_mm_iova(int buffer_fd,int mmu_addr, int size);
+    /* end of *old stuffs* */
+
     static int Get_phy_addr_from_ion(int fd, unsigned long *phy_addr, size_t *size);/*fd is "fd of the corresponding ion hanlde"*/
     int get_phy_addr_from_ion(unsigned long *phy_addr, size_t *size);
     static int Flush_ion_buffer(int buffer_fd, void *v_addr,void *p_addr, size_t size);
