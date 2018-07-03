@@ -30,6 +30,7 @@
 #include <cutils/properties.h>
 #include <gralloc_priv.h>
 #include <ion_sprd.h>
+#include <MemoryHeapIon.h>
 #include <media/hardware/MetadataBufferType.h>
 #include "SprdOEMCamera.h"
 //#include <androidfw/SprdIlog.h>
@@ -3280,13 +3281,13 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 		if (is_cache) {
 			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_MM);
 		} else {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 		}
 	} else {
 		if (is_cache) {
 			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_SYSTEM);
 		} else {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 		}
 	}
 
@@ -5152,11 +5153,11 @@ int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem 
 	if (0 == s_mem_method) {
 		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
 											tmp_one_frame_mem_ptr->width * tmp_one_frame_mem_ptr->height,
-											MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+											MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
 										tmp_one_frame_mem_ptr->width * tmp_one_frame_mem_ptr->height,
-										MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+										MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (tmp_one_frame_mem_ptr->input_y_pmem_hp->getHeapID() < 0) {
 		LOGE("failed to alloc input_y pmem buffer.\n");
@@ -5178,7 +5179,7 @@ int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem 
 			return -1;
 		}
 	}
-	tmp_one_frame_mem_ptr->input_y_virtual_addr = (unsigned char*)tmp_one_frame_mem_ptr->input_y_pmem_hp->base();
+	tmp_one_frame_mem_ptr->input_y_virtual_addr = (unsigned char*)tmp_one_frame_mem_ptr->input_y_pmem_hp->getBase();
 	if (!tmp_one_frame_mem_ptr->input_y_physical_addr) {
 		LOGE("failed to alloc input_y pmem buffer:addr is null.\n");
 		return -1;
@@ -5198,7 +5199,7 @@ int SprdCameraHardware::relaseOneFrameMem(struct SprdCameraHardware::OneFrameMem
 		if (0 == s_mem_method) {
 			tmp_one_frame_mem_ptr->input_y_pmem_hp.clear();
 		} else {
-			tmp_one_frame_mem_ptr->input_y_pmem_hp->free_mm_iova(tmp_one_frame_mem_ptr->input_y_physical_addr,tmp_one_frame_mem_ptr->input_y_pmemory_size);
+			tmp_one_frame_mem_ptr->input_y_pmem_hp->free_mm_iova((int)tmp_one_frame_mem_ptr->input_y_physical_addr,(int)tmp_one_frame_mem_ptr->input_y_pmemory_size);
 		}
 	}
 	return 0;
@@ -6755,7 +6756,7 @@ int SprdCameraHardware::flush_buffer(camera_flush_mem_type_e  type, int index, v
 				}
 				if (pHeapIon) {
 					LOGE("flush_buffer index=%d,vaddr=0x%x, paddr=0x%x,size=0x%x", i, (uint32_t)v_addr, (uint32_t)p_addr,size);
-					ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
+					ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, (size_t)size);
 					if (ret) {
 						LOGW("flush_buffer abnormal ret=%d", ret);
 						LOGW("flush_buffer index=%d,vaddr=0x%x, paddr=0x%x", i, (uint32_t)v_addr, (uint32_t)p_addr);
@@ -6789,7 +6790,7 @@ int SprdCameraHardware::flush_buffer(camera_flush_mem_type_e  type, int index, v
 
 	if (pHeapIon) {
 		LOGV("flush_buffer index=%d,vaddr=0x%x, paddr=0x%x,size=0x%x", index, (uint32_t)v_addr, (uint32_t)p_addr,size);
-		ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
+		ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, (size_t)size);
 		if (ret) {
 			LOGW("flush_buffer abnormal ret=%d", ret);
 			LOGW("flush_buffer index=%d,vaddr=0x%x, paddr=0x%x", index, (uint32_t)v_addr, (uint32_t)p_addr);

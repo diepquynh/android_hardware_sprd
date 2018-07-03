@@ -912,8 +912,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
-    if (PNULL != user_ptr && user_ptr->MakerNote.ptr
-        && user_ptr->MakerNote.count > 0)
+    if (PNULL != user_ptr && user_ptr->MakerNote.count > 0)
     {
         ifd_info.tag = IFD_MAKERNOTE;
         ifd_info.type = IFD_UNDEFINED;
@@ -929,8 +928,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
-    if (PNULL != user_ptr && user_ptr->UserComment.ptr
-        && user_ptr->UserComment.count > 0)
+    if (PNULL != user_ptr && user_ptr->UserComment.count > 0)
     {
         ifd_info.tag = IFD_USERCOMMENT;
         ifd_info.type = IFD_UNDEFINED;

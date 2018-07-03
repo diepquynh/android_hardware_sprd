@@ -1156,12 +1156,12 @@ sprd_camera_memory_t* SprdCameraHWInterface2::GetCachePmem(int buf_size, int num
 		if (IsCach)
 			pHeapIon = new MemoryHeapIon("/dev/ion", acc ,0 , (1<<31) | ION_HEAP_ID_MASK_MM);
 		else
-			pHeapIon = new MemoryHeapIon("/dev/ion", acc, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			pHeapIon = new MemoryHeapIon("/dev/ion", acc, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		if (IsCach)
 			pHeapIon = new MemoryHeapIon("/dev/ion", acc, 0, (1<<31) | ION_HEAP_ID_MASK_SYSTEM);
 		else
-			pHeapIon = new MemoryHeapIon("/dev/ion", acc, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+			pHeapIon = new MemoryHeapIon("/dev/ion", acc, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (pHeapIon == NULL) {
 		HAL_LOGE("Failed to alloc cap pmem (%d)", acc);

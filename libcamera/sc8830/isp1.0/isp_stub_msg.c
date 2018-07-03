@@ -313,7 +313,7 @@ int stub_thread_create(cmr_handle *thread_handle, uint32_t queue_length, msg_pro
 	}
 
 	pthread_attr_destroy(&attr);
-	*thread_handle = (unsigned long)thread;
+	*thread_handle = (void *)thread;
 	return rtn;
 }
 

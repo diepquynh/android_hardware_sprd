@@ -65,14 +65,14 @@ int isp_stub_process(uint32_t		thread_id,
 
 	if (is_need_destory && !func_ptr && *cur_handle_ptr) {
 		STUB_LOGE("[STUB PROC] directly destroy thread 0x%x", *cur_handle_ptr);
-		stub_thread_destroy(*cur_handle_ptr);
+		stub_thread_destroy((void *)cur_handle_ptr);
 		*cur_handle_ptr = 0;
 
 		return ret;
 	}
 
 	if (0 == *cur_handle_ptr) {
-		ret = stub_thread_create(cur_handle_ptr,
+		ret = stub_thread_create((void *)cur_handle_ptr,
 			STUB_MSG_QUEUE_SIZE,
 			thread_proc,
 			NULL);
@@ -91,7 +91,7 @@ int isp_stub_process(uint32_t		thread_id,
 	memset(context_ptr, 0, sizeof(struct stub_context_t));
 
 	context_ptr->thread_id 		= thread_id;
-	context_ptr->thread_handle_ptr	= cur_handle_ptr;
+	context_ptr->thread_handle_ptr	= (void *)cur_handle_ptr;
 	context_ptr->func_ptr		= func_ptr;
 	context_ptr->cb			= cb;
 	context_ptr->param		= param;
@@ -105,7 +105,7 @@ int isp_stub_process(uint32_t		thread_id,
 	message.msg_type   = STUB_EVT_START;
 	message.alloc_flag = 1;
 	message.data 	   = context_ptr;
-	ret = stub_thread_msg_send(*cur_handle_ptr, &message);
+	ret = stub_thread_msg_send((void *)cur_handle_ptr, &message);
 	if (ret) {
 		STUB_LOGE("[STUB PROC] Faile to send one msg to af thread");
 

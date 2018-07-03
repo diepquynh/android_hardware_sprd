@@ -174,7 +174,7 @@ cmr_int Sensor_Ioctl(SENSOR_IOCTL_CMD_E sns_cmd, void *arg)
 	cmr_u32 ret = CMR_CAMERA_SUCCESS;
 
 
-	struct sensor_drv_context *sensor_cxt = sensor_get_dev_cxt();
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
 	if (SENSOR_IOCTL_GET_STATUS != sns_cmd) {
 		SCI_Trace_Dcam("cmd = %d, arg = %p.\n", sns_cmd, arg);
@@ -356,7 +356,7 @@ int write_sensor_shutter(uint32_t shutter_val)
 
 //	line_time = psensorinfo->sensor_mode_info[cxt->sn_cxt.preview_mode].line_time ;
 	expsure_line = shutter_val/line_time;
-	ret = Sensor_Ioctl(SENSOR_IOCTL_WRITE_EV, expsure_line);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_WRITE_EV, &expsure_line);
 
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, shutter_val);
 	/*ret = _hi544_set_shutter(shutter_val);*/
@@ -377,7 +377,7 @@ int write_sensor_gain(uint32_t gain_val)
 	int ret = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, gain_val);
 	//ret = _hi544_write_gain(gain_val);
-	ret = Sensor_Ioctl(SENSOR_IOCTL_WRITE_GAIN, gain_val);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_WRITE_GAIN, &gain_val);
 	return ret;
 }
 
@@ -422,7 +422,7 @@ int write_position(uint32_t pos)
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, pos);
 
 	//ret = _hi544_write_af(pos);
-	ret = Sensor_Ioctl(SENSOR_IOCTL_AF_ENABLE, pos);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_AF_ENABLE, &pos);
 
 	return ret;
 }
@@ -644,7 +644,7 @@ int write_otp_actuator_i2c( uint32_t data_size, uint8_t *data_buf)
 		memcpy_ex(4, &reg_val,read_ptr,4);
 
 		param = (addr<<16)  | (reg_val & 0xffff);
-		ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL,(uint32_t)&io_val);
+		ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, &io_val);
 		if (0 != ret) {
 			SCI_Trace_Dcam ("%s failed  addr=0x%x val=0x%x", __func__, addr, reg_val);
 			break;
@@ -934,7 +934,7 @@ int read_otp_calibration_data(uint32_t *data_size, uint8_t *data_buf)
 		param_ptr.buff= &data_buf[otp_data_start_index];
 		val.type=SENSOR_VAL_TYPE_READ_OTP;
 		val.pval =&param_ptr;
-		ret = Sensor_Ioctl( SENSOR_IOCTL_ACCESS_VAL, (uint32_t)&val);
+		ret = Sensor_Ioctl( SENSOR_IOCTL_ACCESS_VAL, &val);
 
 		*data_size = otp_data_start_index + otp_data_len;
 	}else{
@@ -954,7 +954,7 @@ int read_sensor_shutter(uint32_t *shutter_val)
 	SENSOR_EXP_INFO_T *exp_info;
 	uint32_t mode = 0;
 
-	ret = Sensor_Ioctl(SENSOR_IOCTL_GET_VAL,(uint32_t)&val);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_GET_VAL, &val);
 	//get mode & line time
 	Sensor_GetMode(&mode);
 	exp_info = Sensor_GetInfo();
@@ -982,7 +982,7 @@ int read_sensor_gain(uint32_t *gain_val)
 	val.type = SENSOR_VAL_TYPE_READ_OTP_GAIN;
 	val.pval = &gain;
 
-	ret = Sensor_Ioctl(SENSOR_IOCTL_GET_VAL, (void *)&val);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_GET_VAL, &val);
 	*gain_val = gain & 0xffff;
 
 	SCI_Trace_Dcam("%s:gain %d ret %d\n",__func__, *gain_val,ret);
@@ -1030,7 +1030,7 @@ int read_position(uint32_t *pos)
 
 	val.type=SENSOR_VAL_TYPE_GET_AFPOSITION;
 	val.pval =pos;
-	ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, (uint32_t)&val);
+	ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, &val);
 
 	return ret;
 }
@@ -1307,7 +1307,7 @@ int read_otp_actuator_i2c(uint32_t *data_size, uint8_t *data_buf)
 		//	ret = dcam_i2c_read_reg_16((uint16_t)addr,&reg_val);
 
 			param = addr<<16;
-			ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL,(uint32_t)&io_val);
+			ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, &io_val);
 			if (0 != ret) {
 				SCI_Trace_Dcam ("%s failed  addr=0x%x ", __func__, addr);
 				break;

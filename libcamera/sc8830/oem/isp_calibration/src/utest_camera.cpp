@@ -207,7 +207,7 @@ static int utest_callback_cap_mem_alloc(void* handle, unsigned int size, unsigne
 		return -1;
 	}
 
-	sp<MemoryHeapIon> pHeapIon = new MemoryHeapIon("/dev/ion", size, MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+	sp<MemoryHeapIon> pHeapIon = new MemoryHeapIon("/dev/ion", size, MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	if (pHeapIon == NULL) {
 		return -1;
 	}
@@ -216,7 +216,7 @@ static int utest_callback_cap_mem_alloc(void* handle, unsigned int size, unsigne
 	}
 
 	pHeapIon->get_phy_addr_from_ion((int*)addr_phy, (int*)&size);
-	*addr_vir = (int)(pHeapIon->base());
+	*addr_vir = (int)(pHeapIon->getBase());
 	camera->misc_heap_array[camera->misc_heap_num++] = pHeapIon;
 
 	return 0;
@@ -254,14 +254,14 @@ static int utest_dcam_preview_mem_alloc(void)
 
 	for (i = 0; i < UTEST_PREVIEW_BUF_NUM; i++) {
 		cmr_cxt_ptr->preview_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buf_size,
-			MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 		if (cmr_cxt_ptr->preview_pmem_hp[i]->getHeapID() < 0) {
 			ERR("failed to alloc preview pmem buffer.\n");
 			return -1;
 		}
 		cmr_cxt_ptr->preview_pmem_hp[i]->get_phy_addr_from_ion((int *)(&cmr_cxt_ptr->preview_physical_addr[i]),
 			(int *)(&cmr_cxt_ptr->preview_pmemory_size[i]));
-		cmr_cxt_ptr->preview_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->preview_pmem_hp[i]->base();
+		cmr_cxt_ptr->preview_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->preview_pmem_hp[i]->getBase();
 		if (!cmr_cxt_ptr->preview_physical_addr[i]) {
 			ERR("failed to alloc preview pmem buffer:addr is null.\n");
 			return -1;
@@ -302,14 +302,14 @@ static int utest_dcam_cap_memory_alloc(void)
 
 	buffer_size = camera_get_size_align_page(mem_size);
 	cmr_cxt_ptr->cap_pmem_hp = new MemoryHeapIon("/dev/ion", buffer_size,
-		MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+		MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	if (cmr_cxt_ptr->cap_pmem_hp->getHeapID() < 0) {
 		ERR("failed to alloc capture pmem buffer.\n");
 		return -1;
 	}
 	cmr_cxt_ptr->cap_pmem_hp->get_phy_addr_from_ion((int *)(&cmr_cxt_ptr->cap_physical_addr),
 		(int *)(&cmr_cxt_ptr->cap_pmemory_size));
-	cmr_cxt_ptr->cap_virtual_addr = (unsigned char*)cmr_cxt_ptr->cap_pmem_hp->base();
+	cmr_cxt_ptr->cap_virtual_addr = (unsigned char*)cmr_cxt_ptr->cap_pmem_hp->getBase();
 	if (!cmr_cxt_ptr->cap_physical_addr) {
 		ERR("failed to alloc capture pmem buffer:addr is null.\n");
 		return -1;

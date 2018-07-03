@@ -179,11 +179,11 @@ static int utest_jpeg_mem_alloc(void)
 	if (0 == s_mem_method) {
 		jpeg_cxt_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
 											jpeg_cxt_ptr->width * jpeg_cxt_ptr->height,
-											MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+											MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		jpeg_cxt_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
 										jpeg_cxt_ptr->width * jpeg_cxt_ptr->height,
-										MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+										MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (jpeg_cxt_ptr->input_y_pmem_hp->getHeapID() < 0) {
 		ERR("failed to alloc input_y pmem buffer.\n");
@@ -197,7 +197,7 @@ static int utest_jpeg_mem_alloc(void)
 		jpeg_cxt_ptr->input_y_pmem_hp->get_mm_iova((int *)(&jpeg_cxt_ptr->input_y_physical_addr),
 		(int *)(&jpeg_cxt_ptr->input_y_pmemory_size));
 	}
-	jpeg_cxt_ptr->input_y_virtual_addr = (unsigned char*)jpeg_cxt_ptr->input_y_pmem_hp->base();
+	jpeg_cxt_ptr->input_y_virtual_addr = (unsigned char*)jpeg_cxt_ptr->input_y_pmem_hp->getBase();
 	if (!jpeg_cxt_ptr->input_y_physical_addr) {
 		ERR("failed to alloc input_y pmem buffer:addr is null.\n");
 		return -1;
@@ -209,11 +209,11 @@ static int utest_jpeg_mem_alloc(void)
 	if (0 == s_mem_method) {
 		jpeg_cxt_ptr->input_uv_pmem_hp = new MemoryHeapIon("/dev/ion",
 											jpeg_cxt_ptr->width * jpeg_cxt_ptr->height / 2,
-											MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+											MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		jpeg_cxt_ptr->input_uv_pmem_hp = new MemoryHeapIon("/dev/ion",
 										jpeg_cxt_ptr->width * jpeg_cxt_ptr->height / 2,
-										MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+										MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (jpeg_cxt_ptr->input_uv_pmem_hp->getHeapID() < 0) {
 		ERR("failed to alloc input_uv pmem buffer.\n");
@@ -227,7 +227,7 @@ static int utest_jpeg_mem_alloc(void)
 		jpeg_cxt_ptr->input_uv_pmem_hp->get_mm_iova((int *)(&jpeg_cxt_ptr->input_uv_physical_addr),
 			(int *)(&jpeg_cxt_ptr->input_uv_pmemory_size));
 	}
-	jpeg_cxt_ptr->input_uv_virtual_addr = (unsigned char*)jpeg_cxt_ptr->input_uv_pmem_hp->base();
+	jpeg_cxt_ptr->input_uv_virtual_addr = (unsigned char*)jpeg_cxt_ptr->input_uv_pmem_hp->getBase();
 	if (!jpeg_cxt_ptr->input_uv_physical_addr) {
 		ERR("failed to alloc input_uv pmem buffer:addr is null.\n");
 		return -1;
@@ -239,11 +239,11 @@ static int utest_jpeg_mem_alloc(void)
 	if (0 == s_mem_method) {
 		jpeg_cxt_ptr->jpg_pmem_hp = new MemoryHeapIon("/dev/ion",
 											jpeg_cxt_ptr->width * jpeg_cxt_ptr->height,
-											MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+											MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		jpeg_cxt_ptr->jpg_pmem_hp = new MemoryHeapIon("/dev/ion",
 										jpeg_cxt_ptr->width * jpeg_cxt_ptr->height,
-										MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+										MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (jpeg_cxt_ptr->jpg_pmem_hp->getHeapID() < 0) {
 		ERR("failed to alloc output_y pmem buffer.\n");
@@ -257,7 +257,7 @@ static int utest_jpeg_mem_alloc(void)
 		jpeg_cxt_ptr->jpg_pmem_hp->get_mm_iova((int *)(&jpeg_cxt_ptr->jpg_physical_addr),
 		(int *)(&jpeg_cxt_ptr->jpg_pmemory_size));
 	}
-	jpeg_cxt_ptr->jpg_virtual_addr = (unsigned char*)jpeg_cxt_ptr->jpg_pmem_hp->base();
+	jpeg_cxt_ptr->jpg_virtual_addr = (unsigned char*)jpeg_cxt_ptr->jpg_pmem_hp->getBase();
 	if (!jpeg_cxt_ptr->jpg_physical_addr) {
 		ERR("failed to alloc output_y pmem buffer:addr is null.\n");
 		return -1;

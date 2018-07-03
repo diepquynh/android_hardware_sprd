@@ -260,7 +260,7 @@ static int auto_test_callback_cap_mem_alloc(void* handle, unsigned int size, uns
 	} else {
 		pHeapIon->get_mm_iova((int*)addr_phy, (int*)&size);
 	}
-	*addr_vir = (int)(pHeapIon->base());
+	*addr_vir = (int)(pHeapIon->getBase());
 	camera->misc_heap_array[camera->misc_heap_num++] = pHeapIon;
 
 	INFO("debug %s %d X \n",__func__,__LINE__);
@@ -288,9 +288,9 @@ int auto_test_dcam_preview_mem_alloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_ad
 	for (i = 0; i < sum; i++) {
 
 		if (g_mem_method == USE_PHYSICAL_ADD)
-			cmr_cxt_ptr->preview_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			cmr_cxt_ptr->preview_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 		else
-			cmr_cxt_ptr->preview_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buf_size ,MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+			cmr_cxt_ptr->preview_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buf_size ,MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
 		if (cmr_cxt_ptr->preview_pmem_hp[i]->getHeapID() < 0) {
 			ERR("failed to alloc preview pmem buffer.\n");
@@ -305,7 +305,7 @@ int auto_test_dcam_preview_mem_alloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_ad
 				(int *)(&cmr_cxt_ptr->preview_pmemory_size[i]));
 		}
 
-		cmr_cxt_ptr->preview_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->preview_pmem_hp[i]->base();
+		cmr_cxt_ptr->preview_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->preview_pmem_hp[i]->getBase();
 		if (!cmr_cxt_ptr->preview_physical_addr[i]) {
 			ERR("failed to alloc preview pmem buffer:addr is null.\n");
 			return -1;
@@ -354,9 +354,9 @@ int auto_test_dcam_cap_memory_alloc(cmr_u32 size, cmr_u32 sum, cmr_uint *addr_ph
 	}
 	for (i=0 ; i< sum ; i++) {
 		if(g_mem_method == USE_PHYSICAL_ADD)
-			cmr_cxt_ptr->cap_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buffer_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			cmr_cxt_ptr->cap_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buffer_size , MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 		else
-			cmr_cxt_ptr->cap_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buffer_size ,MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+			cmr_cxt_ptr->cap_pmem_hp[i] = new MemoryHeapIon("/dev/ion", buffer_size ,MemoryHeapIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
 		if (cmr_cxt_ptr->cap_pmem_hp[i]->getHeapID() < 0) {
 			ERR("failed to alloc capture pmem buffer.\n");
@@ -371,7 +371,7 @@ int auto_test_dcam_cap_memory_alloc(cmr_u32 size, cmr_u32 sum, cmr_uint *addr_ph
 				(int *)(&cmr_cxt_ptr->cap_pmemory_size[i]));
 		}
 
-		cmr_cxt_ptr->cap_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->cap_pmem_hp[i]->base();
+		cmr_cxt_ptr->cap_virtual_addr[i] = (unsigned char*)cmr_cxt_ptr->cap_pmem_hp[i]->getBase();
 		if (!cmr_cxt_ptr->cap_physical_addr[i]) {
 			ERR("failed to alloc capture pmem buffer:addr is null.\n");
 			return -1;

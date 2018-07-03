@@ -17,6 +17,7 @@
 #define LOG_TAG "isp_app"
 
 #include <sys/types.h>
+#include <stdint.h>
 #include "isp_log.h"
 #include "isp_ctrl.h"
 #include "isp_app.h"
@@ -330,15 +331,15 @@ int32_t _isp_AppCtrlCallback(uint32_t handler_id, int32_t mode, void* param_ptr,
 			ISP_LOG("$LHC:0x%x", mode);
 			if((ISP_AE_BAPASS_CALLBACK == (ISP_EVT_MASK&mode))
 				|| (ISP_FLASH_AE_CALLBACK == (ISP_EVT_MASK&mode))) {
-				isp_context_ptr->ctrl_callback(isp_context_ptr->oem_handle, ISP_CALLBACK_EVT|ISP_AE_STAB_CALLBACK, param_ptr, param_len);	
+				isp_context_ptr->ctrl_callback((uintptr_t)isp_context_ptr->oem_handle, ISP_CALLBACK_EVT|ISP_AE_STAB_CALLBACK, param_ptr, param_len);	
 
 			} else {
-				isp_context_ptr->ctrl_callback(isp_context_ptr->oem_handle, mode, param_ptr, param_len);
+				isp_context_ptr->ctrl_callback((uintptr_t)isp_context_ptr->oem_handle, mode, param_ptr, param_len);
 			}
 		}
 	} else {
 		//isp_context_ptr->ctrl_callback(handler_id, mode, param_ptr, param_len);
-		isp_context_ptr->ctrl_callback(isp_context_ptr->oem_handle, mode, param_ptr, param_len);
+		isp_context_ptr->ctrl_callback((uintptr_t)isp_context_ptr->oem_handle, mode, param_ptr, param_len);
 	}
 
 	return rtn;
@@ -365,7 +366,7 @@ uint32_t _isp_AppCtrlCallbackHandler(uint32_t handler_id, int32_t mode, void* pa
 			rtn = _isp_AppLumMeasureRecover(handler_id);
 		}
 	}
-	isp_context_ptr->ctrl_callback(isp_context_ptr->oem_handle, mode, param_ptr, param_len);
+	isp_context_ptr->ctrl_callback((uintptr_t)isp_context_ptr->oem_handle, mode, param_ptr, param_len);
 
 	//isp_context_ptr->ctrl_callback(handler_id, mode, param_ptr, param_len);
 
@@ -388,7 +389,7 @@ uint32_t _isp_AppStopVideoHandler(uint32_t handler_id)
 		af_notice.mode=ISP_FOCUS_MOVE_END;
 		af_notice.valid_win=0x00;
 		//isp_context_ptr->ctrl_callback(handler_id, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK, (void*)&af_notice, sizeof(struct isp_af_notice));
-		isp_context_ptr->ctrl_callback(isp_context_ptr->oem_handle,ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK, (void*)&af_notice, sizeof(struct isp_af_notice));
+		isp_context_ptr->ctrl_callback((uintptr_t)isp_context_ptr->oem_handle,ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK, (void*)&af_notice, sizeof(struct isp_af_notice));
 
 		isp_context_ptr->af_flag = ISP_APP_UEB;
 		isp_context_ptr->stop_handle_flag = 1;

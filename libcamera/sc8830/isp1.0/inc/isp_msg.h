@@ -27,6 +27,7 @@ extern "C"
 #include <stdio.h>
 #include <string.h>
 #include "cmr_isp_type.h"
+#include "isp_app.h"
 
 #define      ISP_MSG_MAGIC_CODE           0xEFFEA55A
 

@@ -26,7 +26,7 @@ extern "C"
 #include "port.h"
 #endif
 
-#if 0
+//#if 1
 typedef unsigned long   cmr_uint;
 typedef long            cmr_int;
 typedef uint64_t        cmr_u64;
@@ -38,7 +38,7 @@ typedef short           cmr_s16;
 typedef unsigned char   cmr_u8;
 typedef char            cmr_s8;
 typedef void*           cmr_handle;
-#endif
+//#endif
 
 #ifdef __cplusplus
 }

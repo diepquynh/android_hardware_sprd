@@ -150,7 +150,7 @@ private:
 		void     completeInitialization();
 		bool     initialized() const {
 			if (mHeap != NULL) {
-				if(MAP_FAILED != mHeap->base())
+				if(MAP_FAILED != mHeap->getBase())
 					return true;
 				else
 					return false;
