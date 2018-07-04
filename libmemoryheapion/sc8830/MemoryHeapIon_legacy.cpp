@@ -103,4 +103,4 @@ int MemoryHeapIon::Free_mm_iova(int buffer_fd,int mmu_addr, int size) {
     return Free_mm_iova(buffer_fd, mmuaddr, sz);
 }
 
-} // namespace android
+}; // namespace android
