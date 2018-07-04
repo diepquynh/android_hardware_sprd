@@ -469,6 +469,8 @@ LOCAL_CFLAGS += \
 
 endif
 
+LOCAL_CFLAGS += -DSCX30G_V2
+
 include $(LOCAL_PATH)/SprdCtrl.mk
 
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
