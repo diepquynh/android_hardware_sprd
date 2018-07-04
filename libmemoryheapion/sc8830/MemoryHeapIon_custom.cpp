@@ -222,4 +222,4 @@ int MemoryHeapIon::Free_iova(int master_id, int buffer_fd,
 #endif
 }
 
-} // namespace android
+}; // namespace android
