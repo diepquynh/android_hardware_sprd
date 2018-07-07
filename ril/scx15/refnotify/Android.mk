@@ -10,6 +10,7 @@ LOCAL_SHARED_LIBRARIES := \
     libc \
     libutils \
     libcutils \
+    liblog \
 
 LOCAL_MODULE := refnotify
 
