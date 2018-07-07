@@ -19,4 +19,6 @@ LOCAL_MODULE := modemd
 
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_PROPRIETARY_MODULE := true
+
 include $(BUILD_EXECUTABLE)

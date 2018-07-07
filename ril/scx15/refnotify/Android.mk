@@ -16,4 +16,6 @@ LOCAL_MODULE := refnotify
 
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_PROPRIETARY_MODULE := true
+
 include $(BUILD_EXECUTABLE)

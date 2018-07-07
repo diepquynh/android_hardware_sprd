@@ -37,6 +37,8 @@ LOCAL_MODULE := nvitemd
 
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_PROPRIETARY_MODULE := true
+
 include $(BUILD_EXECUTABLE)
 
 endif # !TARGET_SIMULATOR
