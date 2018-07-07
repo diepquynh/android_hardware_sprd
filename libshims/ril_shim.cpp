@@ -29,13 +29,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "RIL_SHIM"
 #include <cutils/log.h>
-
-#define PROPERTY_VALUE_MAX 92
-
-static int (*real_property_set)(const char *, const char *);
-static int (*real_property_get)(const char *, char *, const char *);
-
-static void constructor() __attribute__((constructor));
+#include <cutils/properties.h>
 
 /* { RIL_KEYS, { ANDROID_KEY, ANDROID_VALUE_INDEXES } } */
 static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
@@ -53,14 +47,6 @@ static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
     { "gsm.network.type2",
             { "gsm.network.type", 1 } },
 };
-
-void constructor()
-{
-    real_property_set = (typeof real_property_set) dlsym(RTLD_NEXT, "property_set");
-    real_property_get = (typeof real_property_get) dlsym(RTLD_NEXT, "property_get");
-    assert(real_property_set);
-    assert(real_property_get);
-}
 
 static std::vector<std::string> split(const std::string &s, char delim)
 {
@@ -91,13 +77,13 @@ extern "C" int _ZN7android6Parcel13writeString16EPKtj() {
     return _ZN7android6Parcel13writeString16EPKDsj();
 }
 
-extern "C" int property_get(const char *key, char *value, const char *default_value)
+extern "C" int ____prop_get(const char *key, char *value, const char *default_value)
 {
     auto search = KEY_MAP.find(key);
     if (search != KEY_MAP.end()) {
         std::string actual_key = (*search).second.first;
         int index = (*search).second.second;
-        if (real_property_get(actual_key.c_str(), value, default_value) > 0) {
+        if (property_get(actual_key.c_str(), value, default_value) > 0) {
             std::vector<std::string> v = split(value, ',');
             if (index < v.size())
                 strcpy(value, v[index].c_str());
@@ -106,24 +92,24 @@ extern "C" int property_get(const char *key, char *value, const char *default_va
         }
         return strlen(value);
     }
-    return real_property_get(key, value, default_value);
+    return property_get(key, value, default_value);
 }
 
-extern "C" int property_set(const char *key, const char *value)
+extern "C" int ____prop_set(const char *key, const char *value)
 {
     auto search = KEY_MAP.find(key);
     if (search != KEY_MAP.end()) {
         std::string actual_key = (*search).second.first;
         int index = (*search).second.second;
         char tmp[PROPERTY_VALUE_MAX];
-        if (real_property_get(actual_key.c_str(), tmp, "") >= 0) {
+        if (property_get(actual_key.c_str(), tmp, "") >= 0) {
             std::vector<std::string> v = split(tmp, ',');
             if (!(index < v.size()))
                 v.resize(index + 1);
             v[index] = value;
             std::string actual_value = concat(v, ',');
-            return real_property_set(actual_key.c_str(), actual_value.c_str());
+            return property_set(actual_key.c_str(), actual_value.c_str());
         }
     }
-    return real_property_set(key, value);
+    return property_set(key, value);
 }

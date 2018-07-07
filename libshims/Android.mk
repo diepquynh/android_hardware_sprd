@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := ril_shim.cpp
-LOCAL_SHARED_LIBRARIES := libbinder liblog
+LOCAL_SHARED_LIBRARIES := libbinder libcutils liblog
 LOCAL_MODULE := libril_shim
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_TAGS := optional
