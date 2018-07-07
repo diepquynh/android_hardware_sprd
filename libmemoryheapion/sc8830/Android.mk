@@ -25,8 +25,12 @@ LOCAL_PROPRIETARY_MODULE := true
 
 LOCAL_SRC_FILES := \
 	MemoryHeapIon.cpp \
-	MemoryHeapIon_custom.cpp \
+	MemoryHeapIon_custom.cpp
+
+ifneq ($(SOC_SCX30G_V2),true)
+LOCAL_SRC_FILES += \
 	MemoryHeapIon_legacy.cpp
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
