@@ -9,6 +9,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
+    liblog \
 
 ifeq ($(strip $(TARGET_USERIMAGES_USE_EXT4)),true)
 LOCAL_CFLAGS += -DCONFIG_EMMC
