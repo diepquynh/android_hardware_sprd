@@ -1,14 +1,4 @@
 LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libcamsensors
-LOCAL_SRC_FILES := sensor/libcamsensors.so
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_SUFFIX := .so
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)
-include $(BUILD_PREBUILT)
-
 include $(CLEAR_VARS)
 
 sc8830like:=0
@@ -71,6 +61,7 @@ LOCAL_SRC_FILES:= \
 	sensor/sensor_pattern.c \
 	sensor/sensor_s5k4ecgx_mipi.c \
 	sensor/sensor_s5k4ecgx.c \
+	sensor/sensor_sr200pc20.c \
 	vsp/sc8830/src/jpg_drv_sc8830.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_bufmgr.c \
 	jpeg/jpeg_fw_8830/src/jpegcodec_global.c \
@@ -327,8 +318,7 @@ LOCAL_SHARED_LIBRARIES := \
 	liblog \
 	libmemoryheapion \
 	libui \
-	libgui \
-	libcamsensors
+	libgui
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_SHARED_LIBRARIES += libface_finder
