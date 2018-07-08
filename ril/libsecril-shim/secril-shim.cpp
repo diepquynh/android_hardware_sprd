@@ -160,6 +160,13 @@ static void fixupSignalStrength(void *response) {
 	p_cur->LTE_SignalStrength.rssnr = INT_MAX;
 }
 
+static void onCompleteRequestGetSimStatus(RIL_Token t, RIL_Errno e, void *response) {
+	RIL_CardStatus_v6 *v6response = (RIL_CardStatus_v6 *) response;
+
+	/* Send the fixed response to libril */
+	rilEnv->OnRequestComplete(t, e, v6response, sizeof(RIL_CardStatus_v6));
+}
+
 static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
 	int request;
 	RequestInfo *pRI;
@@ -192,6 +199,14 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
 			onRequestCompleteGetImeiSv(t, e, response, responselen);
 			return;
+		case RIL_REQUEST_GET_SIM_STATUS:
+			/* Remove unknown elements from Samsung's struct */
+			if (response != NULL && responselen == 440) {
+				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
+				onCompleteRequestGetSimStatus(t, e, response);
+				return;
+			}
+			break;
 		case RIL_REQUEST_SIGNAL_STRENGTH:
 			/* The Samsung RIL reports the signal strength in a strange way... */
 			if (response != NULL && responselen >= sizeof(RIL_SignalStrength_v5)) {
