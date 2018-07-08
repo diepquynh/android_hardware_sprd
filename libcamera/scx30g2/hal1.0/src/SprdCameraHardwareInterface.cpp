@@ -8395,7 +8395,7 @@ int SprdCameraHardware::flush_buffer(camera_flush_mem_type_e  type, int index, v
 				}
 				if (pHeapIon) {
 					LOGE("flush_buffer index=%d,vaddr=0x%lx, paddr=0x%lx,size=0x%x", i, (unsigned long)v_addr, (unsigned long)p_addr,size);
-					ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
+					ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, (size_t)size);
 					if (ret) {
 						LOGW("flush_buffer abnormal ret=%d", ret);
 						LOGW("flush_buffer index=%d,vaddr=0x%lx, paddr=0x%lx", i, (unsigned long)v_addr, (unsigned long)p_addr);
@@ -8429,7 +8429,7 @@ int SprdCameraHardware::flush_buffer(camera_flush_mem_type_e  type, int index, v
 
 	if (pHeapIon) {
 		LOGV("flush_buffer index=%d,vaddr=%p, paddr=%p,size=0x%x", index, v_addr, p_addr,size);
-		ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
+		ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, (size_t)size);
 		if (ret) {
 			LOGW("flush_buffer abnormal ret=%d", ret);
 			LOGW("flush_buffer index=%d,vaddr=%p, paddr=%p", index, v_addr, p_addr);
