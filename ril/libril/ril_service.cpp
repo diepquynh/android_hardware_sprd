@@ -926,9 +926,19 @@ Return<void> RadioImpl::dial(int32_t serial, const Dial& dialInfo) {
         dial.uusInfo = &uusInfo;
     }
 
+    // Handle Samsung CallDetails stuff
+    dial.callDetails = (RIL_CallDetails *) malloc(sizeof(RIL_CallDetails));
+    memset(dial.callDetails, 0, sizeof(RIL_CallDetails));
+    dial.callDetails->call_type = 0;
+    dial.callDetails->call_domain = 1;
+    dial.callDetails->getCsvFromExtras = strdup("");
+
     CALL_ONREQUEST(RIL_REQUEST_DIAL, &dial, sizeOfDial, pRI, mSlotId);
 
     memsetAndFreeStrings(2, dial.address, uusInfo.uusData);
+
+    free(dial.callDetails->getCsvFromExtras);
+    free(dial.callDetails);
 
     return Void();
 }
