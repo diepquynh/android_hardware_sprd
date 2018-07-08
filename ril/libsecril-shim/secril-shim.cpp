@@ -38,26 +38,6 @@ static RIL_CellInfo_v12 cellInfoWCDMA;
 static RIL_CellInfo_v12 cellInfoGSM;
 static RIL_CellInfo_v12 cellInfoList[2];
 
-static void onRequestDial(int request, void *data, RIL_Token t) {
-	RIL_Dial dial;
-	RIL_UUS_Info uusInfo;
-
-	dial.address = ((RIL_Dial *) data)->address;
-	dial.clir = ((RIL_Dial *) data)->clir;
-	dial.uusInfo = ((RIL_Dial *) data)->uusInfo;
-
-	if (dial.uusInfo == NULL) {
-		uusInfo.uusType = (RIL_UUS_Type) 0;
-		uusInfo.uusDcs = (RIL_UUS_DCS) 0;
-		uusInfo.uusData = NULL;
-		uusInfo.uusLength = 0;
-		dial.uusInfo = &uusInfo;
-	}
-
-	origRilFunctions->onRequest(request, &dial, sizeof(dial), t);
-}
-
-
 static int
 decodeVoiceRadioTechnology (RIL_RadioState radioState) {
     switch (radioState) {
@@ -308,15 +288,6 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 			onRequestDeviceIdentity(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
-		/* The Samsung RIL crashes if uusInfo is NULL... */
-		case RIL_REQUEST_DIAL:
-			if (datalen == sizeof(RIL_Dial) && data != NULL) {
-				onRequestDial(request, data, t);
-				RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
-				return;
-			}
-			break;
-
 		/* Necessary; RILJ may fake this for us if we reply not supported, but we can just implement it. */
 		case RIL_REQUEST_GET_RADIO_CAPABILITY:
 			onRequestGetRadioCapability(t);
