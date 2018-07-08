@@ -70,6 +70,26 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 	return true;
 }
 
+/* scx30g2 doesn't need this, so let's have a check flag */
+#ifndef SCX30G_V2
+static void onRequestAllowData(int request, void *data, size_t datalen, RIL_Token t) {
+	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
+			requestToString(request),
+			data, datalen);
+
+	const char rawHookCmd[] = { 0x09, 0x04 }; // RAW_HOOK_OEM_CMD_SWITCH_DATAPREFER
+	bool allowed = *((int *)data) == 0 ? false : true;
+
+	if (allowed) {
+		RequestInfo *pRI = (RequestInfo *)t;
+		pRI->pCI->requestNumber = RIL_REQUEST_OEM_HOOK_RAW;
+		origRilFunctions->onRequest(pRI->pCI->requestNumber, (void *)rawHookCmd, sizeof(rawHookCmd), t);
+	}
+
+	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+}
+#endif
+
 static void onRequestDial(int request, void *data, RIL_Token t) {
 	RIL_Dial dial;
 	RIL_CallDetails *cds;
@@ -115,6 +135,13 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 			onRequestGetRadioCapability(t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
+	/* scx30g2 doesn't need this, so let's have a check flag */
+	#ifndef SCX30G_V2
+		case RIL_REQUEST_ALLOW_DATA:
+			onRequestAllowData(request, data, datalen, t);
+			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+			return;
+	#endif
 		/* The following requests were introduced post-4.3. */
 		case RIL_REQUEST_SIM_TRANSMIT_APDU_BASIC:
 		case RIL_REQUEST_SIM_OPEN_CHANNEL: /* !!! */
