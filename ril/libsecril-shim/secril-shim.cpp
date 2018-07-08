@@ -8,19 +8,6 @@ static const RIL_RadioFunctions *origRilFunctions;
 /* A copy of the ril environment passed to RIL_Init. */
 static const struct RIL_Env *rilEnv;
 
-/* Response data for RIL_REQUEST_VOICE_REGISTRATION_STATE */
-static const int VOICE_REGSTATE_SIZE = 15 * sizeof(char *);
-static char *voiceRegStateResponse[VOICE_REGSTATE_SIZE];
-
-/* Store voice radio technology */
-static int voiceRadioTechnology = -1;
-
-/* Store cdma subscription source */
-static int cdmaSubscriptionSource = -1;
-
-/* Store sim ruim status */
-int simRuimStatus = -1;
-
 /* Variables and methods for RIL_REQUEST_DEVICE_IDENTITY support */
 static char imei[16];
 static char imeisv[17];
@@ -31,106 +18,6 @@ static bool inIMEISVRequest = false;
 
 static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t);
 static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e);
-
-
-/* Response data for RIL_REQUEST_GET_CELL_INFO_LIST */
-static RIL_CellInfo_v12 cellInfoWCDMA;
-static RIL_CellInfo_v12 cellInfoGSM;
-static RIL_CellInfo_v12 cellInfoList[2];
-
-static int
-decodeVoiceRadioTechnology (RIL_RadioState radioState) {
-    switch (radioState) {
-        case RADIO_STATE_SIM_NOT_READY:
-        case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
-        case RADIO_STATE_SIM_READY:
-            return RADIO_TECH_UMTS;
-
-        case RADIO_STATE_RUIM_NOT_READY:
-        case RADIO_STATE_RUIM_READY:
-        case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
-        case RADIO_STATE_NV_NOT_READY:
-        case RADIO_STATE_NV_READY:
-            return RADIO_TECH_1xRTT;
-
-        default:
-            RLOGD("decodeVoiceRadioTechnology: Invoked with incorrect RadioState");
-            return -1;
-    }
-}
-
-static void OnRequestGetCellInfoList(int request, void *data, size_t datalen, RIL_Token t) {
-	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
-		requestToString(request),
-		data, datalen);
-
-	cellInfoWCDMA.cellInfoType = RIL_CELL_INFO_TYPE_WCDMA;
-	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.mcc = -1;
-	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.mnc = -1;
-	cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.psc = -1;
-
-	cellInfoGSM.cellInfoType = RIL_CELL_INFO_TYPE_GSM;
-	cellInfoGSM.CellInfo.gsm.cellIdentityGsm.mcc = -1;
-	cellInfoGSM.CellInfo.gsm.cellIdentityGsm.mnc = -1;
-
-	if (cellInfoGSM.CellInfo.gsm.cellIdentityGsm.lac > -1 &&
-	    cellInfoGSM.CellInfo.gsm.cellIdentityGsm.cid > -1) {
-		cellInfoList[0] = cellInfoGSM;
-		cellInfoList[1] = cellInfoWCDMA;
-		rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cellInfoList, sizeof(cellInfoList));
-	} else {
-		rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cellInfoWCDMA, sizeof(cellInfoWCDMA));
-	}
-}
-
-static void onRequestVoiceRadioTech(int request, void *data, size_t datalen, RIL_Token t) {
-	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
-		requestToString(request),
-		data, datalen);
-        RIL_RadioState radioState = origRilFunctions->onStateRequest();
-
-	voiceRadioTechnology = decodeVoiceRadioTechnology(radioState);
-	if (voiceRadioTechnology < 0) {
-		rilEnv->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
-		return;
-	}
-	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &voiceRadioTechnology, sizeof(voiceRadioTechnology));
-}
-
-static int
-decodeCdmaSubscriptionSource (RIL_RadioState radioState) {
-    switch (radioState) {
-        case RADIO_STATE_SIM_NOT_READY:
-        case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
-        case RADIO_STATE_SIM_READY:
-        case RADIO_STATE_RUIM_NOT_READY:
-        case RADIO_STATE_RUIM_READY:
-        case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
-            return CDMA_SUBSCRIPTION_SOURCE_RUIM_SIM;
-
-        case RADIO_STATE_NV_NOT_READY:
-        case RADIO_STATE_NV_READY:
-            return CDMA_SUBSCRIPTION_SOURCE_NV;
-
-        default:
-            RLOGD("decodeCdmaSubscriptionSource: Invoked with incorrect RadioState");
-            return -1;
-    }
-}
-
-static void onRequestCdmaGetSubscriptionSource(int request, void *data, size_t datalen, RIL_Token t) {
-	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
-		requestToString(request),
-		data, datalen);
-        RIL_RadioState radioState = (RIL_RadioState)origRilFunctions->onStateRequest();
-
-	cdmaSubscriptionSource = decodeCdmaSubscriptionSource(radioState);
-	if (cdmaSubscriptionSource < 0) {
-		rilEnv->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
-		return;
-	}
-	rilEnv->OnRequestComplete(t, RIL_E_SUCCESS, &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
-}
 
 static void onRequestDeviceIdentity(int request, void *data, size_t datalen, RIL_Token t) {
 	RLOGI("%s: got request %s (data:%p datalen:%d)\n", __FUNCTION__,
@@ -164,77 +51,6 @@ static void onRequestUnsupportedRequest(int request, void *data, size_t datalen,
 	rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 }
 
-
-static bool is3gpp2(int radioTech) {
-    switch (radioTech) {
-        case RADIO_TECH_IS95A:
-        case RADIO_TECH_IS95B:
-        case RADIO_TECH_1xRTT:
-        case RADIO_TECH_EVDO_0:
-        case RADIO_TECH_EVDO_A:
-        case RADIO_TECH_EVDO_B:
-        case RADIO_TECH_EHRPD:
-            return true;
-        default:
-            return false;
-    }
-}
-
-static int
-decodeSimStatus (RIL_RadioState radioState) {
-   switch (radioState) {
-       case RADIO_STATE_SIM_NOT_READY:
-       case RADIO_STATE_RUIM_NOT_READY:
-       case RADIO_STATE_NV_NOT_READY:
-       case RADIO_STATE_NV_READY:
-           return -1;
-       case RADIO_STATE_SIM_LOCKED_OR_ABSENT:
-       case RADIO_STATE_SIM_READY:
-       case RADIO_STATE_RUIM_READY:
-       case RADIO_STATE_RUIM_LOCKED_OR_ABSENT:
-           return radioState;
-       default:
-           RLOGD("decodeSimStatus: Invoked with incorrect RadioState");
-           return -1;
-   }
-}
-
-static RIL_RadioState
-processRadioState(RIL_RadioState newRadioState) {
-    if((newRadioState > RADIO_STATE_UNAVAILABLE) && (newRadioState < RADIO_STATE_ON)) {
-        int newVoiceRadioTech;
-        int newCdmaSubscriptionSource;
-        int newSimStatus;
-
-        /* This is old RIL. Decode Subscription source and Voice Radio Technology
-           from Radio State and send change notifications if there has been a change */
-        newVoiceRadioTech = decodeVoiceRadioTechnology(newRadioState);
-        if(newVoiceRadioTech != voiceRadioTechnology) {
-            voiceRadioTechnology = newVoiceRadioTech;
-            rilEnv->OnUnsolicitedResponse(RIL_UNSOL_VOICE_RADIO_TECH_CHANGED,
-                &voiceRadioTechnology, sizeof(voiceRadioTechnology));
-        }
-        if(is3gpp2(newVoiceRadioTech)) {
-            newCdmaSubscriptionSource = decodeCdmaSubscriptionSource(newRadioState);
-            if(newCdmaSubscriptionSource != cdmaSubscriptionSource) {
-                cdmaSubscriptionSource = newCdmaSubscriptionSource;
-                rilEnv->OnUnsolicitedResponse(RIL_UNSOL_CDMA_SUBSCRIPTION_SOURCE_CHANGED,
-                        &cdmaSubscriptionSource, sizeof(cdmaSubscriptionSource));
-            }
-        }
-        newSimStatus = decodeSimStatus(newRadioState);
-        if(newSimStatus != simRuimStatus) {
-            simRuimStatus = newSimStatus;
-            rilEnv->OnUnsolicitedResponse(RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-        }
-
-        /* Send RADIO_ON to telephony */
-        newRadioState = RADIO_STATE_ON;
-    }
-
-    return newRadioState;
-}
-
 static bool onRequestGetRadioCapability(RIL_Token t)
 {
 	RIL_RadioCapability rc[1] =
@@ -254,35 +70,9 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 	return true;
 }
 
-static RIL_RadioState onStateRequestShim() {
-    RIL_RadioState radioState = RADIO_STATE_OFF;
-    RIL_RadioState newRadioState = RADIO_STATE_OFF;
-
-    radioState = origRilFunctions->onStateRequest();
-    newRadioState = processRadioState(radioState);
-
-    RLOGI("%s: RIL legacy radiostate converted from %d to %d\n", __FUNCTION__, radioState, newRadioState);
-    return newRadioState;
-}
-
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
-                /* Our RIL doesn't support this, so we implement this ourself */
-		case RIL_REQUEST_GET_CELL_INFO_LIST:
-			OnRequestGetCellInfoList(request, data, datalen, t);
-			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
-			return;
-			/* Our RIL doesn't support this, so we implement this ourself */
-		case RIL_REQUEST_VOICE_RADIO_TECH:
-			onRequestVoiceRadioTech(request, data, datalen, t);
-			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
-			return;
-		/* Our RIL doesn't support this, so we implement this ourself */
-		case RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE:
-			onRequestCdmaGetSubscriptionSource(request, data, datalen, t);
-			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
-			return;
 		/* RIL_REQUEST_GET_IMEI is depricated */
 		case RIL_REQUEST_DEVICE_IDENTITY:
 			onRequestDeviceIdentity(request, data, datalen, t);
@@ -303,7 +93,6 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 		case RIL_REQUEST_NV_WRITE_CDMA_PRL:
 		case RIL_REQUEST_NV_RESET_CONFIG:
 		case RIL_REQUEST_SET_UICC_SUBSCRIPTION:
-		case RIL_REQUEST_ALLOW_DATA:
 		case RIL_REQUEST_GET_HARDWARE_CONFIG:
 		case RIL_REQUEST_SIM_AUTHENTICATION:
 		case RIL_REQUEST_GET_DC_RT_INFO:
@@ -320,53 +109,6 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 
 	RLOGD("%s: got request %s: forwarded to RIL.\n", __FUNCTION__, requestToString(request));
 	origRilFunctions->onRequest(request, data, datalen, t);
-}
-
-static void onCompleteRequestGetSimStatus(RIL_Token t, RIL_Errno e, void *response) {
-	/* While at it, upgrade the response to RIL_CardStatus_v6 */
-	RIL_CardStatus_v5_samsung *p_cur = ((RIL_CardStatus_v5_samsung *) response);
-	RIL_CardStatus_v6 v6response;
-
-	v6response.card_state = p_cur->card_state;
-	v6response.universal_pin_state = p_cur->universal_pin_state;
-	v6response.gsm_umts_subscription_app_index = p_cur->gsm_umts_subscription_app_index;
-	v6response.cdma_subscription_app_index = p_cur->cdma_subscription_app_index;
-	v6response.ims_subscription_app_index = -1;
-	v6response.num_applications = p_cur->num_applications;
-
-	int i;
-	for (i = 0; i < RIL_CARD_MAX_APPS; ++i)
-		memcpy(&v6response.applications[i], &p_cur->applications[i], sizeof(RIL_AppStatus));
-
-	/* Send the fixed response to libril */
-	rilEnv->OnRequestComplete(t, e, &v6response, sizeof(RIL_CardStatus_v6));
-}
-
-static void onRequestCompleteVoiceRegistrationState(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
-	char **resp = (char **) response;
-        char radioTechUmts = '3';
-	memset(voiceRegStateResponse, 0, VOICE_REGSTATE_SIZE);
-	for (int index = 0; index < (int)responselen; index++) {
-		voiceRegStateResponse[index] = resp[index];
-		switch (index) {
-			case 1: {
-				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.lac = atoi(voiceRegStateResponse[index]);
-				break;
-			}
-			case 2: {
-				cellInfoWCDMA.CellInfo.wcdma.cellIdentityWcdma.cid = atoi(voiceRegStateResponse[index]);
-				break;
-			}
-			case 3:	{
-			        // Add RADIO_TECH_UMTS because our RIL doesn't provide this here
-				voiceRegStateResponse[index] = &radioTechUmts;
-				break;
-		        }
-			default:
-				break;
-		}
-	}
-	rilEnv->OnRequestComplete(t, e, voiceRegStateResponse, VOICE_REGSTATE_SIZE);
 }
 
 static void onRequestCompleteDeviceIdentity(RIL_Token t, RIL_Errno e) {
@@ -394,39 +136,6 @@ static void onRequestCompleteGetImeiSv(RIL_Token t, RIL_Errno /*e*/, void *respo
 	rilEnv->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 	inIMEISVRequest = false;
 	gotIMEISV = true;
-}
-
-static void fixupDataCallList(void *response, size_t responselen) {
-	RIL_Data_Call_Response_v6 *p_cur = (RIL_Data_Call_Response_v6 *) response;
-	int num = responselen / sizeof(RIL_Data_Call_Response_v6);
-
-	int i;
-	for (i = 0; i < num; ++i)
-		p_cur[i].gateways = p_cur[i].addresses;
-}
-
-static void onCompleteQueryAvailableNetworks(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
-	/* Response is a char **, pointing to an array of char *'s */
-	size_t numStrings = responselen / sizeof(char *);
-	size_t newResponseLen = (numStrings - (numStrings / 3)) * sizeof(char *);
-
-	void *newResponse = malloc(newResponseLen);
-
-	/* Remove every 5th and 6th strings (qan elements) */
-	char **p_cur = (char **) response;
-	char **p_new = (char **) newResponse;
-	size_t i, j;
-	for (i = 0, j = 0; i < numStrings; i += 6) {
-		p_new[j++] = p_cur[i];
-		p_new[j++] = p_cur[i + 1];
-		p_new[j++] = p_cur[i + 2];
-		p_new[j++] = p_cur[i + 3];
-	}
-
-	/* Send the fixed response to libril */
-	rilEnv->OnRequestComplete(t, e, newResponse, newResponseLen);
-
-	free(newResponse);
 }
 
 static void fixupSignalStrength(void *response) {
@@ -483,51 +192,6 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				__FUNCTION__, requestToString(request), requestToString(RIL_REQUEST_DEVICE_IDENTITY));
 			onRequestCompleteGetImeiSv(t, e, response, responselen);
 			return;
-		case RIL_REQUEST_VOICE_REGISTRATION_STATE:
-			/* libsecril expects responselen of 60 (bytes) */
-			/* numstrings (15 * sizeof(char *) = 60) */
-			if (response != NULL && responselen < VOICE_REGSTATE_SIZE) {
-				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-				onRequestCompleteVoiceRegistrationState(t, e, response, responselen);
-				return;
-			}
-			break;
-		case RIL_REQUEST_GET_SIM_STATUS:
-			/* Remove unused extra elements from RIL_AppStatus */
-			if (response != NULL && responselen == sizeof(RIL_CardStatus_v5_samsung)) {
-				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-				onCompleteRequestGetSimStatus(t, e, response);
-				return;
-			}
-			break;
-		case RIL_REQUEST_LAST_CALL_FAIL_CAUSE:
-			/* Remove extra element (ignored on pre-M, now crashing the framework) */
-			if (responselen > sizeof(int)) {
-				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-				rilEnv->OnRequestComplete(t, e, response, sizeof(int));
-				return;
-			}
-			break;
-		case RIL_REQUEST_DATA_CALL_LIST:
-		case RIL_REQUEST_SETUP_DATA_CALL:
-			/* According to the Samsung RIL, the addresses are the gateways?
-			 * This fixes mobile data. */
-			if (response != NULL && responselen != 0 && (responselen % sizeof(RIL_Data_Call_Response_v6) == 0)) {
-				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-				fixupDataCallList(response, responselen);
-				rilEnv->OnRequestComplete(t, e, response, responselen);
-				return;
-			}
-			break;
-		case RIL_REQUEST_QUERY_AVAILABLE_NETWORKS:
-			/* Remove the extra (unused) elements from the operator info, freaking out the framework.
-			 * Formerly, this is know as the mQANElements override. */
-			if (response != NULL && responselen != 0 && (responselen % sizeof(char *) == 0)) {
-				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
-				onCompleteQueryAvailableNetworks(t, e, response, responselen);
-				return;
-			}
-			break;
 		case RIL_REQUEST_SIGNAL_STRENGTH:
 			/* The Samsung RIL reports the signal strength in a strange way... */
 			if (response != NULL && responselen >= sizeof(RIL_SignalStrength_v5)) {
@@ -547,12 +211,6 @@ null_token_exit:
 static void onUnsolicitedResponseShim(int unsolResponse, const void *data, size_t datalen)
 {
 	switch (unsolResponse) {
-		case RIL_UNSOL_DATA_CALL_LIST_CHANGED:
-			/* According to the Samsung RIL, the addresses are the gateways?
-			 * This fixes mobile data. */
-			if (data != NULL && datalen != 0 && (datalen % sizeof(RIL_Data_Call_Response_v6) == 0))
-				fixupDataCallList((void*) data, datalen);
-			break;
 		case RIL_UNSOL_SIGNAL_STRENGTH:
 			/* The Samsung RIL reports the signal strength in a strange way... */
 			if (data != NULL && datalen >= sizeof(RIL_SignalStrength_v5))
@@ -561,35 +219,6 @@ static void onUnsolicitedResponseShim(int unsolResponse, const void *data, size_
 	}
 
 	rilEnv->OnUnsolicitedResponse(unsolResponse, data, datalen);
-}
-
-static void patchMem(void *libHandle) {
-	/*
-	 * MAX_TIMEOUT is used for a call to pthread_cond_timedwait_relative_np.
-	 * The issue is bionic has switched to using absolute timeouts instead of
-	 * relative timeouts, and a maximum time value can cause an overflow in
-	 * the function converting relative to absolute timespecs if unpatched.
-	 *
-	 * By patching this to 0x01FFFFFF from 0x7FFFFFFF, the timeout should
-	 * expire in about a year rather than 68 years, and the RIL should be good
-	 * up until the year 2036 or so.
-	 */
-	uint32_t *MAX_TIMEOUT;
-
-	MAX_TIMEOUT = (uint32_t *)dlsym(libHandle, "MAX_TIMEOUT");
-	if (CC_UNLIKELY(!MAX_TIMEOUT)) {
-		RLOGE("%s: MAX_TIMEOUT could not be found!", __FUNCTION__);
-		return;
-	}
-	RLOGD("%s: MAX_TIMEOUT found at %p!", __FUNCTION__, MAX_TIMEOUT);
-	RLOGD("%s: MAX_TIMEOUT is currently 0x%" PRIX32, __FUNCTION__, *MAX_TIMEOUT);
-	if (CC_LIKELY(*MAX_TIMEOUT == 0x7FFFFFFF)) {
-		*MAX_TIMEOUT = 0x01FFFFFF;
-		RLOGI("%s: MAX_TIMEOUT was changed to 0x0%" PRIX32, __FUNCTION__, *MAX_TIMEOUT);
-	} else {
-		RLOGW("%s: MAX_TIMEOUT was not 0x7FFFFFFF; leaving alone", __FUNCTION__);
-	}
-
 }
 
 const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **argv)
@@ -619,18 +248,6 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 		goto fail_after_dlopen;
 	}
 
-	// Fix RIL issues by patching memory
-	patchMem(origRil);
-
-	//remove "-c" command line as Samsung's RIL does not understand it - it just barfs instead
-	RLOGD("Ditching -c command...");
-	for (int i = 0; i < argc; i++) {
-		if (!strcmp(argv[i], "-c") && i != argc -1) {	//found it
-			memcpy(argv + i, argv + i + 2, sizeof(char*[argc - i - 2]));
-			argc -= 2;
-		}
-	}
-
 	origRilFunctions = origRilInit(&shimmedEnv, argc, argv);
 	RLOGD("Assigning original RIL funcs...");
 	if (CC_UNLIKELY(!origRilFunctions)) {
@@ -641,7 +258,6 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env *env, int argc, char **a
 	/* Shim functions as needed. */
 	shimmedFunctions = *origRilFunctions;
 	shimmedFunctions.onRequest = onRequestShim;
-	shimmedFunctions.onStateRequest = onStateRequestShim;
 
 	RLOGD("RIL_Init completed");
 	return &shimmedFunctions;
