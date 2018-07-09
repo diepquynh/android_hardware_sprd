@@ -17,7 +17,7 @@
 //#include "engat.h"
 
 #define LOG_TAG "NVITEM"
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 #include <cutils/log.h>
 #define NVITEM_PRINT ALOGD
 #endif
