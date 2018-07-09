@@ -249,9 +249,9 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 		goto null_token_exit;
 	}
 
-	/* If pCI is null, this entire function is useless. */
-	if (pRI->pCI == NULL) {
-		RLOGE("pRI->pCI is NULL");
+	/* If pCI is null or invalid pointer, this entire function is useless. */
+	if (!pRI->pCI || (0 <(int)pRI->pCI && (int)pRI->pCI < 0xff)) {
+		RLOGE("Invalid CommandInterface pointer: %p", pRI->pCI);
 		goto null_token_exit;
 	}
 
