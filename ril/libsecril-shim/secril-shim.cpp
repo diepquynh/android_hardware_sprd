@@ -70,6 +70,30 @@ static bool onRequestGetRadioCapability(RIL_Token t)
 	return true;
 }
 
+static void onRequestDial(int request, void *data, RIL_Token t) {
+	RIL_Dial dial;
+	RIL_CallDetails *cds;
+
+	dial.address = ((RIL_Dial *) data)->address;
+	dial.clir = ((RIL_Dial *) data)->clir;
+	dial.uusInfo = ((RIL_Dial *) data)->uusInfo;
+
+	/* Handle Samsung CallDetails stuff */
+	cds = (RIL_CallDetails *) malloc(sizeof(RIL_CallDetails));
+	memset(cds, 0, sizeof(RIL_CallDetails));
+	cds->call_type = 0;
+	cds->call_domain = 1;
+	cds->getCsvFromExtras = strdup("");
+	dial.callDetails = cds;
+
+	origRilFunctions->onRequest(request, &dial, sizeof(dial), t);
+
+	/* Free this buffer (cds) */
+	free(cds->getCsvFromExtras);
+	free(cds);
+	RLOGI("memory free'd");
+}
+
 static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 {
 	switch (request) {
@@ -78,6 +102,14 @@ static void onRequestShim(int request, void *data, size_t datalen, RIL_Token t)
 			onRequestDeviceIdentity(request, data, datalen, t);
 			RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
 			return;
+		/* The Samsung RIL crashes if CallDetails is NULL... */
+		case RIL_REQUEST_DIAL:
+			if (datalen == sizeof(RIL_Dial) && data != NULL) {
+				onRequestDial(request, data, t);
+				RLOGI("%s: got request %s: replied with our implementation!\n", __FUNCTION__, requestToString(request));
+				return;
+			}
+			break;
 		/* Necessary; RILJ may fake this for us if we reply not supported, but we can just implement it. */
 		case RIL_REQUEST_GET_RADIO_CAPABILITY:
 			onRequestGetRadioCapability(t);
