@@ -207,6 +207,14 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 				return;
 			}
 			break;
+		case RIL_REQUEST_LAST_CALL_FAIL_CAUSE:
+			/* Remove extra element (ignored on pre-M, now crashing the framework) */
+			if (responselen > sizeof(int)) {
+				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
+				rilEnv->OnRequestComplete(t, e, response, sizeof(int));
+				return;
+			}
+			break;
 		case RIL_REQUEST_SIGNAL_STRENGTH:
 			/* The Samsung RIL reports the signal strength in a strange way... */
 			if (response != NULL && responselen >= sizeof(RIL_SignalStrength_v5)) {
