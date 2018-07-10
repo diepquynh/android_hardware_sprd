@@ -220,10 +220,21 @@ static void fixupSignalStrength(void *response) {
 }
 
 static void onCompleteRequestGetSimStatus(RIL_Token t, RIL_Errno e, void *response) {
-	RIL_CardStatus_v6 *v6response = (RIL_CardStatus_v6 *) response;
+	RIL_CardStatus_v6_samsung *p_cur = (RIL_CardStatus_v6_samsung *) response;
+	RIL_CardStatus_v6 v6response;
+
+	v6response.card_state = p_cur->card_state;
+	v6response.universal_pin_state = p_cur->universal_pin_state;
+	v6response.gsm_umts_subscription_app_index = p_cur->gsm_umts_subscription_app_index;
+	v6response.cdma_subscription_app_index = p_cur->cdma_subscription_app_index;
+	v6response.ims_subscription_app_index = p_cur->ims_subscription_app_index;
+	v6response.num_applications = p_cur->num_applications;
+
+	for (int i = 0; i < RIL_CARD_MAX_APPS; ++i)
+		memcpy(&v6response.applications[i], &p_cur->applications[i], sizeof(RIL_AppStatus));
 
 	/* Send the fixed response to libril */
-	rilEnv->OnRequestComplete(t, e, v6response, sizeof(RIL_CardStatus_v6));
+	rilEnv->OnRequestComplete(t, e, &v6response, sizeof(RIL_CardStatus_v6));
 }
 
 static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
@@ -260,7 +271,7 @@ static void onRequestCompleteShim(RIL_Token t, RIL_Errno e, void *response, size
 			return;
 		case RIL_REQUEST_GET_SIM_STATUS:
 			/* Remove unknown elements from Samsung's struct */
-			if (response != NULL && responselen == 440) {
+			if (response != NULL && responselen == sizeof(RIL_CardStatus_v6_samsung)) {
 				RLOGD("%s: got request %s and shimming response!\n", __FUNCTION__, requestToString(request));
 				onCompleteRequestGetSimStatus(t, e, response);
 				return;
