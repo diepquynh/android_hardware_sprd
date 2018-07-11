@@ -18,7 +18,7 @@
 #include <telephony/ril.h>
 #include <utils/Log.h>
 
-#define RIL_LIB_PATH "system/vendor/lib/libsec-ril.so"
+#define RIL_LIB_PATH "/system/vendor/lib/libreference-ril_sp.so"
 
 extern "C" const char * requestToString(int request);
 
