@@ -39,9 +39,9 @@ endif
 ifneq ($(filter xmm6262 xmm6360,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS += -DMODEM_TYPE_XMM6262
 endif
-ifeq ($(BOARD_MODEM_TYPE),xmm6260)
-LOCAL_CFLAGS += -DMODEM_TYPE_XMM6260
-endif
+#ifeq ($(BOARD_MODEM_TYPE),xmm6260)
+LOCAL_CFLAGS += -DMODEM_TYPE_XMM6260 # sprd uses XMM6260's signal hack?
+#endif
 ifneq ($(filter m7450 mdm9x35 ss333 tss310 xmm7260,$(BOARD_MODEM_TYPE)),)
 LOCAL_CFLAGS += -DSAMSUNG_NEXT_GEN_MODEM
 endif
