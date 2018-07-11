@@ -31,3 +31,5 @@ LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_EXECUTABLE)
+
+include $(LOCAL_PATH)/modem_control/Android.mk
