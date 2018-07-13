@@ -1,16 +1,22 @@
 #define LOG_TAG "IAtChannel"
 
+#include <string.h>
+
+#include <algorithm>
+
 #include <android/log.h>
-#include <binder/IServiceManager.h>
-#include <utils/String8.h>
-#include <utils/String16.h>
-#include "IAtChannel.h"
-#include "AtChannel.h"
+#include <cutils/log.h>
 #include <cutils/properties.h>
 
-using namespace android;
+#include <secril-client.h>
 
-const int MAX_SERVICE_NAME = 100;
+#include "AtChannel.h"
+
+static const char *RET_ERROR = "ERROR"; // libatchannel blob return a pointer to this string on error
+static const char *RET_SUCCESS = "find sril_SendATHandle"; // libatchannel blob return a pointer to this string on success
+
+static HRilClient rilClient = nullptr;
+static HRilClient rilClientSecond = nullptr;
 
 #define  MSMS_PHONE_COUNT_PROP             "persist.msms.phone_count"
 #define  MODEM_TD_ENABLE_PROP              "persist.modem.t.enable"
@@ -78,38 +84,43 @@ static int getPhoneId(int modemId, int simId)
     return 0;
 }
 
-static String16 getServiceName(int modemId, int simId)
-{
-    char serviceName[MAX_SERVICE_NAME];
-    char phoneCount[PROPERTY_VALUE_MAX] = "";
-
-    memset(serviceName, 0, sizeof(serviceName));
-    property_get(MSMS_PHONE_COUNT_PROP, phoneCount, "1");
-
-    if (atoi(phoneCount) > 1){
-        snprintf(serviceName, MAX_SERVICE_NAME - 1, "atchannel%d", simId);
-    } else {
-        strcpy(serviceName,  "atchannel");
-    }
-
-    return String16(serviceName);
-}
-
 const char* sendAt(int modemId, int simId, const char* atCmd)
 {
+    const int phoneId = getPhoneId(modemId, simId);
+    const size_t atCmdLen = strlen(atCmd);
+    char oemReqHookRaw[1024] = { 0x30, 0x0 };
+    int error = RIL_CLIENT_ERR_SUCCESS;
+    int retryCount = 0;
 
-    sp<IServiceManager> sm = NULL;
-    sp<IAtChannel> atChannel = NULL;
-    String16 serviceName;
-    do {
-        sm = defaultServiceManager();
-        if (sm == NULL) {
-            ALOGE("Couldn't get default ServiceManager\n");
-            continue;
+    ALOGI("Receive sendAt request: modemId=%d simId=%d atCmd=\"%s\"", modemId, simId, atCmd);
+
+    // Initialize connection
+    HRilClient& client = (phoneId == 0) ? rilClient : rilClientSecond;
+    if (client == nullptr && (client = OpenClient_RILD()) == nullptr) {
+        ALOGE("OpenClient_RILD() failed!");
+        return RET_ERROR;
+    }
+    if (!isConnected_RILD(client)) {
+        error = (phoneId == 0) ? Connect_RILD(client) : Connect_RILD_Second(client);
+        if (error != RIL_CLIENT_ERR_SUCCESS) {
+            ALOGE("Cannot open connection to RILD: phoneId=%d error=%d", phoneId, error);
+            return RET_ERROR;
         }
-        serviceName = getServiceName(modemId, simId);
-        atChannel = interface_cast<IAtChannel>(sm->getService(serviceName));
-    } while (atChannel == NULL);
+    }
 
-    return atChannel->sendAt(atCmd);
+    // Build and send OEM request hook
+    memcpy(oemReqHookRaw + 2, atCmd, std::min(atCmdLen, sizeof(oemReqHookRaw) - 3));
+    ALOGI("Sending OEM request hook raw for AT command: atCmd=\"%s\"", atCmd);
+    do {
+        if (error == RIL_CLIENT_ERR_AGAIN)
+            ALOGI("Resend request: retryCount=%d error=%d", ++retryCount, error);
+        error = InvokeOemRequestHookRaw(client, oemReqHookRaw, atCmdLen + 3);
+    } while (error == RIL_CLIENT_ERR_AGAIN && retryCount < 10);
+
+    if (error == RIL_CLIENT_ERR_SUCCESS)
+        ALOGI("Send OEM request hook raw successfully.");
+    else
+        ALOGE("Failed to send OEM request hook raw: error=%d", error);
+
+    return error == RIL_CLIENT_ERR_SUCCESS ? RET_SUCCESS : RET_ERROR;
 }

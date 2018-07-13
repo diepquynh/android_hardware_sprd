@@ -19,14 +19,13 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    IAtChannel.cpp \
     AtChannel.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
-    libbinder \
     libutils \
     liblog \
+    libsecril-client \
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
     $(LOCAL_PATH) \
@@ -36,20 +35,3 @@ LOCAL_MODULE := libatchannel
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-
-LOCAL_SHARED_LIBRARIES := \
-    liblog \
-    libcutils \
-    libatchannel \
-    libutils \
-
-LOCAL_SRC_FILES := \
-    AtChannelTest.cpp \
-
-LOCAL_MODULE := AtChannelTest
-
-LOCAL_MODULE_TAGS := optional
-
-include $(BUILD_EXECUTABLE)
