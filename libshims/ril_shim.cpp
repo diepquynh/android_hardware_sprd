@@ -113,3 +113,8 @@ extern "C" int ____prop_set(const char *key, const char *value)
     }
     return property_set(key, value);
 }
+
+extern "C" int __sncmp(const char *s1, const char *s2, size_t n)
+{
+    return strncmp("GLB", s2, 3) == 0 ? 0 : strncmp(s1, s2, n);
+}
