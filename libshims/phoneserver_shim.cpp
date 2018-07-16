@@ -35,6 +35,7 @@ extern "C" int pthread_getschedparam(pthread_t thread, int* policy, struct sched
 
 extern "C" int pthread_create(pthread_t* thread, const pthread_attr_t* attr,void *(*start_rountine)(void*), void* arg)
 {
+    int result = ((int (*)(pthread_t*, const pthread_attr_t*,void *(*)(void*), void*)) dlsym(RTLD_NEXT, "pthread_create"))(thread, attr, start_rountine, arg);
     ALOGI("%s: pointer=%p, value=%lx", __FUNCTION__, thread, *thread);
-    return ((int (*)(pthread_t*, const pthread_attr_t*,void *(*)(void*), void*)) dlsym(RTLD_NEXT, "pthread_create"))(thread, attr, start_rountine, arg);
+    return result;
 }
