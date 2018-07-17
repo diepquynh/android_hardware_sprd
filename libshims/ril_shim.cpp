@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 The CyanogenMod Project
+ * Copyright (C) 2018 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +15,6 @@
  * limitations under the License.
  */
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-
 #include <dlfcn.h>
 
 #include <iostream>
@@ -29,10 +26,26 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "RIL_SHIM"
 #include <cutils/log.h>
-#include <cutils/properties.h>
+
+#ifndef PROPERTY_VALUE_MAX
+#define PROPERTY_VALUE_MAX 92
+#endif
+
+static int (*real_property_get)(const char*, char*, const char*) =
+    (int (*)(const char*, char*, const char*)) dlsym(RTLD_NEXT, "property_get");
+
+static int (*real_property_set)(const char *, const char *) =
+    (int (*)(const char*, const char*)) dlsym(RTLD_NEXT, "property_set");
+
+static int (*real_strncmp)(const char*, const char *, size_t) =
+    (int (*)(const char*, const char *, size_t)) dlsym(RTLD_NEXT, "strncmp");
+
+static std::vector<std::string> split(const std::string &, char);
+
+static std::string concat(const std::vector<std::string> &, char);
 
 /* { RIL_KEYS, { ANDROID_KEY, ANDROID_VALUE_INDEXES } } */
-static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
+static std::unordered_map<std::string, std::pair<std::string, size_t>> KEY_MAP
 {
     { "gsm.operator.numeric",
             { "gsm.operator.numeric", 0 } },
@@ -48,7 +61,59 @@ static std::unordered_map<std::string, std::pair<std::string, int>> KEY_MAP
             { "gsm.network.type", 1 } },
 };
 
-static std::vector<std::string> split(const std::string &s, char delim)
+/** status_t Parcel::writeString16() */
+extern "C" int _ZN7android6Parcel13writeString16EPKDsj();
+extern "C" int _ZN7android6Parcel13writeString16EPKtj()
+{
+    return _ZN7android6Parcel13writeString16EPKDsj();
+}
+
+/** property_get() */
+extern "C" int ____prop_get(const char *key, char *value, const char *default_value)
+{
+    auto search = KEY_MAP.find(key);
+    if (search != KEY_MAP.end()) {
+        std::string actual_key = (*search).second.first;
+        size_t index = (*search).second.second;
+        if (real_property_get(actual_key.c_str(), value, default_value) > 0) {
+            std::vector<std::string> v = split(value, ',');
+            if (index < v.size())
+                strcpy(value, v[index].c_str());
+            else
+                strcpy(value, default_value);
+        }
+        return strlen(value);
+    }
+    return real_property_get(key, value, default_value);
+}
+
+/** property_set() */
+extern "C" int ____prop_set(const char *key, const char *value)
+{
+    auto search = KEY_MAP.find(key);
+    if (search != KEY_MAP.end()) {
+        std::string actual_key = (*search).second.first;
+        size_t index = (*search).second.second;
+        char tmp[PROPERTY_VALUE_MAX];
+        if (real_property_get(actual_key.c_str(), tmp, "") >= 0) {
+            std::vector<std::string> v = split(tmp, ',');
+            if (!(index < v.size()))
+                v.resize(index + 1);
+            v[index] = value;
+            std::string actual_value = concat(v, ',');
+            return real_property_set(actual_key.c_str(), actual_value.c_str());
+        }
+    }
+    return real_property_set(key, value);
+}
+
+/** strncmp() */
+extern "C" int __sncmp(const char *s1, const char *s2, size_t n)
+{
+    return real_strncmp("GLB", s2, 3) == 0 ? 0 : real_strncmp(s1, s2, n);
+}
+
+std::vector<std::string> split(const std::string &s, char delim)
 {
     std::vector<std::string> result;
     std::stringstream ss;
@@ -58,7 +123,7 @@ static std::vector<std::string> split(const std::string &s, char delim)
     return result;
 }
 
-static std::string concat(const std::vector<std::string> &v, char delim)
+std::string concat(const std::vector<std::string> &v, char delim)
 {
     if (v.size()) {
         auto s = *v.begin();
@@ -69,52 +134,4 @@ static std::string concat(const std::vector<std::string> &v, char delim)
         return s;
     }
     return std::string();
-}
-
-/* status_t Parcel::writeString16 */
-extern "C" int _ZN7android6Parcel13writeString16EPKDsj();
-extern "C" int _ZN7android6Parcel13writeString16EPKtj() {
-    return _ZN7android6Parcel13writeString16EPKDsj();
-}
-
-extern "C" int ____prop_get(const char *key, char *value, const char *default_value)
-{
-    auto search = KEY_MAP.find(key);
-    if (search != KEY_MAP.end()) {
-        std::string actual_key = (*search).second.first;
-        int index = (*search).second.second;
-        if (property_get(actual_key.c_str(), value, default_value) > 0) {
-            std::vector<std::string> v = split(value, ',');
-            if (index < v.size())
-                strcpy(value, v[index].c_str());
-            else
-                strcpy(value, default_value);
-        }
-        return strlen(value);
-    }
-    return property_get(key, value, default_value);
-}
-
-extern "C" int ____prop_set(const char *key, const char *value)
-{
-    auto search = KEY_MAP.find(key);
-    if (search != KEY_MAP.end()) {
-        std::string actual_key = (*search).second.first;
-        int index = (*search).second.second;
-        char tmp[PROPERTY_VALUE_MAX];
-        if (property_get(actual_key.c_str(), tmp, "") >= 0) {
-            std::vector<std::string> v = split(tmp, ',');
-            if (!(index < v.size()))
-                v.resize(index + 1);
-            v[index] = value;
-            std::string actual_value = concat(v, ',');
-            return property_set(actual_key.c_str(), actual_value.c_str());
-        }
-    }
-    return property_set(key, value);
-}
-
-extern "C" int __sncmp(const char *s1, const char *s2, size_t n)
-{
-    return strncmp("GLB", s2, 3) == 0 ? 0 : strncmp(s1, s2, n);
 }
