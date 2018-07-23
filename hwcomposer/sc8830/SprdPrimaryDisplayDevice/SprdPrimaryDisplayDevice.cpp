@@ -676,7 +676,7 @@ int SprdPrimaryDisplayDevice:: commit(hwc_display_contents_1_t* list)
         dumpCameraShakeTest(list);
 #endif
 
-#ifdef SPRD_DITHER_ENABLE
+#if 0
         if(!((mLayerList->getVideoLayerCount() != 0) || (mLayerList->getYuvLayerCount() != 0))) {
             privateH->flags |= private_handle_t::PRIV_FLAGS_SPRD_DITHER;
         }
