@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define SENSORS_LIB "/vendor/lib/sensors.vendor." BOARD_PLATFORM ".so"
+
 static pthread_mutex_t init_modules_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t init_sensors_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -472,7 +474,7 @@ static void lazy_init_modules() {
     // dlopen the module files and cache their module symbols in sub_hw_modules
     sub_hw_modules = new std::vector<hw_module_t *>();
     dlerror(); // clear any old errors
-    add_so_module("/vendor/lib/hw/sensors.vendor.scx15.so");
+    add_so_module(SENSORS_LIB);
     pthread_mutex_unlock(&init_modules_mutex);
 }
 
